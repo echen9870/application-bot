@@ -1,0 +1,13 @@
+node_modules/
+reports/
+output/
+jds/
+*.log
+.env
+.DS_Store
+package-lock.json
+service-account.json
+*.json.key
+gmail-credentials.json
+gmail-token.json
+.playwright-mcp/

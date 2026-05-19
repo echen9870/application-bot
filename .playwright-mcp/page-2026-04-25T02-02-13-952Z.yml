@@ -1,0 +1,616 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - navigation [ref=e6]:
+      - link "cockroachlabs-logo-170" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "cockroachlabs-logo-170" [ref=e8]
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - menuitem "Product" [ref=e11]:
+            - link "Product" [ref=e12] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e14]: Product
+          - menuitem "Solutions" [ref=e15]:
+            - link "Solutions" [ref=e16] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e18]: Solutions
+          - menuitem "Resources" [ref=e19]:
+            - link "Resources" [ref=e20] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e22]: Resources
+          - menuitem "Pricing" [ref=e23]:
+            - link "Pricing" [ref=e24] [cursor=pointer]:
+              - /url: /pricing/
+              - generic [ref=e26]: Pricing
+          - menuitem "Company" [ref=e27]:
+            - link "Company" [ref=e28] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e30]: Company
+        - list [ref=e32]:
+          - listitem [ref=e33]:
+            - link "Contact us" [ref=e34] [cursor=pointer]:
+              - /url: /contact/
+              - generic [ref=e35]: Contact us
+          - listitem [ref=e36]:
+            - link "Sign in" [ref=e37] [cursor=pointer]:
+              - /url: https://cockroachlabs.cloud/
+              - generic [ref=e38]: Sign in
+          - listitem [ref=e39]:
+            - button "search" [ref=e40] [cursor=pointer]:
+              - img "search" [ref=e41]
+          - listitem [ref=e43]:
+            - link "Get started free" [ref=e44] [cursor=pointer]:
+              - /url: https://cockroachlabs.cloud/signup?referralId=cc_nav_global
+              - button "Get started free" [ref=e45]
+    - generic [ref=e49]:
+      - link "Careers" [ref=e50] [cursor=pointer]:
+        - /url: /careers/
+      - link "Open Interview Process" [ref=e51] [cursor=pointer]:
+        - /url: /careers/open-interview/
+      - link "Product and Engineering" [ref=e52] [cursor=pointer]:
+        - /url: /careers/product-and-engineering/
+      - link "Open Positions" [ref=e53] [cursor=pointer]:
+        - /url: /careers/open-positions/
+    - generic [ref=e56]:
+      - iframe [ref=e61]:
+        - main [ref=f16e2]:
+          - generic [ref=f16e3]:
+            - generic [ref=f16e4]:
+              - link "Back to jobs" [ref=f16e5] [cursor=pointer]:
+                - /url: https://www.cockroachlabs.com/careers/open-positions/
+                - img [ref=f16e6]
+                - text: Back to jobs
+              - generic [ref=f16e9]:
+                - generic [ref=f16e10]:
+                  - heading "Engineering Internships 2026" [level=1] [ref=f16e11]
+                  - generic [ref=f16e12]:
+                    - img [ref=f16e13]
+                    - generic [ref=f16e15]: New York, NY
+                - button "Apply" [ref=f16e16] [cursor=pointer]: Apply Here!
+              - generic [ref=f16e21]:
+                - heading [level=1]
+                - heading [level=1] [ref=f16e22]
+                - heading [level=1] [ref=f16e23]
+                - heading "Category-defining tech. Career-defining work." [level=1] [ref=f16e24]
+                - paragraph [ref=f16e25]: Lots of tech companies disrupt. But, many fail when they try to scale. We're different. CockroachDB makes it easier for companies to build and scale apps. This is how and why we're helping some of the most innovative companies on the planet. We tackle problems head-on and focus on solutions that create lasting impact.
+                - heading "Because when our customers win, we all win." [level=3] [ref=f16e26]
+                - paragraph [ref=f16e27]
+                - separator [ref=f16e28]
+                - paragraph [ref=f16e29]: Cockroach Labs has a hybrid work model, with Roachers that are local to one of our offices coming in on Mondays, Tuesdays, and Thursdays and working flexibly the rest of the week. While we’ve learned valuable lessons working remotely, nothing can replace the connection, creativity, and fun that occurs when Roachers get together and we are committed to fostering a workplace that encourages collaboration and allows us all to do our best work.
+                - separator [ref=f16e30]
+                - heading "The Role" [level=2] [ref=f16e31]:
+                  - strong [ref=f16e32]: The Role
+                - paragraph [ref=f16e33]: "We are looking for extraordinary Backend Engineering Interns to join our team. During your internship you will:"
+                - list [ref=f16e34]:
+                  - listitem [ref=f16e35]: Design, code, and test the backend of our distributed, open source database CockroachDB.
+                  - listitem [ref=f16e36]: Be matched to a team based on your interests, and complete a project related to your focus area that is shared with the entire Engineering organization.
+                  - listitem [ref=f16e37]: Work closely with other engineers and product managers across our the cloud and database teams.
+                  - listitem [ref=f16e38]: Take part in a collaborative culture and exchange knowledge with a highly experienced technical organization.
+                  - listitem [ref=f16e39]: Ensure that CockroachDB remains scalable, survivable, and consistent as we continue to grow as a company.
+                  - listitem [ref=f16e40]: Meet regularly with your Mentor and Manager to get feedback and continue refining your skills.
+                - paragraph [ref=f16e41]:
+                  - text: A huge bonus is that even after your experience at Cockroach Labs ends, your code will live on in our open source GitHub repo,
+                  - link "CockroachDB" [ref=f16e42] [cursor=pointer]:
+                    - /url: https://github.com/cockroachdb/cockroach
+                    - strong [ref=f16e43]: CockroachDB
+                  - text: .
+                - heading "The Expectations" [level=2] [ref=f16e44]:
+                  - strong [ref=f16e45]: The Expectations
+                - paragraph [ref=f16e46]: In your first 30 days, you will become an integrated member of our engineering team. During this time, you will work on a starter project that allows you to gain confidence in navigating the code base and begin to understand our engineering environment. We believe that it's important for you to take this first month to become familiar with our technology and our company.
+                - paragraph [ref=f16e47]: For the next 8-12 weeks, you will make meaningful contributions to our codebase. After wrapping up your starter project, you will work with your manager to focus your efforts on a project that aligns with your interests and the product roadmap.
+                - paragraph [ref=f16e48]: The cohort will close out with our Intern Presentations, where each intern has the opportunity to showcase the work they've done to the entire Engineering organization.
+                - heading "You" [level=2] [ref=f16e49]:
+                  - strong [ref=f16e50]: You
+                - list [ref=f16e51]:
+                  - listitem [ref=f16e52]: Are pursuing studies in Computer Science, Software Engineering, or a related technical field graduating between Winter 2026 -Spring 2027.
+                  - listitem [ref=f16e53]: Have had exposure to coursework on subjects like distributed systems, concurrency control, data replication, file systems, or SQL processing.
+                  - listitem [ref=f16e54]: Are comfortable using programming languages like Go, C/C++, Java, and Python. We primarily use Go but if you're not familiar with it, you'll learn them while you're here.
+                  - listitem [ref=f16e55]: Love building relationships with your colleagues and enjoy being part of the code review process and partnering with your teammates on challenging problems.
+                  - listitem [ref=f16e56]: Have past experience working on production-level code.
+                  - listitem [ref=f16e57]: Are genuinely interested in Cockroach Labs's mission and are excited to use CockroachDB in your projects.
+                - paragraph [ref=f16e58]: Our interview process consists largely of programming in a real environment, and we'll be evaluating you on the skills listed above.
+                - paragraph [ref=f16e59]: Cockroach Labs is proud to be an Equal Opportunity Employer building a diverse and inclusive workforce. If you need additional accommodations to feel comfortable during your interview process, please email us at accessibility@cockroachlabs.com.
+                - paragraph [ref=f16e60]: The anticipated base salary range for U.S. candidates for this role is USD $8,250 to $8,750 per month. We set standard ranges for all U.S.-based roles based on function, level, and geographic location, benchmarked against similar stage growth companies. Actual salaries may vary and fall outside of this range depending on factors such as a candidate’s qualifications, geographic location, skills, experience, and competencies. In addition, we are often open to a wide variety of profiles, and recognize that the person we hire may be less experienced (or more senior) than this job description as posted.
+                - separator [ref=f16e61]
+                - heading "Benefits" [level=1] [ref=f16e62]
+                - list [ref=f16e63]:
+                  - listitem [ref=f16e64]: Contribute to production-level code
+                  - listitem [ref=f16e65]: Intern socials and Cockroach Labs swag
+                  - listitem [ref=f16e66]: Free office lunches and snacks
+                  - listitem [ref=f16e67]: Engage with executive and senior engineering leaders
+              - generic [ref=f16e68]:
+                - img [ref=f16e69]
+                - generic [ref=f16e71]:
+                  - paragraph [ref=f16e72]: Create a Job Alert
+                  - paragraph [ref=f16e73]: Interested in building your career at Cockroach Labs? Get future opportunities sent straight to your email.
+                  - button "Create alert" [ref=f16e74] [cursor=pointer]
+            - separator [ref=f16e75]
+            - generic [ref=f16e76]:
+              - generic [ref=f16e78]:
+                - heading "Apply for this job" [level=2] [ref=f16e80]
+                - generic [ref=f16e81]:
+                  - paragraph [ref=f16e83]: "*"
+                  - paragraph [ref=f16e84]: indicates a required field
+              - generic [ref=f16e85]:
+                - generic [ref=f16e86]:
+                  - generic [ref=f16e89]:
+                    - generic [ref=f16e90]: First Name*
+                    - textbox "First Name" [ref=f16e91]
+                  - generic [ref=f16e94]:
+                    - generic [ref=f16e95]: Last Name*
+                    - textbox "Last Name" [ref=f16e96]
+                  - generic [ref=f16e99]:
+                    - generic [ref=f16e100]: Email*
+                    - textbox "Email" [ref=f16e101]
+                  - group "Phone" [ref=f16e103]:
+                    - generic [ref=f16e104]: Phone
+                    - generic [ref=f16e107]:
+                      - generic [ref=f16e108]: Country*
+                      - generic [ref=f16e109]:
+                        - log [ref=f16e111]
+                        - generic [ref=f16e113]:
+                          - combobox "Country" [ref=f16e116]
+                          - button "Toggle flyout" [ref=f16e118] [cursor=pointer]:
+                            - img [ref=f16e119]
+                        - textbox
+                    - generic [ref=f16e123]:
+                      - generic [ref=f16e124]: Phone*
+                      - textbox "Phone" [ref=f16e125]
+                  - group "Resume/CV*" [ref=f16e127]:
+                    - generic [ref=f16e128]: Resume/CV*
+                    - generic [ref=f16e130]:
+                      - generic [ref=f16e132]:
+                        - button "Attach" [ref=f16e133] [cursor=pointer]
+                        - generic [ref=f16e134]: Attach
+                        - button "Attach" [ref=f16e135]
+                      - button "Dropbox" [ref=f16e137] [cursor=pointer]
+                      - generic [ref=f16e139]:
+                        - button "Enter manually" [ref=f16e140] [cursor=pointer]
+                        - generic [ref=f16e141]: Enter manually
+                      - paragraph [ref=f16e142]: "Accepted file types: pdf, doc, docx, txt, rtf"
+                  - group "Cover Letter" [ref=f16e144]:
+                    - generic [ref=f16e145]: Cover Letter
+                    - generic [ref=f16e147]:
+                      - generic [ref=f16e149]:
+                        - button "Attach" [ref=f16e150] [cursor=pointer]
+                        - generic [ref=f16e151]: Attach
+                        - button "Attach" [ref=f16e152]
+                      - button "Dropbox" [ref=f16e154] [cursor=pointer]
+                      - generic [ref=f16e156]:
+                        - button "Enter manually" [ref=f16e157] [cursor=pointer]
+                        - generic [ref=f16e158]: Enter manually
+                      - paragraph [ref=f16e159]: "Accepted file types: pdf, doc, docx, txt, rtf"
+                - generic [ref=f16e160]:
+                  - generic [ref=f16e161]:
+                    - separator [ref=f16e162]
+                    - paragraph [ref=f16e164]: Education
+                    - generic [ref=f16e166]:
+                      - generic [ref=f16e167]: School*
+                      - generic [ref=f16e168]:
+                        - log [ref=f16e170]
+                        - generic [ref=f16e172]:
+                          - generic [ref=f16e173]:
+                            - generic [ref=f16e174]: Select...
+                            - combobox "School" [ref=f16e176]
+                          - button "Toggle flyout" [ref=f16e178] [cursor=pointer]:
+                            - img [ref=f16e179]
+                        - textbox
+                  - button "Add another" [ref=f16e181] [cursor=pointer]
+                - generic [ref=f16e182]:
+                  - separator [ref=f16e183]
+                  - generic [ref=f16e186]:
+                    - generic [ref=f16e187]: Degree*
+                    - generic [ref=f16e188]:
+                      - log [ref=f16e190]
+                      - generic [ref=f16e192]:
+                        - generic [ref=f16e193]:
+                          - generic [ref=f16e194]: Select...
+                          - combobox "Degree" [ref=f16e196]
+                        - button "Toggle flyout" [ref=f16e198] [cursor=pointer]:
+                          - img [ref=f16e199]
+                      - textbox
+                  - generic [ref=f16e203]:
+                    - generic [ref=f16e204]: Graduation Year*
+                    - generic [ref=f16e205]:
+                      - log [ref=f16e207]
+                      - generic [ref=f16e209]:
+                        - generic [ref=f16e210]:
+                          - generic [ref=f16e211]: Select...
+                          - combobox "Graduation Year" [ref=f16e213]
+                        - button "Toggle flyout" [ref=f16e215] [cursor=pointer]:
+                          - img [ref=f16e216]
+                      - textbox
+                  - generic [ref=f16e220]:
+                    - generic [ref=f16e221]: For this U.S.-based hybrid internship, can you commit to working on-site at our New York City office every Monday, Tuesday, and Thursday?*
+                    - generic [ref=f16e222]:
+                      - log [ref=f16e224]
+                      - generic [ref=f16e226]:
+                        - generic [ref=f16e227]:
+                          - generic [ref=f16e228]: Select...
+                          - combobox "For this U.S.-based hybrid internship, can you commit to working on-site at our New York City office every Monday, Tuesday, and Thursday?" [ref=f16e230]
+                        - button "Toggle flyout" [ref=f16e232] [cursor=pointer]:
+                          - img [ref=f16e233]
+                      - textbox
+                  - generic [ref=f16e237]:
+                    - generic [ref=f16e238]: Do you have any pending interviews or offers that would impact your ability to move forward with Cockroach Labs?*
+                    - generic [ref=f16e239]:
+                      - log [ref=f16e241]
+                      - generic [ref=f16e243]:
+                        - generic [ref=f16e244]:
+                          - generic [ref=f16e245]: Select...
+                          - combobox "Do you have any pending interviews or offers that would impact your ability to move forward with Cockroach Labs?" [ref=f16e247]
+                        - button "Toggle flyout" [ref=f16e249] [cursor=pointer]:
+                          - img [ref=f16e250]
+                      - textbox
+                  - generic [ref=f16e254]:
+                    - generic [ref=f16e255]: Describe a specific experience — such as a course, project, internship, or extracurricular activity — that has deepened your interest in distributed systems, cloud-native databases, or the technology behind Cockroach Labs. How has this experience influenced your desire to intern at Cockroach Labs and/or work with CockroachDB?*
+                    - textbox "Describe a specific experience — such as a course, project, internship, or extracurricular activity — that has deepened your interest in distributed systems, cloud-native databases, or the technology behind Cockroach Labs. How has this experience influenced your desire to intern at Cockroach Labs and/or work with CockroachDB?" [ref=f16e256]
+                  - generic [ref=f16e259]:
+                    - generic [ref=f16e260]: Tell us about your favorite class(es) and who taught it. (Any class!)*
+                    - textbox "Tell us about your favorite class(es) and who taught it. (Any class!)" [ref=f16e261]
+                  - generic [ref=f16e264]:
+                    - generic [ref=f16e265]: Would you like to hear future updates from the Early Careers team at Cockroach Labs?*
+                    - generic [ref=f16e266]:
+                      - log [ref=f16e268]
+                      - generic [ref=f16e270]:
+                        - generic [ref=f16e271]:
+                          - generic [ref=f16e272]: Select...
+                          - combobox "Would you like to hear future updates from the Early Careers team at Cockroach Labs?" [ref=f16e274]
+                        - button "Toggle flyout" [ref=f16e276] [cursor=pointer]:
+                          - img [ref=f16e277]
+                      - textbox
+                  - generic [ref=f16e281]:
+                    - generic [ref=f16e282]: "If you were referred to this internship by a Cockroach Labs employee, please enter their current email below:"
+                    - textbox "If you were referred to this internship by a Cockroach Labs employee, please enter their current email below:" [ref=f16e283]
+                - generic [ref=f16e284]:
+                  - separator [ref=f16e285]
+                  - generic [ref=f16e286]:
+                    - heading "Voluntary Self-Identification" [level=2] [ref=f16e287]
+                    - paragraph [ref=f16e288]: For government reporting purposes, we ask candidates to respond to the below self-identification survey. Completion of the form is entirely voluntary. Whatever your decision, it will not be considered in the hiring process or thereafter. Any information that you do provide will be recorded and maintained in a confidential file.
+                    - paragraph [ref=f16e289]: As set forth in Cockroach Labs’s Equal Employment Opportunity policy, we do not discriminate on the basis of any protected group status under any applicable law.
+                  - generic [ref=f16e292]:
+                    - generic [ref=f16e293]: Gender
+                    - generic [ref=f16e294]:
+                      - log [ref=f16e296]
+                      - generic [ref=f16e298]:
+                        - generic [ref=f16e299]:
+                          - generic [ref=f16e300]: Select...
+                          - combobox "Gender" [ref=f16e302]
+                        - button "Toggle flyout" [ref=f16e304] [cursor=pointer]:
+                          - img [ref=f16e305]
+                  - generic [ref=f16e307]:
+                    - generic [ref=f16e309]:
+                      - generic [ref=f16e310]: Are you Hispanic/Latino?
+                      - generic [ref=f16e311]:
+                        - log [ref=f16e313]
+                        - generic [ref=f16e315]:
+                          - generic [ref=f16e316]:
+                            - generic [ref=f16e317]: Select...
+                            - combobox "Are you Hispanic/Latino?" [ref=f16e319]
+                          - button "Toggle flyout" [ref=f16e321] [cursor=pointer]:
+                            - img [ref=f16e322]
+                    - link "Race & Ethnicity Definitions" [ref=f16e324] [cursor=pointer]:
+                      - /url: https://job-boards.cdn.greenhouse.io/docs/2023/RaceEthnicityDefinitions.pdf
+                  - generic [ref=f16e325]:
+                    - paragraph [ref=f16e326]: "If you believe you belong to any of the categories of protected veterans listed below, please indicate by making the appropriate selection. As a government contractor subject to the Vietnam Era Veterans Readjustment Assistance Act (VEVRAA), we request this information in order to measure the effectiveness of the outreach and positive recruitment efforts we undertake pursuant to VEVRAA. Classification of protected categories is as follows:"
+                    - paragraph [ref=f16e327]: "A \"disabled veteran\" is one of the following: a veteran of the U.S. military, ground, naval or air service who is entitled to compensation (or who but for the receipt of military retired pay would be entitled to compensation) under laws administered by the Secretary of Veterans Affairs; or a person who was discharged or released from active duty because of a service-connected disability."
+                    - paragraph [ref=f16e328]: A "recently separated veteran" means any veteran during the three-year period beginning on the date of such veteran's discharge or release from active duty in the U.S. military, ground, naval, or air service.
+                    - paragraph [ref=f16e329]: An "active duty wartime or campaign badge veteran" means a veteran who served on active duty in the U.S. military, ground, naval or air service during a war, or in a campaign or expedition for which a campaign badge has been authorized under the laws administered by the Department of Defense.
+                    - paragraph [ref=f16e330]: An "Armed forces service medal veteran" means a veteran who, while serving on active duty in the U.S. military, ground, naval or air service, participated in a United States military operation for which an Armed Forces service medal was awarded pursuant to Executive Order 12985.
+                  - generic [ref=f16e333]:
+                    - generic [ref=f16e334]: Veteran Status
+                    - generic [ref=f16e335]:
+                      - log [ref=f16e337]
+                      - generic [ref=f16e339]:
+                        - generic [ref=f16e340]:
+                          - generic [ref=f16e341]: Select...
+                          - combobox "Veteran Status" [ref=f16e343]
+                        - button "Toggle flyout" [ref=f16e345] [cursor=pointer]:
+                          - img [ref=f16e346]
+                  - separator [ref=f16e348]
+                  - generic [ref=f16e349]:
+                    - heading "Voluntary Self-Identification of Disability" [level=2] [ref=f16e350]
+                    - generic [ref=f16e351]:
+                      - generic [ref=f16e352]:
+                        - generic [ref=f16e353]: Form CC-305
+                        - generic [ref=f16e354]: Page 1 of 1
+                      - generic [ref=f16e355]:
+                        - generic [ref=f16e356]: OMB Control Number 1250-0005
+                        - generic [ref=f16e357]: Expires 04/30/2026
+                    - strong [ref=f16e358]: Why are you being asked to complete this form?
+                    - paragraph [ref=f16e359]: We are a federal contractor or subcontractor. The law requires us to provide equal employment opportunity to qualified people with disabilities. We have a goal of having at least 7% of our workers as people with disabilities. The law says we must measure our progress towards this goal. To do this, we must ask applicants and employees if they have a disability or have ever had one. People can become disabled, so we need to ask this question at least every five years.
+                    - paragraph [ref=f16e360]:
+                      - text: Completing this form is voluntary, and we hope that you will choose to do so. Your answer is confidential. No one who makes hiring decisions will see it. Your decision to complete the form and your answer will not harm you in any way. If you want to learn more about the law or this form, visit the U.S. Department of Labor’s Office of Federal Contract Compliance Programs (OFCCP) website at
+                      - link "www.dol.gov/ofccp" [ref=f16e361] [cursor=pointer]:
+                        - /url: https://www.dol.gov/ofccp
+                      - text: .
+                    - strong [ref=f16e362]: How do you know if you have a disability?
+                    - paragraph [ref=f16e363]:
+                      - text: A disability is a condition that substantially limits one or more of your “major life activities.” If you have or have ever had such a condition, you are a person with a disability.
+                      - strong [ref=f16e364]: "Disabilities include, but are not limited to:"
+                    - list [ref=f16e365]:
+                      - listitem [ref=f16e366]: Alcohol or other substance use disorder (not currently using drugs illegally)
+                      - listitem [ref=f16e367]: Autoimmune disorder, for example, lupus, fibromyalgia, rheumatoid arthritis, HIV/AIDS
+                      - listitem [ref=f16e368]: Blind or low vision
+                      - listitem [ref=f16e369]: Cancer (past or present)
+                      - listitem [ref=f16e370]: Cardiovascular or heart disease
+                      - listitem [ref=f16e371]: Celiac disease
+                      - listitem [ref=f16e372]: Cerebral palsy
+                      - listitem [ref=f16e373]: Deaf or serious difficulty hearing
+                      - listitem [ref=f16e374]: Diabetes
+                      - listitem [ref=f16e375]: Disfigurement, for example, disfigurement caused by burns, wounds, accidents, or congenital disorders
+                      - listitem [ref=f16e376]: Epilepsy or other seizure disorder
+                      - listitem [ref=f16e377]: Gastrointestinal disorders, for example, Crohn's Disease, irritable bowel syndrome
+                      - listitem [ref=f16e378]: Intellectual or developmental disability
+                      - listitem [ref=f16e379]: Mental health conditions, for example, depression, bipolar disorder, anxiety disorder, schizophrenia, PTSD
+                      - listitem [ref=f16e380]: Missing limbs or partially missing limbs
+                      - listitem [ref=f16e381]: Mobility impairment, benefiting from the use of a wheelchair, scooter, walker, leg brace(s) and/or other supports
+                      - listitem [ref=f16e382]: Nervous system condition, for example, migraine headaches, Parkinson’s disease, multiple sclerosis (MS)
+                      - listitem [ref=f16e383]: Neurodivergence, for example, attention-deficit/hyperactivity disorder (ADHD), autism spectrum disorder, dyslexia, dyspraxia, other learning disabilities
+                      - listitem [ref=f16e384]: Partial or complete paralysis (any cause)
+                      - listitem [ref=f16e385]: Pulmonary or respiratory conditions, for example, tuberculosis, asthma, emphysema
+                      - listitem [ref=f16e386]: Short stature (dwarfism)
+                      - listitem [ref=f16e387]: Traumatic brain injury
+                  - generic [ref=f16e390]:
+                    - generic [ref=f16e391]: Disability Status
+                    - generic [ref=f16e392]:
+                      - log [ref=f16e394]
+                      - generic [ref=f16e396]:
+                        - generic [ref=f16e397]:
+                          - generic [ref=f16e398]: Select...
+                          - combobox "Disability Status" [ref=f16e400]
+                        - button "Toggle flyout" [ref=f16e402] [cursor=pointer]:
+                          - img [ref=f16e403]
+                  - paragraph [ref=f16e406]: "PUBLIC BURDEN STATEMENT: According to the Paperwork Reduction Act of 1995 no persons are required to respond to a collection of information unless such collection displays a valid OMB control number. This survey should take about 5 minutes to complete."
+                - button "Submit application" [ref=f16e408] [cursor=pointer]
+      - generic [ref=e62]:
+        - text: Don't see a position and want to join our mission? Apply through
+        - link "Applications (General)" [ref=e63] [cursor=pointer]:
+          - /url: "#applicationsGeneral"
+        - text: at the top of the page and the team will keep you in mind for future openings.
+    - generic [ref=e66]:
+      - paragraph [ref=e67]: Cockroach Labs has an office-first approach, with Roachers coming into one of our offices on Monday, Tuesday and Thursday and working flexibly the rest of the week. While we’ve learned valuable lessons working remotely, nothing can replace the connection, creativity, and fun that occurs when Roachers get together and we are committed to fostering a workplace that encourages collaboration and allows us all to do our best work.
+      - paragraph [ref=e68]:
+        - strong [ref=e69]: "Please note:"
+        - text: Remote-based designations are exclusively reserved for in-region required roles in Field Sales, Sales Engineering, and Enterprise Architecture. Exceptions may be made on a case-by-case basis on rare occasions for niche and/or expert roles at the executive team’s discretion.
+      - paragraph [ref=e70]:
+        - text: If you are a resident of California, the United Kingdom or the European Economic Area, the Cockroach Labs Employee Privacy Policy,
+        - link "available here" [ref=e71] [cursor=pointer]:
+          - /url: /crl-employee-privacy/
+        - text: ", may apply to you."
+    - contentinfo [ref=e72]:
+      - generic [ref=e73]:
+        - generic [ref=e74]:
+          - generic [ref=e75]:
+            - heading "Join our community and get updates delivered straight to your inbox." [level=1] [ref=e77]
+            - generic [ref=e80]:
+              - textbox "*" [ref=e83]:
+                - /placeholder: Email*
+              - button "Subscribe" [ref=e86] [cursor=pointer]
+          - paragraph [ref=e88]:
+            - text: We will email you updates about CockroachDB. You can unsubscribe at any time. Learn more about our privacy practices
+            - link "here" [ref=e89] [cursor=pointer]:
+              - /url: https://www.cockroachlabs.com/privacy/
+            - text: .
+        - generic [ref=e90]:
+          - generic [ref=e92]:
+            - heading "Product" [level=4] [ref=e93]
+            - list [ref=e94]:
+              - listitem [ref=e95]:
+                - link "Product overview" [ref=e96] [cursor=pointer]:
+                  - /url: /product/overview/
+              - listitem [ref=e97]:
+                - link "CockroachDB Fully-Managed Cloud" [ref=e98] [cursor=pointer]:
+                  - /url: /product/cloud/
+              - listitem [ref=e99]:
+                - link "CockroachDB Bring Your Own Cloud" [ref=e100] [cursor=pointer]:
+                  - /url: https://cockroachlabs.com/product/cloud/bring-your-own-cloud
+              - listitem [ref=e101]:
+                - link "CockroachDB Enterprise" [ref=e102] [cursor=pointer]:
+                  - /url: https://www.cockroachlabs.com/product/enterprise/
+              - listitem [ref=e103]:
+                - link "Latest release" [ref=e104] [cursor=pointer]:
+                  - /url: /whatsnew/
+              - listitem [ref=e105]:
+                - link "Pricing" [ref=e106] [cursor=pointer]:
+                  - /url: /pricing/
+              - listitem [ref=e107]:
+                - link "Sign in" [ref=e108] [cursor=pointer]:
+                  - /url: https://cockroachlabs.cloud/
+          - generic [ref=e109]:
+            - generic [ref=e110]:
+              - heading "Solutions" [level=4] [ref=e111]
+              - list [ref=e112]:
+                - listitem [ref=e113]:
+                  - link "Customers" [ref=e114] [cursor=pointer]:
+                    - /url: /customers/
+                - listitem [ref=e115]:
+                  - link "Database Modernization" [ref=e116] [cursor=pointer]:
+                    - /url: https://www.cockroachlabs.com/database-modernization/
+                - listitem [ref=e117]:
+                  - link "High availability and disaster recovery" [ref=e118] [cursor=pointer]:
+                    - /url: /resilience/
+            - generic [ref=e119]:
+              - heading "By Industry" [level=4] [ref=e120]
+              - list [ref=e121]:
+                - listitem [ref=e122]:
+                  - link "AI Innovators" [ref=e123] [cursor=pointer]:
+                    - /url: https://www.cockroachlabs.com/solutions/verticals/ai-innovators/
+                - listitem [ref=e124]:
+                  - link "Banking & Fintech" [ref=e125] [cursor=pointer]:
+                    - /url: /solutions/verticals/financialservices/
+                - listitem [ref=e126]:
+                  - link "Cybersecurity" [ref=e127] [cursor=pointer]:
+                    - /url: https://www.cockroachlabs.com/solutions/verticals/cybersecurity
+                - listitem [ref=e128]:
+                  - link "Gambling" [ref=e129] [cursor=pointer]:
+                    - /url: /solutions/verticals/gambling/
+                - listitem [ref=e130]:
+                  - link "Gaming" [ref=e131] [cursor=pointer]:
+                    - /url: /solutions/verticals/gaming/
+                - listitem [ref=e132]:
+                  - link "Healthcare" [ref=e133] [cursor=pointer]:
+                    - /url: /solutions/verticals/healthcare/
+                - listitem [ref=e134]:
+                  - link "Manufacturing & Logistics" [ref=e135] [cursor=pointer]:
+                    - /url: /solutions/verticals/manufacturing-logistics/
+                - listitem [ref=e136]:
+                  - link "Media & Streaming" [ref=e137] [cursor=pointer]:
+                    - /url: /solutions/verticals/media/
+                - listitem [ref=e138]:
+                  - link "Quant Firms" [ref=e139] [cursor=pointer]:
+                    - /url: /solutions/verticals/quantitative-investment/
+                - listitem [ref=e140]:
+                  - link "Retail & eCommerce" [ref=e141] [cursor=pointer]:
+                    - /url: /solutions/verticals/retail-ecommerce/
+                - listitem [ref=e142]:
+                  - link "Software & Tech" [ref=e143] [cursor=pointer]:
+                    - /url: /solutions/verticals/saas/
+            - generic [ref=e144]:
+              - heading "By Use Case" [level=4] [ref=e145]
+              - list [ref=e146]:
+                - listitem [ref=e147]:
+                  - link "Vector Search" [ref=e148] [cursor=pointer]:
+                    - /url: https://www.cockroachlabs.com/solutions/usecases/generative-ai/
+                - listitem [ref=e149]:
+                  - link "Banking & Wallet" [ref=e150] [cursor=pointer]:
+                    - /url: /solutions/usecases/banking-and-wallet/
+                - listitem [ref=e151]:
+                  - link "Gaming" [ref=e152] [cursor=pointer]:
+                    - /url: /solutions/verticals/gaming/
+                - listitem [ref=e153]:
+                  - link "Identity Access Management" [ref=e154] [cursor=pointer]:
+                    - /url: /solutions/usecases/identity-access-management/
+                - listitem [ref=e155]:
+                  - link "IoT & Device Management" [ref=e156] [cursor=pointer]:
+                    - /url: /solutions/usecases/iot-and-device-management/
+                - listitem [ref=e157]:
+                  - link "Orders & Inventory Management" [ref=e158] [cursor=pointer]:
+                    - /url: /solutions/usecases/orders-and-inventory-management/
+                - listitem [ref=e159]:
+                  - link "Payments" [ref=e160] [cursor=pointer]:
+                    - /url: /solutions/usecases/payments/
+                - listitem [ref=e161]:
+                  - link "Routing and Logistics" [ref=e162] [cursor=pointer]:
+                    - /url: /solutions/usecases/routing-and-logistics/
+                - listitem [ref=e163]:
+                  - link "User Metadata" [ref=e164] [cursor=pointer]:
+                    - /url: /solutions/usecases/user-accounts-and-metadata/
+            - generic [ref=e165]:
+              - heading "By Initiative" [level=4] [ref=e166]
+              - list [ref=e167]:
+                - listitem [ref=e168]:
+                  - link "Database Modernization" [ref=e169] [cursor=pointer]:
+                    - /url: https://www.cockroachlabs.com/database-modernization/
+                - listitem [ref=e170]:
+                  - link "Architectural Simplification" [ref=e171] [cursor=pointer]:
+                    - /url: /architectural-simplification/
+          - generic [ref=e172]:
+            - generic [ref=e173]:
+              - heading "Resources" [level=4] [ref=e174]
+              - list [ref=e175]:
+                - listitem [ref=e176]:
+                  - link "Documentation" [ref=e177] [cursor=pointer]:
+                    - /url: /docs/stable/
+            - generic [ref=e178]:
+              - heading "Connect" [level=4] [ref=e179]
+              - list [ref=e180]:
+                - listitem [ref=e181]:
+                  - link "Events" [ref=e182] [cursor=pointer]:
+                    - /url: /events/
+                - listitem [ref=e183]:
+                  - link "Podcast" [ref=e184] [cursor=pointer]:
+                    - /url: /big-ideas-podcast/
+                - listitem [ref=e185]:
+                  - link "Professional Services" [ref=e186] [cursor=pointer]:
+                    - /url: /company/professional-services/
+                - listitem [ref=e187]:
+                  - link "Support" [ref=e188] [cursor=pointer]:
+                    - /url: /support/
+                - listitem [ref=e189]:
+                  - link "Webinars" [ref=e190] [cursor=pointer]:
+                    - /url: /community/webinars/
+            - generic [ref=e191]:
+              - heading "Learn" [level=4] [ref=e192]
+              - list [ref=e193]:
+                - listitem [ref=e194]:
+                  - link "Blog" [ref=e195] [cursor=pointer]:
+                    - /url: /blog/
+                - listitem [ref=e196]:
+                  - link "Cockroach University" [ref=e197] [cursor=pointer]:
+                    - /url: https://learn.cockroachlabs.com/
+                - listitem [ref=e198]:
+                  - link "Database Comparisons" [ref=e199] [cursor=pointer]:
+                    - /url: /compare/
+                - listitem [ref=e200]:
+                  - link "Guides" [ref=e201] [cursor=pointer]:
+                    - /url: /guides/
+                - listitem [ref=e202]:
+                  - link "Product Demos" [ref=e203] [cursor=pointer]:
+                    - /url: /resource/product-demos/
+          - generic [ref=e205]:
+            - heading "Company" [level=4] [ref=e206]
+            - list [ref=e207]:
+              - listitem [ref=e208]:
+                - link "About" [ref=e209] [cursor=pointer]:
+                  - /url: /about/
+              - listitem [ref=e210]:
+                - link "Careers" [ref=e211] [cursor=pointer]:
+                  - /url: /careers/
+              - listitem [ref=e212]:
+                - link "Contact Us" [ref=e213] [cursor=pointer]:
+                  - /url: /contact/
+              - listitem [ref=e214]:
+                - link "Legal Notices" [ref=e215] [cursor=pointer]:
+                  - /url: /legal-notices/
+              - listitem [ref=e216]:
+                - link "News / Press" [ref=e217] [cursor=pointer]:
+                  - /url: /press/
+              - listitem [ref=e218]:
+                - link "Partners" [ref=e219] [cursor=pointer]:
+                  - /url: /partners/
+              - listitem [ref=e220]:
+                - link "Privacy" [ref=e221] [cursor=pointer]:
+                  - /url: /privacy/
+              - listitem [ref=e222]:
+                - link "Security" [ref=e223] [cursor=pointer]:
+                  - /url: /security/
+              - listitem [ref=e224]:
+                - link "Trust Center" [ref=e225] [cursor=pointer]:
+                  - /url: /trust-center/
+        - generic [ref=e226]:
+          - generic [ref=e227]:
+            - link "Youtube" [ref=e228] [cursor=pointer]:
+              - /url: https://www.youtube.com/@cockroachdb
+              - img "Youtube" [ref=e229]
+            - link "Twitter" [ref=e230] [cursor=pointer]:
+              - /url: https://x.com/CockroachDB
+              - img "Twitter" [ref=e231]
+            - link "Linkedin" [ref=e232] [cursor=pointer]:
+              - /url: https://www.linkedin.com/company/cockroach-labs/mycompany/verification/
+              - img "Linkedin" [ref=e233]
+            - link "Instagram" [ref=e234] [cursor=pointer]:
+              - /url: https://www.instagram.com/cockroachdb/
+              - img "Instagram" [ref=e235]
+          - generic [ref=e236]:
+            - button "Open cookie settings" [ref=e237] [cursor=pointer]: Cookie Settings
+            - generic [ref=e238]: © 2026 Cockroach Labs
+  - alert [ref=e239]
+  - button "Feedback" [ref=e240] [cursor=pointer]
+  - button "Project Logo Ask AI" [ref=e241] [cursor=pointer]:
+    - generic [ref=e244]:
+      - img "Project Logo" [ref=e245]
+      - paragraph [ref=e246]: Ask AI
+  - region "Cookie banner" [active] [ref=e247]:
+    - dialog "Cookie Consent" [ref=e248]:
+      - generic [ref=e249]:
+        - generic [ref=e250]:
+          - generic:
+            - heading "Cookie Consent" [level=2] [ref=e251]
+            - generic [ref=e252]: We share information you communicate to us through our site and information about how you use our site with our vendors, advertising and analytics partners.
+        - generic [ref=e254]:
+          - generic [ref=e255]:
+            - button "Accept All Cookies" [ref=e256] [cursor=pointer]
+            - button "Reject All" [ref=e257] [cursor=pointer]
+          - button "Cookies Settings, Opens the preference center dialog" [ref=e258] [cursor=pointer]: Cookies Settings
+        - button "Close" [ref=e260] [cursor=pointer]

@@ -1,0 +1,2902 @@
+scan_config:
+  recency_hours: 48       # how far back to look for new jobs (24 = last 24h, 48 = last 48h)
+  max_yoe: 3              # reject roles requiring more than this many years of experience
+  concurrency: 10         # parallel company fetches
+  fetch_timeout_ms: 10000 # per-request HTTP timeout in milliseconds
+
+title_filter:
+  positive:
+    - Software Engineer
+    - Software Developer
+    - Backend Engineer
+    - Full Stack Engineer
+    - Full-Stack Engineer
+    - Systems Engineer
+    - Platform Engineer
+    - Infrastructure Engineer
+    - Application Engineer
+    - Product Engineer
+    - Founding Engineer
+    - Software Engineer Intern
+    - Software Developer Intern
+    - Engineering Intern
+    - SWE Intern
+    - New Grad
+    - Entry Level
+    - University Grad
+    - Early Career
+    - API Engineer
+    - Cloud Engineer
+    - DevOps Engineer
+    - Site Reliability
+    - SRE
+    - Distributed Systems
+    - Systems Software Engineer
+  negative:
+    # Seniority — the original list was missing these
+    - Senior
+    - 'Sr.'
+    - 'Sr '
+    - Lead
+    - Staff
+    - Principal
+    - Director
+    - 'VP '
+    - Head of
+    - Manager
+    - Distinguished
+    - Architect
+    # Specializations Eric isn't targeting
+    - AI Engineer
+    - ML Engineer
+    - Machine Learning
+    - Data Scientist
+    - Data Engineer
+    - Research Scientist
+    - Applied Scientist
+    - Security Engineer
+    - QA Engineer
+    - Test Engineer
+    - SDET
+    - Android
+    - iOS
+    - Mobile
+    - Embedded
+    - Firmware
+    - FPGA
+    - ASIC
+    - .NET
+    - PHP
+    - Ruby
+    - Blockchain
+    - Web3
+    - Crypto
+    - Salesforce
+    - 'SAP '
+    - COBOL
+    - Mainframe
+tracked_companies:
+  - name: Google
+    careers_url: https://www.google.com/about/careers/applications/jobs/results
+    api: https://www.google.com/about/careers/applications/jobs/results?q=software+engineer&location=United+States
+    scan_method: googlecareers
+    enabled: true
+  - name: Microsoft
+    careers_url: https://jobs.careers.microsoft.com
+    scan_query: site:jobs.careers.microsoft.com "software engineer" 2026
+    scan_method: websearch
+    enabled: true
+  - name: Meta
+    careers_url: https://www.metacareers.com/jobs
+    scan_query: site:metacareers.com "software engineer" OR "intern" 2026
+    scan_method: websearch
+    enabled: true
+  - name: Amazon
+    careers_url: https://www.amazon.jobs
+    api: https://www.amazon.jobs/en/search.json?base_query=engineer&country=USA&result_limit=100&sort=recent
+    scan_method: amazon
+    enabled: true
+  - name: Apple
+    careers_url: https://jobs.apple.com
+    api: https://jobs.apple.com/en-us/search?location=united-states-USA
+    scan_method: applecareers
+    enabled: true
+  - name: Stripe
+    careers_url: https://stripe.com/jobs
+    api: https://boards-api.greenhouse.io/v1/boards/stripe/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Cloudflare
+    careers_url: https://job-boards.greenhouse.io/cloudflare
+    api: https://boards-api.greenhouse.io/v1/boards/cloudflare/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Vercel
+    careers_url: https://job-boards.greenhouse.io/vercel
+    api: https://boards-api.greenhouse.io/v1/boards/vercel/jobs
+    scan_method: greenhouse
+    notes: Frontend/backend infra. Remote-friendly.
+    enabled: true
+  - name: Supabase
+    careers_url: https://jobs.ashbyhq.com/supabase
+    api: https://api.ashbyhq.com/posting-api/job-board/supabase
+    scan_method: ashby
+    notes: Open-source Firebase alternative. Remote-first.
+    enabled: true
+  - name: PlanetScale
+    careers_url: https://job-boards.greenhouse.io/planetscale
+    api: https://boards-api.greenhouse.io/v1/boards/planetscale/jobs
+    scan_method: greenhouse
+    notes: Serverless MySQL. Engineering roles.
+    enabled: true
+  - name: Temporal
+    careers_url: https://job-boards.greenhouse.io/temporaltechnologies
+    api: https://boards-api.greenhouse.io/v1/boards/temporaltechnologies/jobs
+    scan_method: greenhouse
+    notes: Workflow orchestration. Go-heavy. Matches Eric's Go experience.
+    enabled: true
+  - name: WorkOS
+    careers_url: https://jobs.ashbyhq.com/workos
+    api: https://api.ashbyhq.com/posting-api/job-board/workos
+    scan_method: ashby
+    notes: Auth/enterprise APIs for developers.
+    enabled: true
+  - name: Clerk
+    careers_url: https://jobs.ashbyhq.com/clerk
+    api: https://api.ashbyhq.com/posting-api/job-board/clerk
+    scan_method: ashby
+    notes: Auth & user management.
+    enabled: true
+  - name: Inngest
+    careers_url: https://jobs.ashbyhq.com/inngest
+    api: https://api.ashbyhq.com/posting-api/job-board/inngest
+    scan_method: ashby
+    notes: Durable workflow engine. Go/TypeScript.
+    enabled: true
+  - name: Resend
+    careers_url: https://jobs.ashbyhq.com/resend
+    api: https://api.ashbyhq.com/posting-api/job-board/resend
+    scan_method: ashby
+    enabled: true
+  - name: Databricks
+    careers_url: https://job-boards.greenhouse.io/databricks
+    api: https://boards-api.greenhouse.io/v1/boards/databricks/jobs
+    scan_method: greenhouse
+    notes: Data & AI platform. Strong new grad hiring.
+    enabled: true
+  - name: Hightouch
+    careers_url: https://job-boards.greenhouse.io/hightouch
+    api: https://boards-api.greenhouse.io/v1/boards/hightouch/jobs
+    scan_method: greenhouse
+    notes: Data activation. Engineering roles.
+    enabled: true
+  - name: Anthropic
+    careers_url: https://job-boards.greenhouse.io/anthropic
+    api: https://boards-api.greenhouse.io/v1/boards/anthropic/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: OpenAI
+    careers_url: https://openai.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/openai
+    scan_method: ashby
+    enabled: true
+  - name: Cohere
+    careers_url: https://jobs.ashbyhq.com/cohere
+    api: https://api.ashbyhq.com/posting-api/job-board/cohere
+    scan_method: ashby
+    notes: LLM provider. Remote-friendly.
+    enabled: true
+  - name: Perplexity
+    careers_url: https://jobs.ashbyhq.com/perplexity
+    api: https://api.ashbyhq.com/posting-api/job-board/perplexity
+    scan_method: ashby
+    enabled: true
+  - name: Glean
+    careers_url: https://job-boards.greenhouse.io/gleanwork
+    api: https://boards-api.greenhouse.io/v1/boards/gleanwork/jobs
+    scan_method: greenhouse
+    notes: Enterprise AI search. Strong engineering team.
+    enabled: true
+  - name: Airtable
+    careers_url: https://job-boards.greenhouse.io/airtable
+    api: https://boards-api.greenhouse.io/v1/boards/airtable/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Retool
+    careers_url: https://retool.com/careers
+    scan_method: websearch
+    notes: Acquired by Figma (already in scanner)
+    enabled: false
+  - name: Linear
+    careers_url: https://jobs.ashbyhq.com/linear
+    api: https://api.ashbyhq.com/posting-api/job-board/linear
+    scan_method: ashby
+    notes: Project management tool. TypeScript/React heavy.
+    enabled: true
+  - name: Figma
+    careers_url: https://job-boards.greenhouse.io/figma
+    api: https://boards-api.greenhouse.io/v1/boards/figma/jobs
+    scan_method: greenhouse
+    notes: Design tools. Strong new grad program.
+    enabled: true
+  - name: Palantir
+    careers_url: https://jobs.lever.co/palantir
+    api: https://api.lever.co/v0/postings/palantir
+    scan_method: lever
+    notes: FDE/SWE roles. Boston office.
+    enabled: true
+  - name: Zapier
+    careers_url: https://jobs.ashbyhq.com/zapier
+    api: https://api.ashbyhq.com/posting-api/job-board/zapier
+    scan_method: ashby
+    notes: Automation platform. Remote-first.
+    enabled: true
+  - name: Clay Labs
+    careers_url: https://jobs.ashbyhq.com/claylabs
+    api: https://api.ashbyhq.com/posting-api/job-board/claylabs
+    scan_method: ashby
+    enabled: true
+  - name: Pinecone
+    careers_url: https://jobs.ashbyhq.com/pinecone
+    api: https://api.ashbyhq.com/posting-api/job-board/pinecone
+    scan_method: ashby
+    notes: Vector database. Engineering roles.
+    enabled: true
+  - name: LangChain
+    careers_url: https://jobs.ashbyhq.com/langchain
+    api: https://api.ashbyhq.com/posting-api/job-board/langchain
+    scan_method: ashby
+    notes: LangChain/LangSmith. Python/TypeScript.
+    enabled: true
+  - name: Arize AI
+    careers_url: https://job-boards.greenhouse.io/arizeai
+    api: https://boards-api.greenhouse.io/v1/boards/arizeai/jobs
+    scan_method: greenhouse
+    notes: LLMOps / AI observability.
+    enabled: true
+  - name: Mistral AI
+    careers_url: https://jobs.lever.co/mistral
+    api: https://api.lever.co/v0/postings/mistral
+    scan_method: lever
+    notes: European AI lab. Remote roles available.
+    enabled: true
+  - name: Hugging Face
+    careers_url: https://apply.workable.com/huggingface/
+    scan_method: websearch
+    scan_query: site:apply.workable.com/huggingface "Engineer"
+    notes: ML hub. Remote-first. Workable widget API blocks scrapers (403) — kept on websearch.
+    enabled: true
+  - name: 2K Games
+    careers_url: https://jobs.2k.com
+    api: https://boards-api.greenhouse.io/v1/boards/2k/jobs
+    scan_method: greenhouse
+    notes: Game studio
+    enabled: true
+  - name: Acadian Asset Management
+    careers_url: https://job-boards.greenhouse.io/acadianassetmanagementllc
+    api: https://boards-api.greenhouse.io/v1/boards/acadianassetmanagementllc/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Actalent
+    careers_url: https://www.actalent.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Actalent/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Activision Blizzard
+    careers_url: https://careers.activisionblizzard.com
+    scan_method: websearch
+    notes: Gaming
+    enabled: true
+  - name: Acuity
+    careers_url: https://www.acuity.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Adept
+    careers_url: https://www.adept.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Adobe
+    careers_url: https://adobe.wd5.myworkdayjobs.com/external_experienced
+    api: https://adobe.wd5.myworkdayjobs.com/external_experienced
+    scan_method: workday
+    notes: Creative software
+    enabled: true
+  - name: AffiniPay
+    careers_url: https://www.affinipay.com/careers
+    scan_query: site:affinipay.com/careers "engineer" OR "developer" 2026
+    scan_method: websearch
+    enabled: true
+  - name: Affirm
+    careers_url: https://job-boards.greenhouse.io/affirm
+    api: https://boards-api.greenhouse.io/v1/boards/affirm/jobs
+    scan_method: greenhouse
+    notes: BNPL fintech
+    enabled: true
+  - name: Air Products
+    careers_url: https://www.airproducts.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Airbnb
+    careers_url: https://job-boards.greenhouse.io/airbnb
+    api: https://boards-api.greenhouse.io/v1/boards/airbnb/jobs
+    scan_method: greenhouse
+    notes: Travel marketplace
+    enabled: true
+  - name: Alarm.com
+    careers_url: https://www.alarm.com/about/careers
+    api: https://boards-api.greenhouse.io/v1/boards/alarmcom/jobs
+    scan_method: greenhouse
+    notes: Smart home security
+    enabled: true
+  - name: Allstate
+    careers_url: https://jobs.allstate.com
+    scan_method: websearch
+    notes: Insurance
+    enabled: true
+  - name: Altruist
+    careers_url: https://job-boards.greenhouse.io/altruist
+    api: https://boards-api.greenhouse.io/v1/boards/altruist/jobs
+    scan_method: greenhouse
+    notes: Fintech brokerage
+    enabled: true
+  - name: Ambarella
+    careers_url: https://www.ambarella.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Ambrook
+    careers_url: https://www.ambrook.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/ambrook
+    scan_method: ashby
+    enabled: true
+  - name: America Heart Association
+    careers_url: https://www.americaheartassociation.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Amex
+    careers_url: https://egug.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
+    api: https://egug.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    notes: American Express
+    enabled: true
+  - name: Analytic Partners
+    careers_url: https://www.analyticpartners.com/careers
+    api: https://api.lever.co/v0/postings/analyticpartners
+    scan_method: lever
+    enabled: true
+  - name: Anon
+    careers_url: https://www.anon.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/anon
+    scan_method: ashby
+    enabled: true
+  - name: Anyscale
+    careers_url: https://jobs.lever.co/anyscale
+    api: https://api.lever.co/v0/postings/anyscale
+    scan_method: lever
+    notes: Ray/distributed ML infra
+    enabled: true
+  - name: Apex Fintech Solutions
+    careers_url: https://www.apexfintechsolutions.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Applied Intuition
+    careers_url: https://job-boards.greenhouse.io/appliedintuition
+    api: https://boards-api.greenhouse.io/v1/boards/appliedintuition/jobs
+    scan_method: greenhouse
+    notes: AV software
+    enabled: true
+  - name: Applied Materials
+    careers_url: https://www.appliedmaterials.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: AppLovin
+    careers_url: https://job-boards.greenhouse.io/applovin
+    api: https://boards-api.greenhouse.io/v1/boards/applovin/jobs
+    scan_method: greenhouse
+    notes: Mobile ad tech
+    enabled: true
+  - name: Aptiv
+    careers_url: https://www.aptiv.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Aquatic Capital
+    careers_url: https://job-boards.greenhouse.io/aquaticcapitalmanagement
+    api: https://boards-api.greenhouse.io/v1/boards/aquaticcapitalmanagement/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Arcadia
+    careers_url: https://www.arcadia.com/careers
+    api: https://api.lever.co/v0/postings/arcadia
+    scan_method: lever
+    enabled: true
+  - name: Arctic Wolf
+    careers_url: https://www.arcticwolf.com/careers
+    api: https://arcticwolf.wd1.myworkdayjobs.com/External
+    scan_method: workday
+    enabled: true
+  - name: Arista Networks
+    careers_url: https://www.aristanetworks.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/AristaNetworks/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Asana
+    careers_url: https://job-boards.greenhouse.io/asana
+    api: https://boards-api.greenhouse.io/v1/boards/asana/jobs
+    scan_method: greenhouse
+    notes: Work management
+    enabled: true
+  - name: Ascend Analytics
+    careers_url: https://www.ascendanalytics.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/ascendanalytics/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Astranis
+    careers_url: https://www.astranis.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/astranis/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Asurion
+    careers_url: https://asurion.wd5.myworkdayjobs.com/Asurion_Careers
+    api: https://asurion.wd5.myworkdayjobs.com/Asurion_Careers
+    scan_method: workday
+    enabled: true
+  - name: AT&T
+    careers_url: https://att.wd1.myworkdayjobs.com/ATTGeneral
+    api: https://att.wd1.myworkdayjobs.com/ATTGeneral
+    scan_method: workday
+    enabled: true
+  - name: Atlassian
+    careers_url: https://join.atlassian.com/atlassian-talent-community/jobs
+    api: https://join.atlassian.com/api/jobs?country=United+States
+    scan_method: atlassian
+    notes: Jira, Confluence
+    enabled: true
+  - name: Atomic
+    careers_url: https://www.atomic.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/atomic
+    scan_method: ashby
+    enabled: true
+  - name: Auctane
+    careers_url: https://www.auctane.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/auctane/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Aurora Innovation
+    careers_url: https://www.aurorainnovation.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/aurorainnovation/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Autostore
+    careers_url: https://www.autostore.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Aviatrix
+    careers_url: https://www.aviatrix.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/aviatrix/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Axom
+    careers_url: https://www.axom.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Bae Systems
+    careers_url: https://www.baesystems.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Bain & Company
+    careers_url: https://careers.bain.com/jobs
+    api: https://careers.bain.com/jobs/SearchJobs/United%20States/feed/?folderRecordsPerPage=20
+    scan_method: bainrss
+    enabled: true
+  - name: Bandwidth
+    careers_url: https://www.bandwidth.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/bandwidth/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Bank of America
+    careers_url: https://ghr.wd1.myworkdayjobs.com/Lateral-US
+    api: https://ghr.wd1.myworkdayjobs.com/Lateral-US
+    scan_method: workday
+    notes: Investment banking
+    enabled: true
+  - name: Barclays
+    careers_url: https://barclays.wd3.myworkdayjobs.com/External_Career_Site_Barclays
+    api: https://barclays.wd3.myworkdayjobs.com/External_Career_Site_Barclays
+    scan_method: workday
+    enabled: true
+  - name: Baseten
+    careers_url: https://jobs.ashbyhq.com/baseten
+    api: https://api.ashbyhq.com/posting-api/job-board/baseten
+    scan_method: ashby
+    notes: ML model serving
+    enabled: true
+  - name: BD
+    careers_url: https://bdx.wd1.myworkdayjobs.com/EXTERNAL_CAREER_SITE_USA
+    api: https://bdx.wd1.myworkdayjobs.com/EXTERNAL_CAREER_SITE_USA
+    scan_method: workday
+    enabled: true
+  - name: Belvedere Trading
+    careers_url: https://belvederetrading.com/careers
+    api: https://api.lever.co/v0/postings/belvederetrading
+    scan_method: lever
+    notes: Quant trading
+    enabled: true
+  - name: Berkley
+    careers_url: https://www.berkley.com/careers
+    api: https://careers-wrberkley.icims.com/jobs/search?ss=1&searchKeyword=&searchLocation=&in_iframe=1
+    scan_method: icims
+    enabled: true
+  - name: Bill
+    careers_url: https://www.bill.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/billcom/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: BlackRock
+    careers_url: https://blackrock.wd1.myworkdayjobs.com/blackrock_professional
+    api: https://blackrock.wd1.myworkdayjobs.com/blackrock_professional
+    scan_method: workday
+    notes: Asset management
+    enabled: true
+  - name: Block
+    careers_url: https://jobs.smartrecruiters.com/Square
+    api: https://boards-api.greenhouse.io/v1/boards/block/jobs
+    scan_method: greenhouse
+    notes: Square/Cash App parent
+    enabled: true
+  - name: Blockhouse
+    careers_url: https://www.blockhouse.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/blockhouse
+    scan_method: ashby
+    enabled: true
+  - name: Bloomberg
+    careers_url: https://bloomberg.wd1.myworkdayjobs.com/Bloombergindustrygroup_External_Career_Site
+    api: https://bloomberg.wd1.myworkdayjobs.com/Bloombergindustrygroup_External_Career_Site
+    scan_method: workday
+    notes: Financial data/media
+    enabled: true
+  - name: Boeing
+    careers_url: https://boeing.wd1.myworkdayjobs.com/EXTERNAL_CAREERS
+    api: https://boeing.wd1.myworkdayjobs.com/EXTERNAL_CAREERS
+    scan_method: workday
+    notes: Aerospace
+    enabled: true
+  - name: Booz Allen
+    careers_url: https://careers.boozallen.com
+    api: https://bah.wd1.myworkdayjobs.com/BAH_Jobs
+    scan_method: workday
+    notes: Defense consulting
+    enabled: true
+  - name: Bose
+    careers_url: https://www.bose.com/en_us/better_with_bose/careers.html
+    scan_method: websearch
+    notes: Audio tech
+    enabled: true
+  - name: Boston Dynamics AI Institute
+    careers_url: https://bostondynamics.com/careers
+    api: https://api.lever.co/v0/postings/rai
+    scan_method: lever
+    notes: Robotics AI
+    enabled: true
+  - name: Braze
+    careers_url: https://job-boards.greenhouse.io/braze
+    api: https://boards-api.greenhouse.io/v1/boards/braze/jobs
+    scan_method: greenhouse
+    notes: Customer engagement
+    enabled: true
+  - name: Brex
+    careers_url: https://job-boards.greenhouse.io/brex
+    api: https://boards-api.greenhouse.io/v1/boards/brex/jobs
+    scan_method: greenhouse
+    notes: Corporate cards/fintech
+    enabled: true
+  - name: Brightspot
+    careers_url: https://www.brightspot.com/careers
+    api: https://api.lever.co/v0/postings/brightspot
+    scan_method: lever
+    enabled: true
+  - name: ByteDance
+    careers_url: https://jobs.bytedance.com
+    api: https://api.smartrecruiters.com/v1/companies/Bytedance/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: TikTok parent company
+    enabled: true
+  - name: C3 AI
+    careers_url: https://job-boards.greenhouse.io/c3iot
+    api: https://boards-api.greenhouse.io/v1/boards/c3iot/jobs
+    scan_method: greenhouse
+    notes: Enterprise AI
+    enabled: true
+  - name: Cadence Design Systems
+    careers_url: https://cadence.wd1.myworkdayjobs.com/External_Careers
+    api: https://cadence.wd1.myworkdayjobs.com/External_Careers
+    scan_method: workday
+    notes: EDA software
+    enabled: true
+  - name: Cambridge Mobile Telematics
+    careers_url: https://www.cambridgemobiletelematics.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/cambridgemobiletelematics/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Canonical
+    careers_url: https://canonical.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/canonical/jobs
+    scan_method: greenhouse
+    notes: Ubuntu Linux
+    enabled: true
+  - name: Capella Space
+    careers_url: https://www.capellaspace.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/capellaspace/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Capital One
+    careers_url: https://capitalone.wd12.myworkdayjobs.com/Capital_One
+    api: https://capitalone.wd12.myworkdayjobs.com/Capital_One
+    scan_method: workday
+    notes: Digital bank
+    enabled: true
+  - name: Cashapp
+    careers_url: https://job-boards.greenhouse.io/block
+    api: https://boards-api.greenhouse.io/v1/boards/block/jobs
+    scan_method: greenhouse
+    notes: Block/Square payment app
+    enabled: true
+  - name: CGI
+    careers_url: https://www.cgi.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Cgi/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Chalk
+    careers_url: https://jobs.ashbyhq.com/chalk
+    api: https://api.ashbyhq.com/posting-api/job-board/chalk
+    scan_method: ashby
+    notes: Feature store / ML infra
+    enabled: true
+  - name: Charles Schwab
+    careers_url: https://www.schwabjobs.com/search-jobs
+    api: https://career-schwab.icims.com/jobs/search?ss=1&hireType=&searchKeyword=&in_iframe=1
+    scan_method: schwabicims
+    notes: Brokerage
+    enabled: true
+  - name: Chatham Financial
+    careers_url: https://www.chathamfinancial.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/chathamfinancial/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Chicago Trading Company
+    careers_url: https://job-boards.greenhouse.io/chicagotrading
+    api: https://boards-api.greenhouse.io/v1/boards/chicagotrading/jobs
+    scan_method: greenhouse
+    notes: Quant trading
+    enabled: true
+  - name: Chime
+    careers_url: https://job-boards.greenhouse.io/chime
+    api: https://boards-api.greenhouse.io/v1/boards/chime/jobs
+    scan_method: greenhouse
+    notes: Neobank
+    enabled: true
+  - name: Ciena
+    careers_url: https://ciena.wd5.myworkdayjobs.com/Careers
+    api: https://ciena.wd5.myworkdayjobs.com/Careers
+    scan_method: workday
+    enabled: true
+  - name: Cigna
+    careers_url: https://www.cigna.com/careers
+    api: https://cigna.wd5.myworkdayjobs.com/cignacareers
+    scan_method: workday
+    enabled: true
+  - name: Circle
+    careers_url: https://www.circle.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Cisco
+    careers_url: https://cisco.wd5.myworkdayjobs.com/Cisco_Careers
+    api: https://cisco.wd5.myworkdayjobs.com/Cisco_Careers
+    scan_method: workday
+    notes: Networking / security
+    enabled: true
+  - name: Citadel
+    careers_url: https://www.citadel.com/careers/open-opportunities/
+    scan_method: websearch
+    notes: Hedge fund
+    enabled: true
+  - name: Citadel Securities
+    careers_url: https://www.citadelsecurities.com/careers/
+    scan_method: websearch
+    notes: Market maker
+    enabled: true
+  - name: Citi
+    careers_url: https://citi.wd5.myworkdayjobs.com/2
+    api: https://citi.wd5.myworkdayjobs.com/2
+    scan_method: workday
+    notes: Global bank
+    enabled: true
+  - name: Clear
+    careers_url: https://www.clear.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/clear/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Clever
+    careers_url: https://job-boards.greenhouse.io/clever
+    api: https://boards-api.greenhouse.io/v1/boards/clever/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: CloudKitchens
+    careers_url: https://job-boards.greenhouse.io/css
+    api: https://boards-api.greenhouse.io/v1/boards/css/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Coalition
+    careers_url: https://www.coalition.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/coalition/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: CockroachDB
+    careers_url: https://job-boards.greenhouse.io/cockroachlabs
+    api: https://boards-api.greenhouse.io/v1/boards/cockroachlabs/jobs
+    scan_method: greenhouse
+    notes: Distributed SQL DB
+    enabled: true
+  - name: Codal
+    careers_url: https://job-boards.greenhouse.io/codalinc
+    api: https://boards-api.greenhouse.io/v1/boards/codalinc/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Coinbase
+    careers_url: https://www.coinbase.com/careers
+    scan_method: websearch
+    notes: GH endpoint stale - TODO find new slug
+    enabled: true
+  - name: Comcast
+    careers_url: https://comcast.wd5.myworkdayjobs.com/Comcast_Careers
+    api: https://comcast.wd5.myworkdayjobs.com/Comcast_Careers
+    scan_method: workday
+    notes: Telecom/media
+    enabled: true
+  - name: CommonWealth Fusion Systems
+    careers_url: https://jobs.lever.co/cfsenergy
+    api: https://api.lever.co/v0/postings/cfsenergy
+    scan_method: lever
+    enabled: true
+  - name: CommScope
+    careers_url: https://www.commscope.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Conduit
+    careers_url: https://www.conduit.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/conduit
+    scan_method: ashby
+    enabled: true
+  - name: Copart
+    careers_url: https://www.copart.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Corsair
+    careers_url: https://www.corsair.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Costco
+    careers_url: https://www.costco.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Credit Karma
+    careers_url: https://jobs.intuit.com/search-jobs/Credit%20Karma/27595/1
+    scan_query: site:jobs.intuit.com "Credit Karma" "software engineer" OR "backend engineer" 2026
+    scan_method: websearch
+    notes: Personal finance
+    enabled: true
+  - name: Cvent
+    careers_url: https://careers.cvent.com
+    api: https://careers.cvent.com/api/jobs?country=United+States
+    scan_method: atlassian
+    enabled: true
+  - name: Databento
+    careers_url: https://www.databento.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/databento/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Datadog
+    careers_url: https://job-boards.greenhouse.io/datadog
+    api: https://boards-api.greenhouse.io/v1/boards/datadog/jobs
+    scan_method: greenhouse
+    notes: Observability platform
+    enabled: true
+  - name: Deductive AI
+    careers_url: https://jobs.ashbyhq.com/deductive
+    api: https://api.ashbyhq.com/posting-api/job-board/deductive
+    scan_method: ashby
+    enabled: true
+  - name: Discord
+    careers_url: https://job-boards.greenhouse.io/discord
+    api: https://boards-api.greenhouse.io/v1/boards/discord/jobs
+    scan_method: greenhouse
+    notes: Gaming chat platform
+    enabled: true
+  - name: Disney
+    careers_url: https://www.disney.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/disney/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Docugami
+    careers_url: https://www.docugami.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Domino Data Lab
+    careers_url: https://www.dominodatalab.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/dominodatalab/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Dominos
+    careers_url: https://www.dominos.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Dominos/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Dow Jones
+    careers_url: https://dowjones.wd1.myworkdayjobs.com/Dow_Jones_Career
+    api: https://dowjones.wd1.myworkdayjobs.com/Dow_Jones_Career
+    scan_method: workday
+    enabled: true
+  - name: Drift
+    careers_url: https://www.drift.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/salesloft/jobs
+    scan_method: greenhouse
+    notes: Acquired by Salesloft — jobs posted under salesloft GH board
+    enabled: true
+  - name: DriveTime
+    careers_url: https://www.drivetime.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Drivetime/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: DriveWealth
+    careers_url: https://www.drivewealth.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/drivewealth/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Dropbox
+    careers_url: https://job-boards.greenhouse.io/dropbox
+    api: https://boards-api.greenhouse.io/v1/boards/dropbox/jobs
+    scan_method: greenhouse
+    notes: Cloud storage
+    enabled: true
+  - name: DRW
+    careers_url: https://job-boards.greenhouse.io/drweng
+    api: https://boards-api.greenhouse.io/v1/boards/drweng/jobs
+    scan_method: greenhouse
+    notes: Quant trading
+    enabled: true
+  - name: Dun & Bradstreet
+    careers_url: https://www.dunbradstreet.com/careers
+    api: https://api.lever.co/v0/postings/dnb
+    scan_method: lever
+    enabled: true
+  - name: Duolingo
+    careers_url: https://job-boards.greenhouse.io/duolingo
+    api: https://boards-api.greenhouse.io/v1/boards/duolingo/jobs
+    scan_method: greenhouse
+    notes: Language learning
+    enabled: true
+  - name: EarnIn
+    careers_url: https://job-boards.greenhouse.io/earnin
+    api: https://boards-api.greenhouse.io/v1/boards/earnin/jobs
+    scan_method: greenhouse
+    notes: Earned wage access
+    enabled: true
+  - name: EliseAI
+    careers_url: https://jobs.ashbyhq.com/eliseai
+    api: https://api.ashbyhq.com/posting-api/job-board/eliseai
+    scan_method: ashby
+    notes: AI for real estate
+    enabled: true
+  - name: Ellipsis Labs
+    careers_url: https://jobs.ashbyhq.com/ellipsislabs
+    api: https://api.ashbyhq.com/posting-api/job-board/ellipsislabs
+    scan_method: ashby
+    notes: Code review AI
+    enabled: true
+  - name: Epic
+    careers_url: https://www.epic.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Epic/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: EquipmentShare
+    careers_url: https://www.equipmentshare.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Ethereum Foundation
+    careers_url: https://www.ethereumfoundation.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/ethereum-foundation
+    scan_method: ashby
+    enabled: true
+  - name: Ethic
+    careers_url: https://www.ethic.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/ethicinvesting/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: EUNA Solutions
+    careers_url: https://www.eunasolutions.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Exiger
+    careers_url: https://job-boards.greenhouse.io/exiger
+    api: https://boards-api.greenhouse.io/v1/boards/exiger/jobs
+    scan_method: greenhouse
+    notes: Risk and compliance AI
+    enabled: true
+  - name: Expedia
+    careers_url: https://expedia.wd108.myworkdayjobs.com/search
+    api: https://expedia.wd108.myworkdayjobs.com/search
+    scan_method: workday
+    notes: Travel tech
+    enabled: true
+  - name: F5
+    careers_url: https://ffive.wd5.myworkdayjobs.com/f5jobs
+    api: https://ffive.wd5.myworkdayjobs.com/f5jobs
+    scan_method: workday
+    enabled: true
+  - name: FanDuel
+    careers_url: https://job-boards.greenhouse.io/fanduel
+    api: https://boards-api.greenhouse.io/v1/boards/fanduel/jobs
+    scan_method: greenhouse
+    notes: Sports betting
+    enabled: true
+  - name: FedEx
+    careers_url: https://www.fedex.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Fidelity
+    careers_url: https://fmr.wd1.myworkdayjobs.com/FidelityCareers
+    api: https://fmr.wd1.myworkdayjobs.com/FidelityCareers
+    scan_method: workday
+    notes: Financial services
+    enabled: true
+  - name: FIS
+    careers_url: https://fis.wd5.myworkdayjobs.com/SearchJobs
+    api: https://fis.wd5.myworkdayjobs.com/SearchJobs
+    scan_method: workday
+    notes: Fintech infrastructure
+    enabled: true
+  - name: Five Rings Capital
+    careers_url: https://job-boards.greenhouse.io/fiveringsllc
+    api: https://boards-api.greenhouse.io/v1/boards/fiveringsllc/jobs
+    scan_method: greenhouse
+    notes: Quant trading
+    enabled: true
+  - name: FlexAI
+    careers_url: https://flexai.ai/careers
+    scan_method: websearch
+    notes: GPU cloud
+    enabled: true
+  - name: Flow Traders
+    careers_url: https://www.flowtraders.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/flowtraders/jobs
+    scan_method: greenhouse
+    notes: Market maker
+    enabled: true
+  - name: Formlabs
+    careers_url: https://job-boards.greenhouse.io/formlabs
+    api: https://boards-api.greenhouse.io/v1/boards/formlabs/jobs
+    scan_method: greenhouse
+    notes: 3D printing
+    enabled: true
+  - name: Forterra
+    careers_url: https://www.forterra.com/careers
+    api: https://api.lever.co/v0/postings/forterra
+    scan_method: lever
+    enabled: true
+  - name: Foursquare
+    careers_url: https://www.foursquare.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/foursquare
+    scan_method: ashby
+    enabled: true
+  - name: Freddie Mac
+    careers_url: https://freddiemac.wd5.myworkdayjobs.com/External
+    api: https://freddiemac.wd5.myworkdayjobs.com/External
+    scan_method: workday
+    notes: Mortgage finance
+    enabled: true
+  - name: FreedomPay
+    careers_url: https://www.freedompay.com/careers
+    api: https://api.lever.co/v0/postings/freedompay
+    scan_method: lever
+    enabled: true
+  - name: Garda Capital Partners
+    careers_url: https://job-boards.greenhouse.io/gardacp
+    api: https://boards-api.greenhouse.io/v1/boards/gardacp/jobs
+    scan_method: greenhouse
+    notes: Hedge fund
+    enabled: true
+  - name: Garner Health
+    careers_url: https://www.garnerhealth.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/garnerhealth/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: GCM Grosvenor
+    careers_url: https://www.gcmgrosvenor.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/gcmgrosvenor/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: GEICO
+    careers_url: https://geico.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Geico/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Insurance
+    enabled: true
+  - name: General Dynamics
+    careers_url: https://gdmissionsystems.com/careers
+    api: https://careers-generaldynamics.icims.com/jobs/search?ss=1&searchKeyword=&searchLocation=&in_iframe=1
+    scan_method: icims
+    notes: Defense
+    enabled: true
+  - name: Genesis Therapeutics
+    careers_url: https://www.genesistherapeutics.ai/careers
+    scan_method: websearch
+    enabled: true
+  - name: Gesture
+    careers_url: https://www.gesture.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Gesture/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Giga
+    careers_url: https://www.giga.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/gigaml
+    scan_method: ashby
+    enabled: true
+  - name: GitHub
+    careers_url: https://github.careers
+    scan_query: site:github.careers "software engineer" 2026
+    scan_method: websearch
+    notes: Code hosting
+    enabled: true
+  - name: GlobalFoundries
+    careers_url: https://globalfoundries.wd1.myworkdayjobs.com/External
+    api: https://globalfoundries.wd1.myworkdayjobs.com/External
+    scan_method: workday
+    enabled: true
+  - name: GM
+    careers_url: https://generalmotors.wd5.myworkdayjobs.com/Careers_GM
+    api: https://generalmotors.wd5.myworkdayjobs.com/Careers_GM
+    scan_method: workday
+    enabled: true
+  - name: GM Financial
+    careers_url: https://fa-exvu-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
+    api: https://fa-exvu-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    enabled: true
+  - name: GoFundMe
+    careers_url: https://www.gofundme.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/gofundme/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Goldman Sachs
+    careers_url: https://hdpc.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/LateralHiring
+    api: https://hdpc.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=LateralHiring,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    notes: Investment banking
+    enabled: true
+  - name: GSK
+    careers_url: https://www.gsk.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Guidehouse
+    careers_url: https://guidehouse.wd1.myworkdayjobs.com/External
+    api: https://guidehouse.wd1.myworkdayjobs.com/External
+    scan_method: workday
+    enabled: true
+  - name: Guidepoint
+    careers_url: https://www.guidepoint.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/guidepoint/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Harbinger Motors
+    careers_url: https://www.harbingermotors.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/harbingermotors/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Hive
+    careers_url: https://www.hive.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/hive/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Home Depot
+    careers_url: https://homedepot.wd5.myworkdayjobs.com/CareerDepot
+    api: https://homedepot.wd5.myworkdayjobs.com/CareerDepot
+    scan_method: workday
+    enabled: true
+  - name: Honeywell
+    careers_url: https://ibqbjb.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/Honeywell
+    api: https://ibqbjb.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=Honeywell,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    notes: Industrial tech
+    enabled: true
+  - name: HP
+    careers_url: https://hp.wd5.myworkdayjobs.com/ExternalCareerSite
+    api: https://hp.wd5.myworkdayjobs.com/ExternalCareerSite
+    scan_method: workday
+    notes: PC & printing
+    enabled: true
+  - name: HPE
+    careers_url: https://hpe.wd5.myworkdayjobs.com/Jobsathpe
+    api: https://hpe.wd5.myworkdayjobs.com/Jobsathpe
+    scan_method: workday
+    notes: Hewlett Packard Enterprise
+    enabled: true
+  - name: HPR
+    careers_url: https://job-boards.greenhouse.io/hyannisportresearch
+    api: https://boards-api.greenhouse.io/v1/boards/hyannisportresearch/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: HubSpot
+    careers_url: https://job-boards.greenhouse.io/hubspotjobs
+    api: https://boards-api.greenhouse.io/v1/boards/hubspotjobs/jobs
+    scan_method: greenhouse
+    notes: CRM platform
+    enabled: true
+  - name: Hudson River Trading
+    careers_url: https://job-boards.greenhouse.io/hrttalentcommunity
+    api: https://boards-api.greenhouse.io/v1/boards/hrttalentcommunity/jobs
+    scan_method: greenhouse
+    notes: HRT quant trading
+    enabled: true
+  - name: IBM
+    careers_url: https://www.ibm.com/employment
+    scan_method: websearch
+    notes: Enterprise tech
+    enabled: true
+  - name: IEX Group
+    careers_url: https://iextrading.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/iex/jobs
+    scan_method: greenhouse
+    notes: Ethical stock exchange
+    enabled: true
+  - name: IMC Financial Markets
+    careers_url: https://job-boards.greenhouse.io/imc
+    api: https://boards-api.greenhouse.io/v1/boards/imc/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: IMC Trading
+    careers_url: https://imc.com/us/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/imc/jobs
+    scan_method: greenhouse
+    notes: Market maker
+    enabled: true
+  - name: impact.com
+    careers_url: https://www.impactcom.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/impact/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Intel
+    careers_url: https://jobs.intel.com
+    api: https://intel.wd1.myworkdayjobs.com/External
+    scan_method: workday
+    notes: Semiconductor
+    enabled: true
+  - name: Interactive Brokers
+    careers_url: https://job-boards.greenhouse.io/ibkr
+    api: https://boards-api.greenhouse.io/v1/boards/ibkr/jobs
+    scan_method: greenhouse
+    notes: Online brokerage
+    enabled: true
+  - name: Interclypse
+    careers_url: https://www.interclypse.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Interclypse/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Intercontinental Exchange
+    careers_url: https://careers.ice.com
+    scan_method: websearch
+    notes: NYSE parent company
+    enabled: true
+  - name: InterSystems
+    careers_url: https://intersystems.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/intersystems/jobs
+    scan_method: greenhouse
+    notes: Healthcare data platform
+    enabled: true
+  - name: Intuit
+    careers_url: https://careers.smartrecruiters.com/intuit2
+    api: https://api.smartrecruiters.com/v1/companies/intuit2/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: TurboTax / QuickBooks
+    enabled: true
+  - name: Intuitive Surgical
+    careers_url: https://careers.smartrecruiters.com/intuitive
+    api: https://api.smartrecruiters.com/v1/companies/intuitive/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Surgical robotics
+    enabled: true
+  - name: Invesco
+    careers_url: https://invesco.wd1.myworkdayjobs.com/IVZ
+    api: https://invesco.wd1.myworkdayjobs.com/IVZ
+    scan_method: workday
+    enabled: true
+  - name: Jane Street
+    careers_url: https://janestreet.com/join-jane-street/open-positions/
+    api: https://boards-api.greenhouse.io/v1/boards/janestreet/jobs
+    scan_method: greenhouse
+    notes: Quant trading
+    enabled: true
+  - name: January
+    careers_url: https://jobs.ashbyhq.com/january
+    api: https://api.ashbyhq.com/posting-api/job-board/january
+    scan_method: ashby
+    notes: Debt resolution fintech
+    enabled: true
+  - name: John Deere
+    careers_url: https://jobs.deere.com
+    api: https://api.smartrecruiters.com/v1/companies/deere/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Agricultural equipment
+    enabled: true
+  - name: John Hancock
+    careers_url: https://manulife.wd3.myworkdayjobs.com/MFCJH_Jobs
+    api: https://manulife.wd3.myworkdayjobs.com/MFCJH_Jobs
+    scan_method: workday
+    enabled: true
+  - name: Johns Hopkins APL
+    careers_url: https://jobs.jhu.edu
+    scan_method: websearch
+    notes: APL defense research
+    enabled: true
+  - name: JP Morgan
+    careers_url: https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
+    api: https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    notes: Investment bank
+    enabled: true
+  - name: JP Morgan Chase
+    careers_url: https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
+    api: https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    notes: Investment bank
+    enabled: true
+  - name: Jump Trading
+    careers_url: https://jumptrading.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/jumptrading/jobs
+    scan_method: greenhouse
+    notes: Quant trading
+    enabled: true
+  - name: Kairos Power
+    careers_url: https://www.kairospower.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/kairospower/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Kargo
+    careers_url: https://job-boards.greenhouse.io/kargo
+    api: https://boards-api.greenhouse.io/v1/boards/kargo/jobs
+    scan_method: greenhouse
+    notes: Logistics infrastructure
+    enabled: true
+  - name: Kensho
+    careers_url: https://www.kensho.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Khan Academy
+    careers_url: https://www.khanacademy.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/khanacademy/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Kin Insurance
+    careers_url: https://jobs.ashbyhq.com/kin
+    api: https://api.ashbyhq.com/posting-api/job-board/kin
+    scan_method: ashby
+    enabled: true
+  - name: KLA
+    careers_url: https://careers.kla.com
+    api: https://api.smartrecruiters.com/v1/companies/kla-tencor/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Semiconductor equipment
+    enabled: true
+  - name: Klaviyo
+    careers_url: https://job-boards.greenhouse.io/klaviyo
+    api: https://boards-api.greenhouse.io/v1/boards/klaviyo/jobs
+    scan_method: greenhouse
+    notes: Email/SMS marketing
+    enabled: true
+  - name: Kognitos
+    careers_url: https://www.kognitos.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/kognitos
+    scan_method: ashby
+    enabled: true
+  - name: L3Harris
+    careers_url: https://careers.l3harris.com
+    api: https://api.smartrecruiters.com/v1/companies/L3harris/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Defense electronics
+    enabled: true
+  - name: Labelbox
+    careers_url: https://job-boards.greenhouse.io/labelbox
+    api: https://boards-api.greenhouse.io/v1/boards/labelbox/jobs
+    scan_method: greenhouse
+    notes: Data labeling platform
+    enabled: true
+  - name: Leidos
+    careers_url: https://leidos.wd5.myworkdayjobs.com/External
+    api: https://leidos.wd5.myworkdayjobs.com/External
+    scan_method: workday
+    notes: Defense/IT
+    enabled: true
+  - name: Lendbuzz
+    careers_url: https://www.lendbuzz.com/careers
+    api: https://api.lever.co/v0/postings/lendbuzz
+    scan_method: lever
+    enabled: true
+  - name: Liberty Mutual
+    careers_url: https://jobs.libertymutualgroup.com
+    api: https://api.smartrecruiters.com/v1/companies/LibertyMutual/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Insurance
+    enabled: true
+  - name: Lockheed Martin
+    careers_url: https://lockheedmartinjobs.com
+    api: https://api.smartrecruiters.com/v1/companies/LockheedMartin/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Defense contractor
+    enabled: true
+  - name: Loop
+    careers_url: https://www.loop.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/loop/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: LTIMindTree
+    careers_url: https://www.ltimindtree.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Lucid Motors
+    careers_url: https://www.lucidmotors.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/lucidmotors/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Lumen
+    careers_url: https://jobs.lumen.com/global/en
+    scan_method: websearch
+    enabled: true
+  - name: M&T Bank
+    careers_url: https://mtb.wd5.myworkdayjobs.com/MTB
+    api: https://mtb.wd5.myworkdayjobs.com/MTB
+    scan_method: workday
+    enabled: true
+  - name: Maestro AI
+    careers_url: https://www.maestroai.com/careers
+    scan_query: site:maestroai.com/careers "engineer" 2026
+    scan_method: websearch
+    enabled: true
+  - name: MarketAxess
+    careers_url: https://www.marketaxess.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Marshall Wace
+    careers_url: https://www.marshallwace.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/marshallwace/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Mastercard
+    careers_url: https://mastercard.wd1.myworkdayjobs.com/CorporateCareers
+    api: https://mastercard.wd1.myworkdayjobs.com/CorporateCareers
+    scan_method: workday
+    notes: Payments network
+    enabled: true
+  - name: MasterControl
+    careers_url: https://job-boards.greenhouse.io/mastercontrol
+    api: https://boards-api.greenhouse.io/v1/boards/mastercontrol/jobs
+    scan_method: greenhouse
+    notes: Quality management software
+    enabled: true
+  - name: Mathworks
+    careers_url: https://www.mathworks.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Matroid
+    careers_url: https://matroid.com/careers
+    scan_method: websearch
+    notes: Video AI
+    enabled: true
+  - name: McDonalds
+    careers_url: https://www.mcdonalds.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: McMaster-Carr
+    careers_url: https://www.mcmastercarr.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/mcmastercarr/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Mercedes-Benz
+    careers_url: https://www.mercedesbenz.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Mercury
+    careers_url: https://job-boards.greenhouse.io/mercury
+    api: https://boards-api.greenhouse.io/v1/boards/mercury/jobs
+    scan_method: greenhouse
+    notes: Banking for startups
+    enabled: true
+  - name: MetLife
+    careers_url: https://www.metlife.com/careers
+    api: https://api.lever.co/v0/postings/metlife
+    scan_method: lever
+    enabled: true
+  - name: Michigan Software Labs
+    careers_url: https://www.michigansoftwarelabs.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: MicroStrategy
+    careers_url: https://www.microstrategy.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Microstrategy/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Millenium Management
+    careers_url: https://mlp.com/careers
+    scan_method: websearch
+    notes: Hedge fund
+    enabled: true
+  - name: Minitab
+    careers_url: https://www.minitab.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/minitab/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: MITRE
+    careers_url: https://careers.mitre.org
+    api: https://api.smartrecruiters.com/v1/companies/Mitre/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: FFRDC research org
+    enabled: true
+  - name: MLB
+    careers_url: https://www.mlb.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/majorleaguebaseball/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Moloco
+    careers_url: https://job-boards.greenhouse.io/moloco
+    api: https://boards-api.greenhouse.io/v1/boards/moloco/jobs
+    scan_method: greenhouse
+    notes: ML-powered ad platform
+    enabled: true
+  - name: Moodys
+    careers_url: https://www.moodys.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Moodys/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Morgan Stanley
+    careers_url: https://ms.wd5.myworkdayjobs.com/External
+    api: https://ms.wd5.myworkdayjobs.com/External
+    scan_method: workday
+    notes: Investment bank
+    enabled: true
+  - name: Morningstar
+    careers_url: https://morningstar.wd5.myworkdayjobs.com/Americas
+    api: https://morningstar.wd5.myworkdayjobs.com/Americas
+    scan_method: workday
+    enabled: true
+  - name: Motorola
+    careers_url: https://motorolasolutions.wd5.myworkdayjobs.com/Careers
+    api: https://motorolasolutions.wd5.myworkdayjobs.com/Careers
+    scan_method: workday
+    enabled: true
+  - name: MyFitnessPal
+    careers_url: https://www.myfitnesspal.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/myfitnesspal/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Navan
+    careers_url: https://job-boards.greenhouse.io/tripactions
+    api: https://boards-api.greenhouse.io/v1/boards/tripactions/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Netapp
+    careers_url: https://careers.smartrecruiters.com/NetApp2
+    api: https://api.smartrecruiters.com/v1/companies/NetApp2/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Netic
+    careers_url: https://www.netic.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/netic
+    scan_method: ashby
+    enabled: true
+  - name: Netsmart
+    careers_url: https://www.netsmart.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Neuralink
+    careers_url: https://neuralink.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/neuralink/jobs
+    scan_method: greenhouse
+    notes: Brain-computer interface
+    enabled: true
+  - name: NewsBreak
+    careers_url: https://www.newsbreak.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/newsbreak/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Nextdoor
+    careers_url: https://job-boards.greenhouse.io/nextdoor
+    api: https://boards-api.greenhouse.io/v1/boards/nextdoor/jobs
+    scan_method: greenhouse
+    notes: Neighborhood social network
+    enabled: true
+  - name: NextEra Energy
+    careers_url: https://jobs.nexteraenergy.com
+    scan_method: websearch
+    notes: Clean energy
+    enabled: true
+  - name: NielsenIQ
+    careers_url: https://niq.com/careers/
+    api: https://api.smartrecruiters.com/v1/companies/Nielseniq/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Market research
+    enabled: true
+  - name: NimbleRx
+    careers_url: https://jobs.lever.co/nimblerx
+    api: https://api.lever.co/v0/postings/nimblerx
+    scan_method: lever
+    notes: Online pharmacy
+    enabled: true
+  - name: Nokia
+    careers_url: https://fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
+    api: https://fa-evmr-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    enabled: true
+  - name: Nordstrom
+    careers_url: https://www.nordstrom.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Nordstrom/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Northern Trust
+    careers_url: https://ntrs.wd1.myworkdayjobs.com/northerntrust
+    api: https://ntrs.wd1.myworkdayjobs.com/northerntrust
+    scan_method: workday
+    enabled: true
+  - name: Northrop Grumman
+    careers_url: https://northropgrumman.com/careers
+    scan_method: websearch
+    notes: Aerospace/defense
+    enabled: true
+  - name: Northwestern Mutual
+    careers_url: https://northwesternmutual.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/NorthwesternMutual/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Insurance/financial planning
+    enabled: true
+  - name: NSA
+    careers_url: https://www.nsa.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Nsa/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: NVIDIA
+    careers_url: https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite
+    api: https://nvidia.wd5.myworkdayjobs.com/NVIDIAExternalCareerSite
+    scan_method: workday
+    notes: GPUs / AI hardware
+    enabled: true
+  - name: Nuro
+    careers_url: https://www.nuro.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/nuro/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Obsidian Security
+    careers_url: https://job-boards.greenhouse.io/obsidiansecurity
+    api: https://boards-api.greenhouse.io/v1/boards/obsidiansecurity/jobs
+    scan_method: greenhouse
+    notes: Cloud security
+    enabled: true
+  - name: OKX
+    careers_url: https://job-boards.greenhouse.io/okx
+    api: https://boards-api.greenhouse.io/v1/boards/okx/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Okta
+    careers_url: https://job-boards.greenhouse.io/okta
+    api: https://boards-api.greenhouse.io/v1/boards/okta/jobs
+    scan_method: greenhouse
+    notes: Identity management
+    enabled: true
+  - name: Old Mission Capital
+    careers_url: https://oldmissioncapital.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/oldmissioncapital/jobs
+    scan_method: greenhouse
+    notes: Market maker
+    enabled: true
+  - name: Onbe
+    careers_url: https://job-boards.greenhouse.io/onbe
+    api: https://boards-api.greenhouse.io/v1/boards/onbe/jobs
+    scan_method: greenhouse
+    notes: Payments platform
+    enabled: true
+  - name: OneStream Software
+    careers_url: https://onestreamsoftware.com/careers
+    scan_method: websearch
+    notes: Corporate finance platform
+    enabled: true
+  - name: Optiver
+    careers_url: https://optiver.com/working-at-optiver/career-opportunities/
+    api: https://boards-api.greenhouse.io/v1/boards/optiverus/jobs
+    scan_method: greenhouse
+    notes: Market maker
+    enabled: true
+  - name: Oracle
+    careers_url: https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_45001
+    api: https://eeho.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_45001,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    notes: Enterprise software/cloud
+    enabled: true
+  - name: Orb
+    careers_url: https://www.orb.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/orb
+    scan_method: ashby
+    enabled: true
+  - name: Owl Labs
+    careers_url: https://www.owllabs.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/owllabs/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Pacific Life
+    careers_url: https://pacificlife.com/careers
+    api: https://pacificlife.wd1.myworkdayjobs.com/PacificLifeCareers
+    scan_method: workday
+    notes: Insurance
+    enabled: true
+  - name: Palo Alto Networks
+    careers_url: https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers
+    api: https://paloaltonetworks.wd5.myworkdayjobs.com/panwexternalcareers
+    scan_method: workday
+    notes: Cybersecurity
+    enabled: true
+  - name: Panasonic Avionics
+    careers_url: https://www.panasonicavionics.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Parafin
+    careers_url: https://jobs.ashbyhq.com/parafin
+    api: https://api.ashbyhq.com/posting-api/job-board/parafin
+    scan_method: ashby
+    notes: Revenue-based financing
+    enabled: true
+  - name: Paramount
+    careers_url: https://www.paramount.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Paramount/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Parsons
+    careers_url: https://parsons.wd5.myworkdayjobs.com/Search
+    api: https://parsons.wd5.myworkdayjobs.com/Search
+    scan_method: workday
+    notes: Engineering/defense
+    enabled: true
+  - name: Patterned Learning AI
+    careers_url: https://www.patternedlearningai.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Peak6
+    careers_url: https://peak6.com/careers/
+    scan_method: websearch
+    notes: Quant trading
+    enabled: true
+  - name: Pega
+    careers_url: https://www.pega.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Pega/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Peraton
+    careers_url: https://peraton.com/careers
+    api: https://careers-peraton.icims.com/jobs/search?ss=1&searchKeyword=&searchLocation=&in_iframe=1
+    scan_method: icims
+    notes: Defense/intel IT
+    enabled: true
+  - name: Perpay
+    careers_url: https://job-boards.greenhouse.io/perpay
+    api: https://boards-api.greenhouse.io/v1/boards/perpay/jobs
+    scan_method: greenhouse
+    notes: Buy now pay later
+    enabled: true
+  - name: Philips
+    careers_url: https://philips.wd3.myworkdayjobs.com/jobs-and-careers
+    api: https://philips.wd3.myworkdayjobs.com/jobs-and-careers
+    scan_method: workday
+    enabled: true
+  - name: Pinterest
+    careers_url: https://job-boards.greenhouse.io/pinterest
+    api: https://boards-api.greenhouse.io/v1/boards/pinterest/jobs
+    scan_method: greenhouse
+    notes: Visual discovery
+    enabled: true
+  - name: PIP Labs
+    careers_url: https://www.piplabs.com/careers
+    api: https://api.lever.co/v0/postings/piplabs
+    scan_method: lever
+    enabled: true
+  - name: Pison Technology
+    careers_url: https://jobs.lever.co/pison
+    api: https://api.lever.co/v0/postings/pison
+    scan_method: lever
+    enabled: true
+  - name: Pixar
+    careers_url: https://pixar.wd501.myworkdayjobs.com/Pixar_External_Career_Site
+    api: https://pixar.wd501.myworkdayjobs.com/Pixar_External_Career_Site
+    scan_method: workday
+    enabled: true
+  - name: Plaid
+    careers_url: https://plaid.com/careers/
+    api: https://plaid.com/careers/
+    scan_method: plaidcareers
+    notes: Banking API infrastructure
+    enabled: true
+  - name: PlayStation Global
+    careers_url: https://careers.playstation.com
+    api: https://boards-api.greenhouse.io/v1/boards/sonyinteractiveentertainmentglobal/jobs
+    scan_method: greenhouse
+    notes: Sony PlayStation. Workday endpoint is in maintenance; SIE Global jobs live on Greenhouse.
+    enabled: true
+  - name: PluralSight
+    careers_url: https://www.pluralsight.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: PMG
+    careers_url: https://www.pmg.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/pmg/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: PNC
+    careers_url: https://pnc.wd5.myworkdayjobs.com/External
+    api: https://pnc.wd5.myworkdayjobs.com/External
+    scan_method: workday
+    enabled: true
+  - name: Point72
+    careers_url: https://point72.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/point72/jobs
+    scan_method: greenhouse
+    notes: Hedge fund
+    enabled: true
+  - name: Polaris
+    careers_url: https://polaris.wd5.myworkdayjobs.com/PolarisJobs
+    api: https://polaris.wd5.myworkdayjobs.com/PolarisJobs
+    scan_method: workday
+    enabled: true
+  - name: Pomelo
+    careers_url: https://www.pomelo.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/pomelocare/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Prelim
+    careers_url: https://www.prelim.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/prelim
+    scan_method: ashby
+    enabled: true
+  - name: Primer
+    careers_url: https://www.primer.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/primer
+    scan_method: ashby
+    enabled: true
+  - name: Pure Storage
+    careers_url: https://job-boards.greenhouse.io/purestorage
+    api: https://boards-api.greenhouse.io/v1/boards/purestorage/jobs
+    scan_method: greenhouse
+    notes: Flash storage
+    enabled: true
+  - name: PWC
+    careers_url: https://pwc.wd3.myworkdayjobs.com/Global_Experienced_Careers
+    api: https://pwc.wd3.myworkdayjobs.com/Global_Experienced_Careers
+    scan_method: workday
+    enabled: true
+  - name: Pylon
+    careers_url: https://www.pylon.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/pylon
+    scan_method: ashby
+    enabled: true
+  - name: Qualcomm
+    careers_url: https://careers.qualcomm.com
+    scan_method: websearch
+    notes: Mobile chips
+    enabled: true
+  - name: Qualtrics
+    careers_url: https://job-boards.greenhouse.io/qualtrics
+    api: https://boards-api.greenhouse.io/v1/boards/qualtrics/jobs
+    scan_method: greenhouse
+    notes: Experience management
+    enabled: true
+  - name: Quartus
+    careers_url: https://www.quartus.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Qumulo
+    careers_url: https://qumulo.com/careers/job-openings/
+    scan_method: websearch
+    enabled: true
+  - name: Rakuten
+    careers_url: https://rakuten.wd1.myworkdayjobs.com/RakutenRewards
+    api: https://rakuten.wd1.myworkdayjobs.com/RakutenRewards
+    scan_method: workday
+    notes: E-commerce/fintech Japan
+    enabled: true
+  - name: Raptor Maps
+    careers_url: https://www.raptormaps.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Red Hat
+    careers_url: https://redhat.wd5.myworkdayjobs.com/jobs
+    api: https://redhat.wd5.myworkdayjobs.com/jobs
+    scan_method: workday
+    enabled: true
+  - name: Reddit
+    careers_url: https://job-boards.greenhouse.io/reddit
+    api: https://boards-api.greenhouse.io/v1/boards/reddit/jobs
+    scan_method: greenhouse
+    notes: Social media
+    enabled: true
+  - name: Relativity Space
+    careers_url: https://job-boards.greenhouse.io/relativity
+    api: https://boards-api.greenhouse.io/v1/boards/relativity/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Replit
+    careers_url: https://jobs.ashbyhq.com/replit
+    api: https://api.ashbyhq.com/posting-api/job-board/replit
+    scan_method: ashby
+    notes: Online IDE / coding platform
+    enabled: true
+  - name: Riot Games
+    careers_url: https://www.riotgames.com/en/careers
+    api: https://boards-api.greenhouse.io/v1/boards/riotgames/jobs
+    scan_method: greenhouse
+    notes: League of Legends studio
+    enabled: true
+  - name: Ripple
+    careers_url: https://ripple.com/company/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/ripple/jobs
+    scan_method: greenhouse
+    notes: Crypto payments
+    enabled: true
+  - name: Roadie
+    careers_url: https://www.roadie.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/roadie/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Roblox
+    careers_url: https://job-boards.greenhouse.io/roblox
+    api: https://boards-api.greenhouse.io/v1/boards/roblox/jobs
+    scan_method: greenhouse
+    notes: Gaming platform
+    enabled: true
+  - name: Rocket Companies
+    careers_url: https://quickenloans.wd5.myworkdayjobs.com/rocket_careers
+    api: https://quickenloans.wd5.myworkdayjobs.com/rocket_careers
+    scan_method: workday
+    notes: Rocket Companies/Quicken Loans
+    enabled: true
+  - name: RocketLab
+    careers_url: https://www.rocketlab.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/rocketlab/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Rockwell Automation
+    careers_url: https://rockwellautomation.wd1.myworkdayjobs.com/External_Rockwell_Automation
+    api: https://rockwellautomation.wd1.myworkdayjobs.com/External_Rockwell_Automation
+    scan_method: workday
+    enabled: true
+  - name: Roku
+    careers_url: https://job-boards.greenhouse.io/roku
+    api: https://boards-api.greenhouse.io/v1/boards/roku/jobs
+    scan_method: greenhouse
+    notes: Streaming platform
+    enabled: true
+  - name: RVO Health
+    careers_url: https://www.rvohealth.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/rvohealth/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: S&P Global
+    careers_url: https://www.spglobal.com/careers
+    api: https://spgi.wd5.myworkdayjobs.com/SPGI_Careers
+    scan_method: workday
+    enabled: true
+  - name: Sabre
+    careers_url: https://sabre.wd1.myworkdayjobs.com/SabreJobs
+    api: https://sabre.wd1.myworkdayjobs.com/SabreJobs
+    scan_method: workday
+    notes: Travel technology
+    enabled: true
+  - name: SageSure
+    careers_url: https://www.sagesure.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/sagesure/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: SAIC
+    careers_url: https://jobs.saic.com
+    scan_method: websearch
+    notes: Defense IT. Was on saicjobs Jobvite adapter, but jobs.saic.com is now Cloudflare-protected (returns 403 challenge page). Reverted to websearch.
+    enabled: true
+  - name: Salesforce
+    careers_url: https://salesforce.wd12.myworkdayjobs.com/External_Career_Site
+    api: https://salesforce.wd12.myworkdayjobs.com/External_Career_Site
+    scan_method: workday
+    notes: CRM platform
+    enabled: true
+  - name: Samsara
+    careers_url: https://job-boards.greenhouse.io/samsara
+    api: https://boards-api.greenhouse.io/v1/boards/samsara/jobs
+    scan_method: greenhouse
+    notes: Fleet/IoT platform
+    enabled: true
+  - name: Samsung
+    careers_url: https://samsung.com/us/careers
+    scan_method: websearch
+    notes: Consumer electronics
+    enabled: true
+  - name: SAP
+    careers_url: https://jobs.sap.com
+    api: https://api.smartrecruiters.com/v1/companies/Sap/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Enterprise ERP
+    enabled: true
+  - name: Saviynt
+    careers_url: https://www.saviynt.com/careers
+    api: https://api.lever.co/v0/postings/saviynt
+    scan_method: lever
+    enabled: true
+  - name: Schonfeld
+    careers_url: https://schonfeld.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/schonfeld/jobs
+    scan_method: greenhouse
+    notes: Hedge fund
+    enabled: true
+  - name: Seagate Technology
+    careers_url: https://www.seagatetechnology.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: SeatGeek
+    careers_url: https://www.seatgeek.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/seatgeek/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Sentra
+    careers_url: https://www.sentra.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/sentra
+    scan_method: ashby
+    enabled: true
+  - name: ServiceNow
+    careers_url: https://jobs.smartrecruiters.com/ServiceNow
+    api: https://api.smartrecruiters.com/v1/companies/ServiceNow/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Enterprise workflow automation
+    enabled: true
+  - name: SharkNinja
+    careers_url: https://www.sharkninja.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: ShieldAI
+    careers_url: https://shieldai.com/careers
+    api: https://api.lever.co/v0/postings/shieldai
+    scan_method: lever
+    notes: Defense AI autonomy
+    enabled: true
+  - name: Siemens
+    careers_url: https://www.siemens.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/Siemens/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Sixth Street
+    careers_url: https://www.sixthstreet.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/sixthstreet/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Smartleaf
+    careers_url: https://www.smartleaf.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/smartleaf
+    scan_method: ashby
+    enabled: true
+  - name: Snackpass
+    careers_url: https://www.snackpass.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/snackpass
+    scan_method: ashby
+    enabled: true
+  - name: Snap
+    careers_url: https://snapchat.wd1.myworkdayjobs.com/snap
+    api: https://snapchat.wd1.myworkdayjobs.com/snap
+    scan_method: workday
+    notes: Snapchat
+    enabled: true
+  - name: Snowflake
+    careers_url: https://careers.snowflake.com
+    api: https://api.ashbyhq.com/posting-api/job-board/snowflake
+    scan_method: ashby
+    notes: Cloud data warehouse
+    enabled: true
+  - name: SoFi
+    careers_url: https://job-boards.greenhouse.io/sofi
+    api: https://boards-api.greenhouse.io/v1/boards/sofi/jobs
+    scan_method: greenhouse
+    notes: Personal finance / neobank
+    enabled: true
+  - name: SpaceX
+    careers_url: https://spacex.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/spacex/jobs
+    scan_method: greenhouse
+    notes: Aerospace
+    enabled: true
+  - name: SproutSocial
+    careers_url: https://job-boards.greenhouse.io/sproutsocial
+    api: https://boards-api.greenhouse.io/v1/boards/sproutsocial/jobs
+    scan_method: greenhouse
+    notes: Social media management
+    enabled: true
+  - name: SPS Commerce
+    careers_url: https://www.spscommerce.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Stack AI
+    careers_url: https://jobs.ashbyhq.com/stack-ai
+    api: https://api.ashbyhq.com/posting-api/job-board/stack-ai
+    scan_method: ashby
+    notes: AI workflow builder
+    enabled: true
+  - name: Stoke Space
+    careers_url: https://job-boards.greenhouse.io/stokespacetechnologies
+    api: https://boards-api.greenhouse.io/v1/boards/stokespacetechnologies/jobs
+    scan_method: greenhouse
+    notes: Reusable rockets
+    enabled: true
+  - name: Strategio
+    careers_url: https://www.strategio.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Symmetry
+    careers_url: https://www.symmetry.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/symmetry
+    scan_method: ashby
+    enabled: true
+  - name: T-Mobile
+    careers_url: https://tmobile.wd1.myworkdayjobs.com/External
+    api: https://tmobile.wd1.myworkdayjobs.com/External
+    scan_method: workday
+    notes: Telecom
+    enabled: true
+  - name: Talos Trading
+    careers_url: https://talos.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/talos-trading
+    scan_method: ashby
+    notes: Crypto trading infra
+    enabled: true
+  - name: Tamr
+    careers_url: https://www.tamr.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/tamr
+    scan_method: ashby
+    enabled: true
+  - name: Teleo
+    careers_url: https://www.teleo.com/careers
+    api: https://api.lever.co/v0/postings/teleo
+    scan_method: lever
+    enabled: true
+  - name: Tempus AI
+    careers_url: https://www.tempusai.com/careers
+    api: https://tempus.wd5.myworkdayjobs.com/Tempus_Careers
+    scan_method: workday
+    enabled: true
+  - name: Tesla
+    careers_url: https://www.tesla.com/careers/search
+    scan_method: websearch
+    notes: Workday (Cloudflare-protected, no public API). Check manually at tesla.com/careers/search
+    enabled: true
+  - name: The Allen Institute for AI
+    careers_url: https://job-boards.greenhouse.io/thealleninstitute
+    api: https://boards-api.greenhouse.io/v1/boards/thealleninstitute/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: The Trade Desk
+    careers_url: https://job-boards.greenhouse.io/thetradedesk
+    api: https://boards-api.greenhouse.io/v1/boards/thetradedesk/jobs
+    scan_method: greenhouse
+    notes: Programmatic advertising
+    enabled: true
+  - name: Thrivent
+    careers_url: https://www.thrivent.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: TikTok
+    careers_url: https://careers.tiktok.com
+    scan_method: websearch
+    notes: Short video / ByteDance
+    enabled: true
+  - name: Tinder
+    careers_url: https://jobs.lever.co/matchgroup
+    api: https://api.lever.co/v0/postings/matchgroup
+    scan_method: lever
+    notes: Dating app
+    enabled: true
+  - name: Tive
+    careers_url: https://www.tive.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Tower Research Capital
+    careers_url: https://www.towerresearchcapital.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/towerresearchcapital/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: TransUnion
+    careers_url: https://transunion.wd5.myworkdayjobs.com/TransUnion
+    api: https://transunion.wd5.myworkdayjobs.com/TransUnion
+    scan_method: workday
+    notes: Credit bureau
+    enabled: true
+  - name: Trepp
+    careers_url: https://www.trepp.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/trepp/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Trimble
+    careers_url: https://trimble.wd1.myworkdayjobs.com/TrimbleCareers
+    api: https://trimble.wd1.myworkdayjobs.com/TrimbleCareers
+    scan_method: workday
+    enabled: true
+  - name: TruStage
+    careers_url: https://www.trustage.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Truveta
+    careers_url: https://job-boards.greenhouse.io/truveta
+    api: https://boards-api.greenhouse.io/v1/boards/truveta/jobs
+    scan_method: greenhouse
+    notes: Health data platform
+    enabled: true
+  - name: Twilio
+    careers_url: https://job-boards.greenhouse.io/twilio
+    api: https://boards-api.greenhouse.io/v1/boards/twilio/jobs
+    scan_method: greenhouse
+    notes: Communications APIs
+    enabled: true
+  - name: Twitch
+    careers_url: https://job-boards.greenhouse.io/twitch
+    api: https://boards-api.greenhouse.io/v1/boards/twitch/jobs
+    scan_method: greenhouse
+    notes: Live streaming
+    enabled: true
+  - name: Typeface
+    careers_url: https://www.typeface.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/typeface/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Udemy
+    careers_url: https://www.udemy.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/udemy/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: UKG
+    careers_url: https://ukg.com/careers
+    scan_method: websearch
+    notes: HR/payroll software
+    enabled: true
+  - name: Uline
+    careers_url: https://uline.wd1.myworkdayjobs.com/Uline_Careers
+    api: https://uline.wd1.myworkdayjobs.com/Uline_Careers
+    scan_method: workday
+    enabled: true
+  - name: UMassChan
+    careers_url: https://www.umasschan.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Unify
+    careers_url: https://www.unify.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/unify
+    scan_method: ashby
+    enabled: true
+  - name: United Airlines
+    careers_url: https://careers.united.com
+    scan_method: websearch
+    notes: Airline
+    enabled: true
+  - name: Universal Music Group
+    careers_url: https://www.universalmusicgroup.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/UniversalMusicGroup/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Valmont
+    careers_url: https://valmont.wd1.myworkdayjobs.com/ValmontCareers
+    api: https://valmont.wd1.myworkdayjobs.com/ValmontCareers
+    scan_method: workday
+    enabled: true
+  - name: Vanguard
+    careers_url: https://careers.vanguard.com
+    scan_method: websearch
+    notes: Index fund investing
+    enabled: true
+  - name: Vanta
+    careers_url: https://jobs.ashbyhq.com/vanta
+    api: https://api.ashbyhq.com/posting-api/job-board/vanta
+    scan_method: ashby
+    notes: Security compliance automation
+    enabled: true
+  - name: VectorShift
+    careers_url: https://www.vectorshift.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Vectra
+    careers_url: https://job-boards.greenhouse.io/vectranetworks
+    api: https://boards-api.greenhouse.io/v1/boards/vectranetworks/jobs
+    scan_method: greenhouse
+    notes: AI threat detection
+    enabled: true
+  - name: Verint
+    careers_url: https://fa-epcb-saasfaprod1.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX
+    api: https://fa-epcb-saasfaprod1.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
+    notes: Customer engagement platform
+    enabled: true
+  - name: Verkada
+    careers_url: https://job-boards.greenhouse.io/verkada
+    api: https://boards-api.greenhouse.io/v1/boards/verkada/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Versana
+    careers_url: https://jobs.lever.co/Versana
+    api: https://api.lever.co/v0/postings/Versana
+    scan_method: lever
+    enabled: true
+  - name: Virtru
+    careers_url: https://job-boards.greenhouse.io/virtru
+    api: https://boards-api.greenhouse.io/v1/boards/virtru/jobs
+    scan_method: greenhouse
+    notes: Data security / encryption
+    enabled: true
+  - name: Virtu Financial
+    careers_url: https://job-boards.greenhouse.io/virtu
+    api: https://boards-api.greenhouse.io/v1/boards/virtu/jobs
+    scan_method: greenhouse
+    notes: Market maker
+    enabled: true
+  - name: Visa
+    careers_url: https://jobs.smartrecruiters.com/Visa
+    api: https://api.smartrecruiters.com/v1/companies/Visa/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Payments network
+    enabled: true
+  - name: Voleon
+    careers_url: https://www.voleon.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/voleon
+    scan_method: ashby
+    enabled: true
+  - name: Waabi
+    careers_url: https://jobs.lever.co/waabi
+    api: https://api.lever.co/v0/postings/waabi
+    scan_method: lever
+    notes: Autonomous trucking
+    enabled: true
+  - name: Walmart
+    careers_url: https://walmart.wd5.myworkdayjobs.com/WalmartExternal
+    api: https://walmart.wd5.myworkdayjobs.com/WalmartExternal
+    scan_method: workday
+    notes: Retail / tech
+    enabled: true
+  - name: Warner Bros
+    careers_url: https://careers.wbd.com
+    scan_method: websearch
+    notes: Media and entertainment
+    enabled: true
+  - name: Washington Post
+    careers_url: https://washpost.wd5.myworkdayjobs.com/washingtonpostcareers
+    api: https://washpost.wd5.myworkdayjobs.com/washingtonpostcareers
+    scan_method: workday
+    notes: News media
+    enabled: true
+  - name: Watershed
+    careers_url: https://www.watershed.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/watershed
+    scan_method: ashby
+    enabled: true
+  - name: Waymo
+    careers_url: https://job-boards.greenhouse.io/waymo
+    api: https://boards-api.greenhouse.io/v1/boards/waymo/jobs
+    scan_method: greenhouse
+    notes: Self-driving cars
+    enabled: true
+  - name: Wealthsimple
+    careers_url: https://jobs.ashbyhq.com/wealthsimple
+    api: https://api.ashbyhq.com/posting-api/job-board/wealthsimple
+    scan_method: ashby
+    notes: Canadian fintech investing
+    enabled: true
+  - name: WebFX
+    careers_url: https://www.webfx.com/careers
+    api: https://api.lever.co/v0/postings/webfx
+    scan_method: lever
+    enabled: true
+  - name: Wells Fargo
+    careers_url: https://wf.wd1.myworkdayjobs.com/WellsFargoJobs
+    api: https://wf.wd1.myworkdayjobs.com/WellsFargoJobs
+    scan_method: workday
+    notes: Bank
+    enabled: true
+  - name: Western Digital
+    careers_url: https://jobs.westerndigital.com
+    api: https://api.smartrecruiters.com/v1/companies/WesternDigital/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    notes: Storage hardware
+    enabled: true
+  - name: Whatnot
+    careers_url: https://jobs.ashbyhq.com/whatnot
+    api: https://api.ashbyhq.com/posting-api/job-board/whatnot
+    scan_method: ashby
+    notes: Live shopping marketplace
+    enabled: true
+  - name: Wing
+    careers_url: https://wing.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/wing/jobs
+    scan_method: greenhouse
+    notes: Alphabet drone delivery
+    enabled: true
+  - name: Wisk
+    careers_url: https://www.wisk.aero/careers
+    scan_method: websearch
+    enabled: true
+  - name: Wispr AI
+    careers_url: https://jobs.ashbyhq.com/wispr-flow
+    api: https://api.ashbyhq.com/posting-api/job-board/wispr-flow
+    scan_method: ashby
+    enabled: true
+  - name: Wolters Kluwer
+    careers_url: https://wk.wd3.myworkdayjobs.com/External
+    api: https://wk.wd3.myworkdayjobs.com/External
+    scan_method: workday
+    enabled: true
+  - name: Woven
+    careers_url: https://jobs.lever.co/woven-by-toyota
+    api: https://api.lever.co/v0/postings/woven-by-toyota
+    scan_method: lever
+    notes: Woven by Toyota
+    enabled: true
+  - name: Wurl
+    careers_url: https://job-boards.greenhouse.io/wurljobs
+    api: https://boards-api.greenhouse.io/v1/boards/wurljobs/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: X
+    careers_url: https://www.x.com/careers
+    api: https://api.smartrecruiters.com/v1/companies/X/postings?limit=100&status=PUBLIC
+    scan_method: smartrecruiters
+    enabled: true
+  - name: Yext
+    careers_url: https://job-boards.greenhouse.io/yext
+    api: https://boards-api.greenhouse.io/v1/boards/yext/jobs
+    scan_method: greenhouse
+    notes: Digital presence platform
+    enabled: true
+  - name: ZipRecruiter
+    careers_url: https://job-boards.greenhouse.io/ziprecruiter
+    api: https://boards-api.greenhouse.io/v1/boards/ziprecruiter/jobs
+    scan_method: greenhouse
+    notes: Job marketplace
+    enabled: true
+  - name: Zoox
+    careers_url: https://www.zoox.com/careers
+    api: https://api.lever.co/v0/postings/zoox
+    scan_method: lever
+    enabled: true
+
+  # ── New companies added 2026-05-06 ──────────────────────────────────────────
+
+  # Ashby
+  - name: ElevenLabs
+    careers_url: https://elevenlabs.io/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/elevenlabs
+    scan_method: ashby
+    enabled: true
+  - name: Runway
+    careers_url: https://runwayml.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/runway-ml
+    scan_method: ashby
+    enabled: true
+  - name: Notion
+    careers_url: https://www.notion.so/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/notion
+    scan_method: ashby
+    enabled: true
+  - name: Harvey
+    careers_url: https://www.harvey.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/harvey
+    scan_method: ashby
+    enabled: true
+  - name: Gecko Robotics
+    careers_url: https://www.geckorobotics.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/gecko-robotics
+    scan_method: ashby
+    enabled: true
+  - name: Modal
+    careers_url: https://modal.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/modal
+    scan_method: ashby
+    enabled: true
+  - name: Render
+    careers_url: https://render.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/render
+    scan_method: ashby
+    enabled: true
+  - name: Warp
+    careers_url: https://www.warp.dev/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/warp
+    scan_method: ashby
+    enabled: true
+  - name: Browserbase
+    careers_url: https://www.browserbase.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/browserbase
+    scan_method: ashby
+    enabled: true
+  - name: Vapi
+    careers_url: https://vapi.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/vapi
+    scan_method: ashby
+    enabled: true
+
+  # Greenhouse
+  - name: xAI
+    careers_url: https://x.ai/careers
+    api: https://boards-api.greenhouse.io/v1/boards/xai/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Motional
+    careers_url: https://motional.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/motional/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Kodiak Robotics
+    careers_url: https://www.kodiak.ai/careers
+    api: https://boards-api.greenhouse.io/v1/boards/kodiak/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Together AI
+    careers_url: https://www.together.ai/careers
+    api: https://boards-api.greenhouse.io/v1/boards/togetherai/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Cerebras Systems
+    careers_url: https://www.cerebras.net/careers
+    api: https://boards-api.greenhouse.io/v1/boards/cerebrassystems/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Archer Aviation
+    careers_url: https://www.archer.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/archer/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Descript
+    careers_url: https://www.descript.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/descript/jobs
+    scan_method: greenhouse
+    enabled: true
+
+  # SmartRecruiters
+  - name: Groq
+    careers_url: https://groq.com/careers
+    scan_method: websearch
+    enabled: true
+  - name: Pika
+    careers_url: https://jobs.ashbyhq.com/pika
+    api: https://api.ashbyhq.com/posting-api/job-board/pika
+    scan_method: ashby
+    enabled: true
+  - name: Luma AI
+    careers_url: https://lumalabs.ai/careers
+    scan_method: websearch
+    enabled: true
+  - name: Character AI
+    careers_url: https://jobs.ashbyhq.com/character
+    api: https://api.ashbyhq.com/posting-api/job-board/character
+    scan_method: ashby
+    enabled: true
+  - name: Joby Aviation
+    careers_url: https://www.jobyaviation.com/careers
+    api: https://careers-jobyaviation.icims.com/jobs/search?ss=1&searchKeyword=&searchLocation=&in_iframe=1
+    scan_method: icims
+    enabled: true
+  - name: Boom Supersonic
+    careers_url: https://jobs.ashbyhq.com/boom
+    api: https://api.ashbyhq.com/posting-api/job-board/boom
+    scan_method: ashby
+    enabled: true
+  - name: Scale AI
+    careers_url: https://job-boards.greenhouse.io/scaleai
+    api: https://boards-api.greenhouse.io/v1/boards/scaleai/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Anduril
+    careers_url: https://www.anduril.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/andurilindustries/jobs
+    scan_method: greenhouse
+    enabled: true
+  - name: Weights & Biases
+    careers_url: https://wandb.ai/site/careers
+    scan_method: websearch
+    enabled: true
+  - name: Rime
+    careers_url: https://jobs.ashbyhq.com/rime
+    api: https://api.ashbyhq.com/posting-api/job-board/rime
+    scan_method: ashby
+    enabled: true
+  - name: Lyft
+    careers_url: https://job-boards.greenhouse.io/lyft
+    api: https://boards-api.greenhouse.io/v1/boards/lyft/jobs
+    scan_method: greenhouse
+    notes: Ride-sharing. Strong infra/backend hiring.
+    enabled: true
+  - name: Amplitude
+    careers_url: https://job-boards.greenhouse.io/amplitude
+    api: https://boards-api.greenhouse.io/v1/boards/amplitude/jobs
+    scan_method: greenhouse
+    notes: Product analytics.
+    enabled: true
+  - name: Elastic
+    careers_url: https://job-boards.greenhouse.io/elastic
+    api: https://boards-api.greenhouse.io/v1/boards/elastic/jobs
+    scan_method: greenhouse
+    notes: Search & observability.
+    enabled: true
+  - name: Intercom
+    careers_url: https://job-boards.greenhouse.io/intercom
+    api: https://boards-api.greenhouse.io/v1/boards/intercom/jobs
+    scan_method: greenhouse
+    notes: Customer messaging platform.
+    enabled: true
+  - name: MongoDB
+    careers_url: https://job-boards.greenhouse.io/mongodb
+    api: https://boards-api.greenhouse.io/v1/boards/mongodb/jobs
+    scan_method: greenhouse
+    notes: Document database. Strong SWE hiring.
+    enabled: true
+  - name: Gemini
+    careers_url: https://job-boards.greenhouse.io/gemini
+    api: https://boards-api.greenhouse.io/v1/boards/gemini/jobs
+    scan_method: greenhouse
+    notes: Crypto exchange.
+    enabled: true
+  - name: Doximity
+    careers_url: https://job-boards.greenhouse.io/doximity
+    api: https://boards-api.greenhouse.io/v1/boards/doximity/jobs
+    scan_method: greenhouse
+    notes: Healthcare professional network.
+    enabled: true
+  - name: Lattice
+    careers_url: https://job-boards.greenhouse.io/lattice
+    api: https://boards-api.greenhouse.io/v1/boards/lattice/jobs
+    scan_method: greenhouse
+    notes: HR/people management platform.
+    enabled: true
+  - name: Mixpanel
+    careers_url: https://job-boards.greenhouse.io/mixpanel
+    api: https://boards-api.greenhouse.io/v1/boards/mixpanel/jobs
+    scan_method: greenhouse
+    notes: Product analytics.
+    enabled: true
+  - name: Gusto
+    careers_url: https://job-boards.greenhouse.io/gusto
+    api: https://boards-api.greenhouse.io/v1/boards/gusto/jobs
+    scan_method: greenhouse
+    notes: Payroll and HR platform.
+    enabled: true
+  - name: Marqeta
+    careers_url: https://job-boards.greenhouse.io/marqeta
+    api: https://boards-api.greenhouse.io/v1/boards/marqeta/jobs
+    scan_method: greenhouse
+    notes: Card issuing platform.
+    enabled: true
+  - name: Tanium
+    careers_url: https://job-boards.greenhouse.io/tanium
+    api: https://boards-api.greenhouse.io/v1/boards/tanium/jobs
+    scan_method: greenhouse
+    notes: Endpoint security.
+    enabled: true
+  - name: Pendo
+    careers_url: https://job-boards.greenhouse.io/pendo
+    api: https://boards-api.greenhouse.io/v1/boards/pendo/jobs
+    scan_method: greenhouse
+    notes: Product analytics & guidance.
+    enabled: true
+  - name: LaunchDarkly
+    careers_url: https://job-boards.greenhouse.io/launchdarkly
+    api: https://boards-api.greenhouse.io/v1/boards/launchdarkly/jobs
+    scan_method: greenhouse
+    notes: Feature flag management.
+    enabled: true
+  - name: Fireworks AI
+    careers_url: https://job-boards.greenhouse.io/fireworksai
+    api: https://boards-api.greenhouse.io/v1/boards/fireworksai/jobs
+    scan_method: greenhouse
+    notes: AI inference platform.
+    enabled: true
+  - name: Zscaler
+    careers_url: https://job-boards.greenhouse.io/zscaler
+    api: https://boards-api.greenhouse.io/v1/boards/zscaler/jobs
+    scan_method: greenhouse
+    notes: Cloud security.
+    enabled: true
+  - name: Cursor
+    careers_url: https://jobs.ashbyhq.com/cursor
+    api: https://api.ashbyhq.com/posting-api/job-board/cursor
+    scan_method: ashby
+    notes: AI code editor.
+    enabled: true
+  - name: Ramp
+    careers_url: https://jobs.ashbyhq.com/ramp
+    api: https://api.ashbyhq.com/posting-api/job-board/ramp
+    scan_method: ashby
+    notes: Corporate spend management.
+    enabled: true
+  - name: Braintrust
+    careers_url: https://jobs.ashbyhq.com/braintrust
+    api: https://api.ashbyhq.com/posting-api/job-board/braintrust
+    scan_method: ashby
+    notes: Talent network.
+    enabled: true
+  - name: Railway
+    careers_url: https://jobs.ashbyhq.com/railway
+    api: https://api.ashbyhq.com/posting-api/job-board/railway
+    scan_method: ashby
+    notes: Cloud deployment platform.
+    enabled: true
+  - name: PostHog
+    careers_url: https://jobs.ashbyhq.com/posthog
+    api: https://api.ashbyhq.com/posting-api/job-board/posthog
+    scan_method: ashby
+    notes: Open-source product analytics.
+    enabled: true
+  - name: Neon
+    careers_url: https://jobs.ashbyhq.com/neon
+    api: https://api.ashbyhq.com/posting-api/job-board/neon
+    scan_method: ashby
+    notes: Serverless Postgres.
+    enabled: true
+  - name: PayPal
+    careers_url: https://paypal.wd1.myworkdayjobs.com/jobs
+    api: https://paypal.wd1.myworkdayjobs.com/jobs
+    scan_method: workday
+    notes: Payments platform.
+    enabled: true
+  - name: Workday
+    careers_url: https://workday.wd5.myworkdayjobs.com/Workday
+    api: https://workday.wd5.myworkdayjobs.com/Workday
+    scan_method: workday
+    notes: HR/finance cloud software.
+    enabled: true
+  - name: CrowdStrike
+    careers_url: https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers
+    api: https://crowdstrike.wd5.myworkdayjobs.com/crowdstrikecareers
+    scan_method: workday
+    notes: Cybersecurity platform.
+    enabled: true
+  - name: Robinhood
+    careers_url: https://careers.robinhood.com
+    api: https://boards-api.greenhouse.io/v1/boards/robinhood/jobs
+    scan_method: greenhouse
+    notes: Brokerage app.
+    enabled: true
+  - name: Crusoe
+    careers_url: https://crusoe.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/crusoe
+    scan_method: ashby
+    notes: AI cloud / energy infrastructure.
+    enabled: true
+  - name: Unity
+    careers_url: https://careers.unity.com
+    api: https://boards-api.greenhouse.io/v1/boards/unity3d/jobs
+    scan_method: greenhouse
+    notes: Game engine.
+    enabled: true
+  - name: Sierra
+    careers_url: https://sierra.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/sierra
+    scan_method: ashby
+    notes: AI agent platform (Bret Taylor).
+    enabled: true
+  - name: Tenstorrent
+    careers_url: https://tenstorrent.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/tenstorrent/jobs
+    scan_method: greenhouse
+    notes: AI accelerator hardware.
+    enabled: true
+  - name: Cresta
+    careers_url: https://cresta.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/cresta/jobs
+    scan_method: greenhouse
+    notes: AI for contact centers.
+    enabled: true
+  - name: Decagon
+    careers_url: https://decagon.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/decagon
+    scan_method: ashby
+    notes: AI customer support agents.
+    enabled: true
+  - name: Instacart
+    careers_url: https://instacart.careers
+    api: https://boards-api.greenhouse.io/v1/boards/instacart/jobs
+    scan_method: greenhouse
+    notes: Grocery delivery.
+    enabled: true
+  - name: Epic Games
+    careers_url: https://www.epicgames.com/site/en-US/careers
+    api: https://boards-api.greenhouse.io/v1/boards/epicgames/jobs
+    scan_method: greenhouse
+    notes: Fortnite / Unreal Engine.
+    enabled: true
+  - name: Suno
+    careers_url: https://suno.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/suno
+    scan_method: ashby
+    notes: Generative music AI.
+    enabled: true
+  - name: Lambda Labs
+    careers_url: https://lambdalabs.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/lambda
+    scan_method: ashby
+    notes: GPU cloud for ML.
+    enabled: true
+  - name: Modal Labs
+    careers_url: https://modal.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/modal
+    scan_method: ashby
+    notes: Serverless GPU compute.
+    enabled: true
+  - name: Sambanova
+    careers_url: https://sambanova.ai/careers
+    api: https://boards-api.greenhouse.io/v1/boards/sambanovasystems/jobs
+    scan_method: greenhouse
+    notes: AI chips and systems.
+    enabled: true
+  - name: Distyl
+    careers_url: https://distyl.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/distyl
+    scan_method: ashby
+    notes: Enterprise AI services.
+    enabled: true
+  - name: You.com
+    careers_url: https://you.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/youcom/jobs
+    scan_method: greenhouse
+    notes: AI search engine.
+    enabled: true
+  - name: Webflow
+    careers_url: https://webflow.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/webflow/jobs
+    scan_method: greenhouse
+    notes: Visual web builder.
+    enabled: true
+  - name: Inflection
+    careers_url: https://inflection.ai/careers
+    api: https://boards-api.greenhouse.io/v1/boards/inflectionai/jobs
+    scan_method: greenhouse
+    notes: AI assistant (Pi).
+    enabled: true
+  - name: Weaviate
+    careers_url: https://weaviate.io/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/weaviate
+    scan_method: ashby
+    notes: Open-source vector database.
+    enabled: true
+  - name: Netlify
+    careers_url: https://netlify.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/netlify/jobs
+    scan_method: greenhouse
+    notes: JAMstack hosting platform.
+    enabled: true
+  - name: Deel
+    careers_url: https://www.deel.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/deel
+    scan_method: ashby
+    notes: Global payroll / HR.
+    enabled: true
+  - name: Zoom
+    careers_url: https://careers.zoom.us
+    api: https://zoom.wd5.myworkdayjobs.com/Zoom
+    scan_method: workday
+    notes: Video conferencing.
+    enabled: true
+  - name: Chroma
+    careers_url: https://www.trychroma.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/trychroma
+    scan_method: ashby
+    notes: Open-source vector DB.
+    enabled: true
+  - name: Faire
+    careers_url: https://www.faire.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/faire/jobs
+    scan_method: greenhouse
+    notes: Wholesale marketplace.
+    enabled: true
+  - name: New Relic
+    careers_url: https://newrelic.com/about/careers
+    api: https://boards-api.greenhouse.io/v1/boards/newrelic/jobs
+    scan_method: greenhouse
+    notes: Observability platform.
+    enabled: true
+  - name: Sumo Logic
+    careers_url: https://www.sumologic.com/careers/
+    api: https://boards-api.greenhouse.io/v1/boards/sumologic/jobs
+    scan_method: greenhouse
+    notes: Cloud observability/SIEM.
+    enabled: true
+  - name: Tavus
+    careers_url: https://www.tavus.io/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/tavus
+    scan_method: ashby
+    notes: AI video personalization.
+    enabled: true
+  - name: Synthesia
+    careers_url: https://www.synthesia.io/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/synthesia
+    scan_method: ashby
+    notes: AI video creation.
+    enabled: true
+  - name: Mintlify
+    careers_url: https://mintlify.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/mintlify
+    scan_method: ashby
+    notes: Modern documentation platform.
+    enabled: true
+  - name: Dust
+    careers_url: https://dust.tt/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/dust
+    scan_method: ashby
+    notes: AI agents for work.
+    enabled: true
+  - name: Mistral
+    careers_url: https://mistral.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/mistral
+    scan_method: ashby
+    notes: French open-source LLM lab.
+    enabled: true
+  - name: Lucid
+    careers_url: https://www.lucidmotors.com/careers
+    api: https://boards-api.greenhouse.io/v1/boards/lucidmotors/jobs
+    scan_method: greenhouse
+    notes: EV manufacturer.
+    enabled: true
+  - name: Uber
+    careers_url: https://www.uber.com/us/en/careers/
+    scan_method: websearch
+    scan_query: site:uber.com/us/en/careers ("software engineer" OR "intern") 2026
+    notes: Proprietary API; SPA-only careers page.
+    enabled: true
+  - name: Doordash
+    careers_url: https://careers.doordash.com
+    scan_method: websearch
+    scan_query: site:careers.doordash.com ("software engineer" OR "intern") 2026
+    notes: Custom careers portal.
+    enabled: true
+  - name: Booking
+    careers_url: https://careers.booking.com
+    scan_method: websearch
+    scan_query: site:careers.booking.com ("software engineer" OR "intern") 2026
+    notes: Booking.com / Booking Holdings.
+    enabled: true
+  - name: Klarna
+    careers_url: https://www.klarna.com/careers/
+    scan_method: websearch
+    scan_query: site:klarna.com/careers ("software engineer" OR "engineer") 2026
+    notes: BNPL fintech (Sweden).
+    enabled: true
+  - name: Revolut
+    careers_url: https://www.revolut.com/careers/
+    scan_method: websearch
+    scan_query: site:revolut.com/careers ("software engineer" OR "engineer") 2026
+    notes: Neobank (UK).
+    enabled: true
+  - name: Wise
+    careers_url: https://wise.jobs
+    scan_method: websearch
+    scan_query: site:wise.jobs ("software engineer" OR "engineer") 2026
+    notes: Cross-border payments (formerly TransferWise).
+    enabled: true
+  - name: Canva
+    careers_url: https://www.canva.com/careers/jobs/
+    scan_method: websearch
+    scan_query: site:canva.com/careers ("software engineer" OR "engineer" OR "intern") 2026
+    notes: Design platform (Australia).
+    enabled: true
+  - name: Loom
+    careers_url: https://www.loom.com/careers
+    scan_method: websearch
+    scan_query: site:loom.com/careers ("software engineer" OR "engineer") 2026
+    notes: Async video. Acquired by Atlassian — most jobs may be on Atlassian board.
+    enabled: true
+  - name: Qdrant
+    careers_url: https://qdrant.tech/careers
+    scan_method: websearch
+    scan_query: site:qdrant.tech/careers ("software engineer" OR "engineer") 2026
+    notes: Vector database.
+    enabled: true
+  - name: Fly.io
+    careers_url: https://fly.io/jobs
+    scan_method: websearch
+    scan_query: site:fly.io/jobs ("software engineer" OR "engineer") 2026
+    notes: Edge platform.
+    enabled: true

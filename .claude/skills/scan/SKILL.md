@@ -1,0 +1,46 @@
+---
+name: scan
+description: Run the full job pipeline — scan API portals, filter by title/location/YOE, write to Potential sheet, then prune dead links. Covers all Greenhouse/Ashby/SmartRecruiters/Lever companies.
+user_invocable: true
+args: flags
+argument-hint: "[--companies 'Stripe,OpenAI'] [--all] [--dry-run]"
+---
+
+# scan
+
+Full pipeline: scan → filter → write to Potential → prune dead links.
+
+## Step 1 — Run the scanner
+
+```bash
+node src/jobs.mjs {{flags}}
+```
+
+**Key flags:**
+- `--companies "Stripe, OpenAI, Glean"` — scan only these companies (comma-separated, case-insensitive). Omit to scan all ~320 API-scannable companies.
+- `--all` — skip the 24h recency filter; returns all currently open jobs matching filters. Use when adding new companies or doing a full refresh.
+- `--dry-run` — preview without writing to the sheet.
+- `--desc` — fetch job descriptions for description-level YOE filtering (slower; always on for Ashby).
+
+If `--companies` names a websearch-only company (no ATS API), the scanner will report it and skip it — use `/websearch-jobs` for those.
+
+## Step 2 — Prune dead links
+
+After the scanner writes to Potential, remove stale rows via HTTP (no browser):
+
+```bash
+node src/prune.mjs
+```
+
+This checks Greenhouse/Ashby/Lever links against their board APIs and drops any job IDs no longer present. Takes ~30s regardless of sheet size.
+
+## Step 3 — Report
+
+Summarize:
+- How many companies were scanned
+- How many new jobs were written to Potential
+- How many were filtered (non-US, YOE, title, recency, duplicates)
+- How many rows prune removed
+- Any errors (transient SR 404s are normal rate-limiting; safe to ignore)
+
+Remind the user to review Potential and run `/apply` when ready.

@@ -1,0 +1,29 @@
+Software Engineer / Data Engineer
+
+Skills: TypeScript, Java, Python, C/C++, R, SQL, React, Node.js, Spring Boot, AWS (CDK, Lambda, CloudWatch), Docker, Kubernetes, Elasticsearch, MySQL, PostgreSQL, MongoDB, Tableau, Power BI
+
+Experience:
+- Software Development Engineer Intern at Amazon, Seattle, WA (Sept 2025 - Jan 2026)
+  - Built AI agent using Model Context Protocol (MCP) server with Amazon Q and CloudWatch to automate API availability investigation, reducing report generation time by 96% (4 hrs to 10 mins)
+  - Migrated 70+ API Gateway endpoints to TypeScript CDK infrastructure with interface-based OpenAPI spec management
+  - Optimized CloudWatch Insights queries, reducing log scan volume by 97.5% and improving query latency 3x
+
+- Data Engineering Intern at Moody's Ratings, New York, NY (Jun 2025 - Aug 2025)
+  - Modernized legacy R-based ETL system to Python, refactoring 1,000+ lines while maintaining 99.9% accuracy
+  - Engineered configuration-driven pipeline processing 18+ macroeconomic indicators with ARIMA forecasting
+  - Optimized SQL Server database schema, improving Power BI dashboard refresh times by 80%
+
+- Data Science Consultant at 33Floors, San Francisco, CA (Feb 2023 - Dec 2023)
+  - Developed 100+ Tableau and Power BI dashboards for real estate clients, contributing to $250K+ in annual recurring revenue
+  - Automated Excel reporting workflows, saving clients 8+ hours/week
+  - Developed SQL validation queries, reducing support tickets by 45%
+
+Education:
+- M.S. Computer Science, Northeastern University, Khoury College of Computer Sciences, Boston, MA (Expected Aug 2026) | GPA: 3.7/4.0
+- B.S. Business Administration, Magna Cum Laude, Babson College, Wellesley Hills, MA (Aug 2019 - Dec 2022)
+- Study Abroad Program in Statistics, The London School of Economics and Political Science, London, UK (Sept 2020 - Jun 2021)
+
+Projects:
+- GitGood (TypeScript, React, Node.js, Redux, Chrome Extension API) - Full-stack platform helping developers discover and contribute to open-source projects with GitHub integration
+- Movie Recommender Application (React, Spring Boot, Elasticsearch, AWS EC2) - Full-stack movie discovery platform with personalized recommendations and sub-second search capability
+EOF

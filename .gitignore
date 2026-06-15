@@ -11,3 +11,5 @@ service-account.json
 gmail-credentials.json
 gmail-token.json
 .playwright-mcp/
+data/job-descriptions.json
+data/resume-parsed.txt

@@ -29,7 +29,7 @@ import {
 
 import { categorizeRows } from '../src/apply.mjs';
 
-import { detectApi, parseLink, parseJobs, extractGHSlug, ATS } from '../src/ats.mjs';
+import { detectApi, parseLink, parseJobs, extractGHSlug, ATS, cleanDescription } from '../src/ats.mjs';
 
 import { isPermanentError } from '../src/fetch.mjs';
 
@@ -500,6 +500,15 @@ test('parseJobs lever: handles array input', () => {
   assert.equal(out[0].location, 'NYC');
 });
 
+test('parseJobs lever: extracts inline description (lowercased, from board listing)', () => {
+  const json = [
+    { text: 'SWE', hostedUrl: 'https://l/1', categories: { location: 'NYC' },
+      descriptionPlain: 'We need PYTHON and 5 Years', description: '<p>ignored html</p>' },
+  ];
+  const out = parseJobs('lever', json, 'OpenAI');
+  assert.equal(out[0].description, 'we need python and 5 years');
+});
+
 test('parseJobs smartrecruiters: city/region/country join + countryCode fallback', () => {
   const json = {
     content: [
@@ -511,6 +520,9 @@ test('parseJobs smartrecruiters: city/region/country join + countryCode fallback
   assert.equal(out[0].location, 'NYC, NY, US');
   assert.equal(out[1].location, 'HU');
   assert.ok(out[0].link.includes('jobs.smartrecruiters.com/Google/a1'));
+  // _slug/_id are carried for the per-job description fetch
+  assert.equal(out[0]._slug, 'Google');
+  assert.equal(out[0]._id, 'a1');
 });
 
 test('detectApi: myworkdayjobs.com api → workday', () => {
@@ -682,6 +694,24 @@ test('ATS URL templates: well-formed', () => {
   assert.equal(ATS.lever.boardApi('openai'),         'https://api.lever.co/v0/postings/openai');
   assert.equal(ATS.lever.jobApi('openai', 'abc-123'),'https://api.lever.co/v0/postings/openai/abc-123');
   assert.ok(ATS.smartrecruiters.boardApi('Google').includes('/v1/companies/Google/postings'));
+  assert.equal(ATS.smartrecruiters.jobApi('Google', 'a1'), 'https://api.smartrecruiters.com/v1/companies/Google/postings/a1');
+});
+
+// ── cleanDescription (HTML → plain lowercased text for storage/scoring) ──
+
+test('cleanDescription: decodes entities, strips tags, collapses whitespace, lowercases', () => {
+  // Greenhouse-style double-encoded HTML
+  assert.equal(cleanDescription('&lt;p&gt;Build   STUFF&lt;/p&gt;'), 'build stuff');
+  // Real tags stripped
+  assert.equal(cleanDescription('<h2>Backend</h2> <b>Engineer</b>'), 'backend engineer');
+  // Ampersand decoded last (no double-decode)
+  assert.equal(cleanDescription('R&amp;D team'), 'r&d team');
+});
+
+test('cleanDescription: empty/nullish input → empty string', () => {
+  assert.equal(cleanDescription(''), '');
+  assert.equal(cleanDescription(null), '');
+  assert.equal(cleanDescription(undefined), '');
 });
 
 // ── looksLikeJobUrl heuristic (used to filter websearch noise) ───────

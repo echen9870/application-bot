@@ -299,18 +299,14 @@ Once test-ml.mjs passes, the `scoreJobs()` function is ready to be called in job
 
 ## Next Steps
 
-Once test-ml.mjs consistently produces good scores:
+**Done — descriptions are now fetched and cached during every scan.** `jobs.mjs` fetches each new job's full description (inline for Ashby/Amazon/Lever/Oracle/Atlassian; per-job for Greenhouse/SmartRecruiters) and persists it to `data/job-descriptions.json`, keyed by job link. Run a normal scan to populate the cache:
 
-1. **Integrate `scoreJobs()` into jobs.mjs**
-   - After filtering, call `scoreJobs(resumeText, filteredJobs)`
-   - Add `score` column to the Potential sheet write
+```bash
+node src/jobs.mjs            # descriptions fetched by default; --no-desc to skip
+```
 
-2. **Add score column to Google Sheets**
-   - Add "Score" header to Potential sheet
-   - User can sort by Score descending to see best matches first
+Remaining to wire up scoring end-to-end:
 
-3. **Run production:**
-   ```bash
-   node src/jobs.mjs --desc
-   # Jobs append to Potential with scores
-   ```
+1. **Build a scoring step** — read jobs from the Potential sheet, join descriptions from the cache by link (`loadDescriptions()` in `src/ml/descriptions.mjs`), then call `scoreJobs(resumeText, jobs)`.
+
+2. **Surface scores** — add a "Score" column to the Potential sheet (or a separate ranked view) so the best matches sort to the top.

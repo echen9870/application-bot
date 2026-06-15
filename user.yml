@@ -1,0 +1,161 @@
+# Eric Chen — Job Search Profile
+# Used for ML-based job scoring (1–10 match score against Potential sheet entries)
+
+profile:
+  name: Eric Chen
+  email: echen9870@gmail.com
+
+experience:
+  years: 0          # new grad / entry-level
+  max_yoe_target: 3 # matches scan_config.max_yoe — won't apply to roles requiring > 3 YOE
+
+skills:
+  languages:
+    - Python
+    - JavaScript
+    - TypeScript
+    - Java
+    - C++
+    - Go
+  frameworks:
+    - Node.js
+    - React
+    - Express
+  tools:
+    - Git
+    - Docker
+    - SQL
+    - REST APIs
+  domains:
+    - Backend Engineering
+    - Full-Stack Development
+    - Distributed Systems
+    - Cloud Infrastructure (AWS / GCP)
+    - AI/ML Engineering
+
+job_titles:
+  preferred:
+    - Software Engineer
+    - Backend Engineer
+    - Full Stack Engineer
+    - Software Developer
+    - Platform Engineer
+    - SWE Intern
+    - New Grad Software Engineer
+    - Software Engineer Intern
+    - Machine Learning Engineer
+  acceptable:
+    - Systems Engineer
+    - Infrastructure Engineer
+    - Cloud Engineer
+    - DevOps Engineer
+    - API Engineer
+  excluded:
+    - Senior
+    - Staff
+    - Principal
+    - Director
+    - Manager
+
+role_level:
+  # 1 = intern, 2 = new grad / entry-level, 3 = junior (0-2 YOE), 4 = mid (2-5 YOE)
+  target: [1, 2, 3]  # intern, new grad, or junior
+  max: 3
+
+location:
+  preferred:
+    - San Francisco, CA
+    - New York, NY
+    - Seattle, WA
+    - Remote
+    - Boston, MA
+  acceptable_states:
+    - CA
+    - NY
+    - WA
+    - MA
+    - TX
+    - IL
+    - CO
+    - VA
+    - MD
+    - GA
+  us_only: true
+
+company_preferences:
+  tiers:
+    tier1:  # dream companies — high signal match
+      - Google
+      - OpenAI
+      - Anthropic
+      - Meta
+      - Apple
+      - Microsoft
+      - Stripe
+      - Databricks
+      - Figma
+      - Notion
+      - Cursor
+    tier2:  # strong interest
+      - Amazon
+      - Netflix
+      - Uber
+      - Airbnb
+      - Coinbase
+      - Brex
+      - Plaid
+      - Anduril
+      - Scale AI
+      - Groq
+      - Hugging Face
+      - IMC Trading
+      - Jane Street
+      - Citadel
+      - Citadel Securities
+      - Two Sigma
+      - DRW
+    tier3:  # solid options
+      - Qualcomm
+      - NVIDIA
+      - AMD
+      - Bloomberg
+      - Goldman Sachs
+      - JP Morgan
+      - Morgan Stanley
+      - Boeing
+      - Booz Allen
+      - Peraton
+      - Leidos
+      - BAE Systems
+  avoid:  # low-signal or non-preferred sectors
+    - consulting_staffing: [Accenture, Infosys, Wipro, TCS, LTIMindTree, Cognizant]
+
+industries:
+  preferred:
+    - AI/ML
+    - FinTech
+    - Developer Tools
+    - Cloud Infrastructure
+    - Robotics / Autonomous Systems
+    - Cybersecurity
+  acceptable:
+    - Defense / Aerospace
+    - Healthcare Tech
+    - Media / Entertainment
+  avoid:
+    - Pure Marketing SaaS
+    - Insurance (non-tech roles)
+
+compensation:
+  # informational — not used for filtering, used for scoring
+  min_base_usd: 100000     # full-time
+  target_base_usd: 150000  # full-time target
+  intern_hourly_min: 35    # $/hr for internships
+
+scoring_weights:
+  # relative importance 1–5 for each dimension
+  company_tier: 5
+  title_match: 4
+  location_match: 3
+  industry_match: 3
+  role_level_match: 4

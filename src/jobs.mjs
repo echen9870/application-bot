@@ -10,8 +10,13 @@
  *   node src/jobs.mjs              # scan + append new jobs to Potential
  *   node src/jobs.mjs --dry-run    # preview without writing
  *   node src/jobs.mjs --all        # skip recency filter
- *   node src/jobs.mjs --desc       # fetch GH descriptions for desc-level YOE filtering
+ *   node src/jobs.mjs --no-desc    # skip description fetching (descriptions are fetched by default)
  *   node src/jobs.mjs --companies "Stripe, OpenAI"
+ *
+ * Descriptions: every new job's full description is fetched during the scan and persisted to
+ * data/job-descriptions.json (keyed by link) so the ML scorer can later evaluate match quality.
+ * Ashby/Amazon/Lever/Oracle/Atlassian include descriptions inline; Greenhouse/SmartRecruiters
+ * are fetched per-job via their individual-posting endpoints. Pass --no-desc to skip all fetches.
  */
 
 import { fileURLToPath } from 'url';
@@ -20,6 +25,7 @@ import { loadConfig, loadEnabledCompanies } from './config.mjs';
 import { fetchJson } from './fetch.mjs';
 import { detectApi, parseJobs, ATS } from './ats.mjs';
 import { appendToPotential, fetchSeenLinks, buildCheckboxRequest } from './potential-writer.mjs';
+import { saveDescriptions } from './ml/descriptions.mjs';
 import {
   extractMinYOE, extractMinYOEFromDesc, yoeLabel,
   isUS, buildTitleFilter,
@@ -41,20 +47,6 @@ function isRecent(posted, cutoff) {
   return isNaN(d) || d >= cutoff;
 }
 
-// Fetch GH job description and strip HTML for description-level YOE filtering.
-async function fetchGHDescription(slug, id, { timeoutMs, retries }) {
-  try {
-    const json = await fetchJson(ATS.greenhouse.jobApi(slug, id), { timeoutMs, retries });
-    return (json.content || '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s{2,}/g, ' ')
-      .trim()
-      .toLowerCase();
-  } catch {
-    return '';
-  }
-}
-
 // Bounded-concurrency worker pool over an array of async tasks.
 async function parallel(tasks, limit) {
   let i = 0;
@@ -68,7 +60,7 @@ async function main() {
   const args      = process.argv.slice(2);
   const dryRun    = args.includes('--dry-run');
   const allDates  = args.includes('--all');
-  const fetchDesc = args.includes('--desc');
+  const fetchDesc = !args.includes('--no-desc');   // descriptions fetched by default
 
   // --companies "Stripe, OpenAI" or --companies=Stripe,OpenAI
   const companiesIdx = args.findIndex(a => a === '--companies' || a.startsWith('--companies='));
@@ -125,16 +117,18 @@ async function main() {
         const minYOE = extractMinYOE(j.role);
         if (minYOE !== null && minYOE > MAX_YOE)              { yoeFiltered++;   continue; }
 
-        // Description-level YOE: Ashby has it inline; GH needs --desc to fetch
+        // Description: inline for Ashby/Amazon/Lever/Oracle/Atlassian; fetched per-job for
+        // Greenhouse/SmartRecruiters. Used both for description-level YOE filtering below and
+        // (after passing) persisted to data/job-descriptions.json for later ML scoring.
         let desc = j.description || '';
-        if (!desc && fetchDesc && c._api.type === 'greenhouse' && j._slug && j._id) {
-          desc = await fetchGHDescription(j._slug, j._id, { timeoutMs: TIMEOUT, retries: RETRIES });
+        if (!desc && fetchDesc && ATS[c._api.type].fetchDescription) {
+          desc = await ATS[c._api.type].fetchDescription(j, fetchJson, { timeoutMs: TIMEOUT, retries: RETRIES });
         }
         const descYOE = extractMinYOEFromDesc(desc);
         if (descYOE !== null && descYOE > MAX_YOE)            { yoeFiltered++;   continue; }
 
         seenLinks.add(j.link);
-        newJobs.push({ ...j, yoe: yoeLabel(j.role) });
+        newJobs.push({ ...j, description: desc, yoe: yoeLabel(j.role) });
       }
     } catch (e) { errors.push(`  ✗ ${c.name}: ${e.message}`); }
   });
@@ -167,6 +161,12 @@ async function main() {
 
   const { written } = await appendToPotential(sheets, newJobs, { dateFound: date, source: 'scan' });
   console.log(`\nSaved → Google Sheets  (${written} rows added to Potential)`);
+
+  // Persist descriptions (keyed by link) for later ML scoring. Jobs from ATSes that expose
+  // no description are silently skipped by saveDescriptions.
+  const cached = saveDescriptions(newJobs);
+  if (cached > 0) console.log(`Cached → data/job-descriptions.json  (${cached} descriptions for ML scoring)`);
+
   console.log('Tip: mark ✓ in Applied? column for jobs you applied to, then run: node src/apply.mjs');
 }
 

@@ -60,7 +60,7 @@ node src/jobs.mjs              # scan all portals, add new jobs to Potential (la
 node src/jobs.mjs --dry-run    # preview without writing anything
 node src/jobs.mjs --all        # scan without 48h recency filter
 node src/jobs.mjs --companies "Stripe, Anthropic"  # scan specific companies only
-node src/jobs.mjs --desc       # also fetch JD text for description-level YOE filtering (slower)
+node src/jobs.mjs --no-desc     # skip JD fetching (descriptions fetched by default → data/job-descriptions.json)
 
 node src/apply.mjs             # process Potential: ✓ → Applied, rest → Ignored
 node src/apply.mjs --dry-run   # preview without writing

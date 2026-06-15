@@ -20,7 +20,7 @@ node src/jobs.mjs {{flags}}
 - `--companies "Stripe, OpenAI, Glean"` — scan only these companies (comma-separated, case-insensitive). Omit to scan all ~320 API-scannable companies.
 - `--all` — skip the 24h recency filter; returns all currently open jobs matching filters. Use when adding new companies or doing a full refresh.
 - `--dry-run` — preview without writing to the sheet.
-- `--desc` — fetch job descriptions for description-level YOE filtering (slower; always on for Ashby).
+- `--no-desc` — skip job-description fetching. Descriptions are fetched **by default** (used for description-level YOE filtering and cached to `data/job-descriptions.json` for ML scoring); pass this to skip the per-job fetches for a faster scan.
 
 If `--companies` names a websearch-only company (no ATS API), the scanner will report it and skip it — use `/websearch-jobs` for those.
 

@@ -39,8 +39,13 @@ career-ops/
     ats.mjs               ← Greenhouse/Ashby/Lever/SmartRecruiters URLs + parsers + parseLink
     fetch.mjs             ← fetchJson/fetchResponse with timeout + retry/backoff
     potential-writer.mjs  ← appendToPotential, fetchSeenLinks, buildCheckboxRequest
+    ml/
+      parser.mjs          ← resume parser (PDF→pdf-parse→Gemini cleanup, or TXT/MD direct)
+      scorer.mjs          ← resume×job match scoring via local embeddings (@xenova/transformers)
+      descriptions.mjs    ← job-description cache (data/job-descriptions.json, keyed by link)
   test/
-    test-all.mjs          ← 65-test suite (node:test, no deps)
+    test-all.mjs          ← test suite (node:test, no deps)
+    test-ml.mjs           ← standalone ML pipeline test (no Sheets needed)
   portals.yml             ← company list + scan config
   .env                    ← secrets (gitignored)
   service-account.json    ← Google service account (gitignored)
@@ -141,7 +146,10 @@ export function detectApi(company)                   // portals.yml entry → { 
 export function extractGHSlug(apiUrl)                // → 'stripe' from /v1/boards/stripe/jobs
 export function parseJobs(type, json, company, apiUrl?)  // dispatch to ATS[type].parse
 export function parseLink(url)                       // job URL → { type, slug, id } | { type:'generic', url } | null
+export function cleanDescription(html)               // decode entities + strip tags + collapse + lowercase
 ```
+
+**`fetchDescription` (optional, per-ATS hook):** `async fetchDescription(job, fetchJson, opts) → string` returns the cleaned, lowercased job description (or `''` on failure). Defined for the two ATSes whose list API omits descriptions: `greenhouse` (fetches `jobApi(_slug, _id)` → `.content`) and `smartrecruiters` (fetches `jobApi(_slug, _id)` → joins `jobAd.sections.{jobDescription,qualifications,additionalInformation}.text`). Both rely on the parser carrying `_slug`/`_id` on each job. ATSes that include descriptions inline (`ashby`, `amazon`, `lever`, `oraclecloud`, `atlassian`) set `job.description` in `parse()` and define no hook.
 
 **`fetchAll` (optional, per-ATS hook):** for ATSes that don't fit the "one GET → one JSON page" pattern. Defined by:
 - `workday` — POSTs to `/wday/cxs/{tenant}/{site}/jobs` with `{appliedFacets, limit, offset, searchText}`; paginates 5 pages × 20 = 100 jobs.
@@ -162,6 +170,26 @@ export async function appendToPotential(sheets, jobs, { dateFound?, source? } = 
 export async function fetchSeenLinks(sheets)         // → Set<string> from Potential G + Applied E + Ignored E
 export async function getFirstEmptyRow(sheets)       // → row number via column B counter
 export function buildCheckboxRequest(sheetId, endRow=1001)  // BOOLEAN data-validation request
+```
+
+### src/ml/descriptions.mjs
+```js
+export function loadDescriptions()        // → { [link]: { company, role, description, fetchedAt } }  (whole cache, {} if absent)
+export function getDescription(link)      // → cached description string | ''
+export function saveDescriptions(jobs)    // merge jobs[].{link,company,role,description} → data/job-descriptions.json (atomic tmp+rename); skips empty descriptions; returns count written
+```
+`jobs.mjs` calls `saveDescriptions(newJobs)` after writing to Potential. The cache is keyed by job **link** (same value stored in Potential col G), so the ML scorer joins jobs→descriptions by link. Gitignored — derived data, can be large.
+
+### src/ml/scorer.mjs
+```js
+export async function embed(text)                     // → number[] (384-dim, all-MiniLM-L6-v2, local, free)
+export async function scoreMatch(resumeText, jobText) // → number 0–1 (cosine similarity)
+export async function scoreJobs(resumeText, jobs)     // → jobs[] each with .score, sorted desc; uses job.description, falls back to "role at company in location"
+```
+
+### src/ml/parser.mjs
+```js
+export async function parseResume({ force? } = {})    // → resume text. PDF→pdf-parse+Gemini cleanup, or data/resume.{txt,md} direct. Caches to data/resume-parsed.txt.
 ```
 
 ### src/sheets-client.mjs
@@ -230,11 +258,13 @@ Status rank: Applied=1, Rejected=2, Interview=3, Offer=6. Rejected only updates 
 
 `npm run scan` = `node src/jobs.mjs && node src/prune.mjs` — scan all API companies, filter, write to Potential, then prune dead links in one step.
 
+**Cost optimization:** `/scanall` and `/websearch-jobs` are token-heavy (95 web searches). Always invoke them with the cheapest available model: `claude --model claude-haiku-4-5-20251001 /scanall`. Prune is a plain Node.js script (`node src/prune.mjs`) — run it directly, not inside a Claude session.
+
 **Flags:**
 - `--companies "Stripe, OpenAI, Glean"` — scan only these companies (comma-separated, case-insensitive). Websearch-only companies are skipped with a clear error.
 - `--all` — skip the recency filter; returns all currently open jobs. Use when adding new companies or doing a full refresh.
 - `--dry-run` — preview without writing to the sheet.
-- `--desc` — fetch GH job descriptions via `https://boards-api.greenhouse.io/v1/boards/{board}/jobs/{id}` (JSON `.content` field, HTML-stripped) for description-level YOE filtering. ~1 extra req/job that passes other filters. Ashby descriptions are always free.
+- `--no-desc` — skip description fetching. **Descriptions are fetched by default** during every scan (this was previously opt-in via `--desc`, now removed). For each job that passes the earlier filters, the full description is fetched and (a) used for description-level YOE filtering and (b) persisted to `data/job-descriptions.json` keyed by link for later ML scoring. Ashby/Amazon/Lever/Oracle/Atlassian include descriptions inline (free); Greenhouse (`/v1/boards/{board}/jobs/{id}` `.content`) and SmartRecruiters (`/v1/companies/{slug}/postings/{id}` `jobAd.sections`) are fetched per-job (~1 extra req/job that passes other filters). Use `--no-desc` to suppress all fetches.
 
 **Filters applied in order:**
 1. Title keyword filter (`buildTitleFilter` from portals.yml `title_filter`)
@@ -242,7 +272,7 @@ Status rank: Applied=1, Rejected=2, Interview=3, Offer=6. Rejected only updates 
 3. US-only location (`isUS()` from `filters.mjs`)
 4. Not already seen (dedup: links from Potential col G + Applied col E + Ignored col E → `seenLinks` Set)
 5. YOE title ≤ `max_yoe` (`extractMinYOE` on role title)
-6. YOE description ≤ `max_yoe` (`extractMinYOEFromDesc` on description — Ashby always, GH with `--desc`)
+6. YOE description ≤ `max_yoe` (`extractMinYOEFromDesc` on description — fetched by default for all ATS that support it; disable with `--no-desc`)
 
 **Write flow:**
 1. Fetch column B (Date Found) to find `firstEmptyRow = values.length + 2`
@@ -387,6 +417,8 @@ node src/prune.mjs            # check and remove dead rows
 node src/prune.mjs --dry-run  # preview without deleting
 ```
 
+**Cost note:** prune is pure Node.js with no Claude involvement — always run it directly (`node src/prune.mjs`), never inside a Claude session where it would burn tokens unnecessarily.
+
 ---
 
 ## Gmail Sync (src/gmail-sync.mjs)
@@ -466,7 +498,7 @@ npm test                    # runs test/test-all.mjs
 node test/test-all.mjs      # same
 ```
 
-**65 tests, zero extra dependencies** (Node.js built-in `node:test` + `node:assert`):
+**89 tests, zero extra dependencies** (Node.js built-in `node:test` + `node:assert`):
 
 | Import source | Functions tested |
 |---|---|
@@ -474,7 +506,7 @@ node test/test-all.mjs      # same
 | `src/filters.mjs` | `looksLikeJobUrl` (3) |
 | `src/gmail-sync.mjs` | `classify` (5), `extractCompany` (4), `normalize` (2), `shouldUpdate` (4) |
 | `src/apply.mjs` | `categorizeRows` (6) — incl. boolean/null/number coercion |
-| `src/ats.mjs` | `detectApi` (3), `extractGHSlug` (1), `parseLink` (5), `parseJobs` (5), URL templates (1) |
+| `src/ats.mjs` | `detectApi` (3), `extractGHSlug` (1), `parseLink` (5), `parseJobs` (5, incl. Lever desc + SR _slug/_id), `cleanDescription` (2), URL templates (1) |
 | `src/fetch.mjs` | `isPermanentError` (3) — 4xx fails fast, 429 retries, 5xx retries |
 
 Filter functions live in `src/filters.mjs` but are re-exported from `src/jobs.mjs` — tests always import from `src/jobs.mjs` for backward compatibility.
@@ -526,6 +558,7 @@ Filter functions live in `src/filters.mjs` but are re-exported from `src/jobs.mj
 - **apply.mjs deduplicates before writing:** Running `/apply` twice is safe — links already in Applied/Ignored are skipped.
 - **Lever board API false positives — FIXED.** Prune now hits `api.lever.co/v0/postings/{slug}/{id}` (individual endpoint, 404 = dead) instead of the board listing. Lever links no longer need Playwright verification.
 - **Filter-set difference between jobs.mjs and write-potential.mjs:** Both apply title + US + dedup + title-YOE. `jobs.mjs` also applies recency and description-level YOE. `write-potential.mjs` additionally applies `looksLikeJobUrl()` (rejects blog/news/podcast URLs from websearch noise).
+- **Descriptions are fetched by default and cached for ML scoring:** `jobs.mjs` fetches every new job's full description during the scan (inline for Ashby/Amazon/Lever/Oracle/Atlassian; per-job for Greenhouse/SmartRecruiters) and writes them to `data/job-descriptions.json` keyed by link. This was previously opt-in via `--desc`; that flag is gone — use `--no-desc` to suppress. Descriptions are NOT written to the Potential sheet (too large) — the cache and sheet join by link. The ML scorer (`src/ml/scorer.mjs`) consumes the cache via `loadDescriptions()`.
 - **Source column drives prune scope:** `jobs.mjs` tags rows `Source = scan`; `write-potential.mjs` tags `Source = websearch`. `prune.mjs` only checks the websearch ones. Don't manually clear column J — it's how the pipeline decides what's verified.
 - **Retry/backoff is automatic:** `fetch.mjs` retries 3 times by default with linear backoff (500ms, 1s, 1.5s) — but only on transient errors (5xx, 429, network/timeout). Permanent 4xx errors (404, 401, 403) fail fast in one attempt via `isPermanentError()` so dead links don't burn 4× wall-time. The retry count is `scan_config.retries`.
 - **`portals.yml` writes are atomic:** `probe-ats.mjs --apply` and `check-liveness.mjs --fix` both stage to `portals.yml.tmp` then `rename`, so a Ctrl+C or crash mid-write can't truncate the source-of-truth file.

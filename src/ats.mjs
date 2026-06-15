@@ -18,6 +18,26 @@ function toDate(val) {
   return isNaN(d) ? '' : d.toISOString().slice(0, 10);
 }
 
+// Decode HTML entities, strip tags, collapse whitespace, lowercase.
+// Used to normalize job descriptions for storage (data/job-descriptions.json)
+// and downstream ML scoring (src/ml/scorer.mjs). Greenhouse double-encodes real
+// HTML as entities (&lt;p&gt;), so decode first, then strip the resulting tags.
+export function cleanDescription(html) {
+  if (!html) return '';
+  return html
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&#x27;/gi, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')      // decode last to avoid double-decoding
+    .replace(/<[^>]+>/g, ' ')    // strip HTML tags
+    .replace(/\s{2,}/g, ' ')     // collapse whitespace
+    .trim()
+    .toLowerCase();
+}
+
 // Workday's listing API only returns human-readable strings like "Posted Today" /
 // "Posted 5 Days Ago" / "Posted 30+ Days Ago". Convert to ISO date.
 function workdayPostedToDate(s) {
@@ -70,6 +90,14 @@ export const ATS = {
       const m = path.match(/^\/([^/]+)\/jobs\/(\d+)/);
       return m ? { type: 'greenhouse', slug: m[1], id: m[2] } : null;
     },
+    // GH list API omits descriptions — fetch the individual job to get .content.
+    async fetchDescription(job, fetchJson, opts) {
+      if (!job._slug || !job._id) return '';
+      try {
+        const json = await fetchJson(ATS.greenhouse.jobApi(job._slug, job._id), opts);
+        return cleanDescription(json.content || '');
+      } catch { return ''; }
+    },
   },
 
   ashby: {
@@ -101,6 +129,8 @@ export const ATS = {
         link:     j.hostedUrl || '',
         location: j.categories?.location || '',
         posted:   toDate(j.createdAt),
+        // Lever's board listing already includes the full description — no extra fetch needed.
+        description: cleanDescription(j.descriptionPlain || j.description || ''),
       }));
     },
     parseLink(host, path) {
@@ -651,6 +681,7 @@ export const ATS = {
 
   smartrecruiters: {
     boardApi: slug => `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&status=PUBLIC`,
+    jobApi:   (slug, id) => `https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`,
     parse(json, company) {
       return (json.content || []).map(j => {
         const loc = j.location;
@@ -663,10 +694,23 @@ export const ATS = {
           link:     `https://jobs.smartrecruiters.com/${j.company?.identifier || ''}/${j.id}`,
           location,
           posted:   toDate(j.releasedDate || j.updatedAt),
+          _slug:    j.company?.identifier || '',   // for fetchDescription
+          _id:      String(j.id || ''),
         };
       });
     },
     parseLink: () => null,   // SR job URLs are not parsed by prune (no liveness check)
+    // SR list API omits descriptions — fetch the individual posting's jobAd sections.
+    async fetchDescription(job, fetchJson, opts) {
+      if (!job._slug || !job._id) return '';
+      try {
+        const json = await fetchJson(ATS.smartrecruiters.jobApi(job._slug, job._id), opts);
+        const s = json.jobAd?.sections || {};
+        const combined = [s.jobDescription?.text, s.qualifications?.text, s.additionalInformation?.text]
+          .filter(Boolean).join(' ');
+        return cleanDescription(combined);
+      } catch { return ''; }
+    },
   },
 };
 

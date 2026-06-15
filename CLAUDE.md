@@ -79,6 +79,7 @@ career-ops/
 | H | H | 7 | YOE label ("New Grad", "2+ YOE", etc.) |
 | I | I | 8 | Notes |
 | J | J | 9 | Source ("scan" or "websearch") — controls what prune checks |
+| K | K | 10 | Match Score (1–10, written by `score.mjs`; blank until scored) |
 
 **Applied** (active applications):
 
@@ -107,7 +108,7 @@ career-ops/
 - **Checkbox cells** return `"TRUE"`/`"FALSE"` strings (not booleans) from `values.get`. `apply.mjs` handles both `"TRUE"` and the legacy `"✓"`.
 - **Trailing empty rows** are omitted from `values.get` responses. Intermediate empty rows are included. This makes **column B (Date Found) a reliable row counter**: `(await sheets.spreadsheets.values.get({ range: 'Potential!B2:B' })).data.values.length + 2` = first empty row number. Both `jobs.mjs` and `write-potential.mjs` use this pattern.
 - **Always use `values.update` (not `values.append`) when writing to Potential.** `values.append` detects a "table" ending at the last row with a checkbox `FALSE` value (row 1001) and appends below it. `values.update` with an explicit range writes to the correct row.
-- **Column A checkbox validation is wiped when `apply.mjs` clears `Potential!A2:J`.** `jobs.mjs` and `write-potential.mjs` re-apply it via `buildCheckboxRequest()` after every append, dynamically extending the end row past any overflow: `Math.max(1001, lastWrittenRow + 1)`.
+- **Column A checkbox validation is wiped when `apply.mjs` clears `Potential!A2:K`.** `jobs.mjs` and `write-potential.mjs` re-apply it via `buildCheckboxRequest()` after every append, dynamically extending the end row past any overflow: `Math.max(1001, lastWrittenRow + 1)`.
 
 If checkboxes disappear, restore them:
 ```bash
@@ -254,7 +255,7 @@ Status rank: Applied=1, Rejected=2, Interview=3, Offer=6. Rejected only updates 
 
 ## Job Scanner (src/jobs.mjs)
 
-**Daily workflow:** `npm run scan` → review Potential sheet → check ✓ → `node src/apply.mjs`
+**Daily workflow:** `npm run scan` → `node src/score.mjs` → review Potential sheet (sort by Match Score) → check ✓ → `node src/apply.mjs`
 
 `npm run scan` = `node src/jobs.mjs && node src/prune.mjs` — scan all API companies, filter, write to Potential, then prune dead links in one step.
 
@@ -372,10 +373,25 @@ git add portals.yml && git commit -m "fix: Company Name ATS endpoint"
 4. Filter out any job whose link is already in `seenLinks` (printed counts reflect post-dedup totals)
 5. `values.append` checked jobs → `Applied!A:G` with status `"Applied"`
 6. `values.append` unchecked jobs → `Ignored!A:E`
-7. `values.clear` → `Potential!A2:J` (includes Source column)
+7. `values.clear` → `Potential!A2:K` (includes Source + Match Score columns)
 
 Running `/apply` twice is safe — duplicates are skipped by the link dedup in step 3.
 Source is not propagated to Applied/Ignored (those sheets stay 7 / 5 columns).
+
+---
+
+## Score (src/score.mjs)
+
+Productionizes the embedding model in `src/ml/scorer.mjs` against the Potential sheet — it does **not** introduce a new algorithm, it calls the same `scoreJobs()` that `test/test-ml.mjs` uses. Run after a scan (`node src/score.mjs`).
+
+**Flow:**
+1. Find the data extent via the column-B (Date Found) counter — `getFirstEmptyRow()` — and read exactly `Potential!A2:K{lastDataRow}` (avoids the hundreds of trailing checkbox-only rows that an open-ended `A:K` read returns, which previously overflowed the grid on clear).
+2. Join each row's description from `data/job-descriptions.json` (by link, via `loadDescriptions()`).
+3. `parseResume()` → resume text; `scoreJobs(resumeText, jobs)` → cosine similarity 0–1 per job (jobs without a cached description fall back to "role at company in location").
+4. Map cosine → 1–10 (`score10 = round(1 + cosine·9, 1)`, matching the scale in `user.yml`) and `values.update` → `Potential!K1:K{lastDataRow}` (header "Match Score" + one score per row, aligned by row).
+5. `values.clear` → `Potential!K{firstEmpty}:K` to wipe stale scores below the current data.
+
+`--dry-run` prints the ranked summary without writing. `--top N` sets how many rows the console summary lists (default 20). **Note:** `user.yml`'s richer rubric (`scoring_weights`, company `tiers`, location/industry prefs) is **not** consumed — scoring is purely the resume↔description embedding similarity. Folding the rubric in is a possible future enhancement.
 
 ---
 
@@ -528,6 +544,8 @@ Filter functions live in `src/filters.mjs` but are re-exported from `src/jobs.mj
 | `npm run apply:dry` | `node src/apply.mjs --dry-run` |
 | `npm run prune` | `node src/prune.mjs` |
 | `npm run prune:dry` | `node src/prune.mjs --dry-run` |
+| `npm run score` | `node src/score.mjs` — score Potential rows, write Match Score (col K) |
+| `npm run score:dry` | `node src/score.mjs --dry-run` — print ranking, write nothing |
 | `npm run probe` | `node src/probe-ats.mjs` |
 | `npm run probe:apply` | `node src/probe-ats.mjs --apply` |
 | `npm run gmail` | `node src/gmail-sync.mjs` |
@@ -550,7 +568,7 @@ Filter functions live in `src/filters.mjs` but are re-exported from `src/jobs.mj
 - **Checkbox values from Sheets API:** BOOLEAN checkbox cells return `"TRUE"`/`"FALSE"` strings (not booleans) under the default `FORMATTED_VALUE` render. Formula cells (e.g. `=IF(...)`) can return real booleans, so `categorizeRows` coerces via `String(r[0] ?? '')` to handle both safely.
 - **`values.append` writes to wrong row:** Sheets detects checkbox `FALSE` values as table content; append lands below row 1001. Always use `values.update` with an explicit range computed from the column B counter.
 - **SmartRecruiters rate limiting:** During bulk scans (300+ companies), some SR endpoints return 404 transiently. These are rate-limiting artifacts. Safe to ignore.
-- **Checkbox loss:** `apply.mjs` clears `Potential!A2:J` which wipes column A data validation. `jobs.mjs` re-applies it via `buildCheckboxRequest()` after every append. If checkboxes vanish, run the one-liner above or re-run `jobs.mjs`.
+- **Checkbox loss:** `apply.mjs` clears `Potential!A2:K` which wipes column A data validation. `jobs.mjs` re-applies it via `buildCheckboxRequest()` after every append. If checkboxes vanish, run the one-liner above or re-run `jobs.mjs`.
 - **portals.yml not committed history:** API endpoint additions were lost once in a `git filter-repo` rewrite. Always commit `portals.yml` changes immediately after bulk probe runs.
 - **Stale jobs in Potential:** The ATS scanner only adds new jobs. Run `node src/prune.mjs` periodically (or after `/websearch-jobs`) to remove dead links.
 - **Websearch results are stale:** After `/websearch-jobs`, always run `node src/prune.mjs` first (HTTP check), then Playwright for links prune can't determine.

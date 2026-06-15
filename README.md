@@ -62,6 +62,9 @@ node src/jobs.mjs --all        # scan without 48h recency filter
 node src/jobs.mjs --companies "Stripe, Anthropic"  # scan specific companies only
 node src/jobs.mjs --no-desc     # skip JD fetching (descriptions fetched by default → data/job-descriptions.json)
 
+node src/score.mjs             # score Potential rows vs resume (ml/scorer.mjs), write Match Score (col K)
+node src/score.mjs --dry-run   # print the ranking without writing
+
 node src/apply.mjs             # process Potential: ✓ → Applied, rest → Ignored
 node src/apply.mjs --dry-run   # preview without writing
 

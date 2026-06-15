@@ -14,6 +14,8 @@
     "gmail:dry": "node src/gmail-sync.mjs --dry-run",
     "prune": "node src/prune.mjs",
     "prune:dry": "node src/prune.mjs --dry-run",
+    "score": "node src/score.mjs",
+    "score:dry": "node src/score.mjs --dry-run",
     "probe": "node src/probe-ats.mjs",
     "probe:apply": "node src/probe-ats.mjs --apply",
     "test": "node test/test-all.mjs",

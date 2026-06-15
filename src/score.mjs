@@ -23,7 +23,7 @@
  */
 
 import { fileURLToPath } from 'url';
-import { createSheetsClient, SPREADSHEET_ID } from './sheets-client.mjs';
+import { createSheetsClient, getSheetId, SPREADSHEET_ID } from './sheets-client.mjs';
 import { getFirstEmptyRow } from './potential-writer.mjs';
 import { parseResume } from './ml/parser.mjs';
 import { scoreJobs } from './ml/scorer.mjs';
@@ -126,7 +126,22 @@ async function main() {
     range: `Potential!${SCORE_COL}${firstEmptyRow}:${SCORE_COL}`,
   });
 
-  console.log(`\nSaved → Potential column ${SCORE_COL} (${SCORE_HEADER}).  Sort by it descending to see best matches first.`);
+  // 7 — sort the data rows (A..K, excluding header) by Match Score descending so the
+  // best matches are at the top. Checkbox values in column A move with their rows.
+  const sheetId = await getSheetId(sheets, 'Potential');
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [{
+        sortRange: {
+          range: { sheetId, startRowIndex: 1, endRowIndex: lastDataRow, startColumnIndex: 0, endColumnIndex: 11 },
+          sortSpecs: [{ dimensionIndex: 10, sortOrder: 'DESCENDING' }],   // column K
+        },
+      }],
+    },
+  });
+
+  console.log(`\nSaved → Potential column ${SCORE_COL} (${SCORE_HEADER}); sheet sorted by score, highest first.`);
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

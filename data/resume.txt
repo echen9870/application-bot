@@ -1,29 +1,25 @@
-Software Engineer / Data Engineer
+Software Engineer
 
-Skills: TypeScript, Java, Python, C/C++, R, SQL, React, Node.js, Spring Boot, AWS (CDK, Lambda, CloudWatch), Docker, Kubernetes, Elasticsearch, MySQL, PostgreSQL, MongoDB, Tableau, Power BI
+Skills: Java, JavaScript, TypeScript, C/C++, Python, Elixir, Go, MongoDB, PostgreSQL, DynamoDB, Express, Flask, Django, React, React Native, NextJS, Spring, Git, AWS, Docker, Postman, Grafana, Kafka
 
 Experience:
-- Software Development Engineer Intern at Amazon, Seattle, WA (Sept 2025 - Jan 2026)
-  - Built AI agent using Model Context Protocol (MCP) server with Amazon Q and CloudWatch to automate API availability investigation, reducing report generation time by 96% (4 hrs to 10 mins)
-  - Migrated 70+ API Gateway endpoints to TypeScript CDK infrastructure with interface-based OpenAPI spec management
-  - Optimized CloudWatch Insights queries, reducing log scan volume by 97.5% and improving query latency 3x
+- Software Developer Intern at MasterControl (Jun 2025 - Dec 2025)
+  - Partnered with data engineering to strengthen Kafka pipelines, ensuring reliable delivery of critical messages
+  - Built Kafka migration pipelines to move legacy systems to modern platforms with minimal downtime
+  - Refactored core backend functions for asynchronous execution, reducing database load and improving performance
+  - Built an automated testing framework to validate EBR templates, growing validation from <10 to 500+ templates and proactively flagging product defects before deployments
 
-- Data Engineering Intern at Moody's Ratings, New York, NY (Jun 2025 - Aug 2025)
-  - Modernized legacy R-based ETL system to Python, refactoring 1,000+ lines while maintaining 99.9% accuracy
-  - Engineered configuration-driven pipeline processing 18+ macroeconomic indicators with ARIMA forecasting
-  - Optimized SQL Server database schema, improving Power BI dashboard refresh times by 80%
-
-- Data Science Consultant at 33Floors, San Francisco, CA (Feb 2023 - Dec 2023)
-  - Developed 100+ Tableau and Power BI dashboards for real estate clients, contributing to $250K+ in annual recurring revenue
-  - Automated Excel reporting workflows, saving clients 8+ hours/week
-  - Developed SQL validation queries, reducing support tickets by 45%
+- Software Developer Intern at Sunnyside (Nov 2023 - Nov 2024)
+  - Developed and implemented an onboarding protocol and landing page to welcome users and facilitate app customization based on individual preferences in React Native
+  - Engineered REST APIs to create and retrieve customer information from PostgreSQL databases
+  - Integrated Google sign-in to streamline the login process using Expo and GoogleOAuth
 
 Education:
-- M.S. Computer Science, Northeastern University, Khoury College of Computer Sciences, Boston, MA (Expected Aug 2026) | GPA: 3.7/4.0
-- B.S. Business Administration, Magna Cum Laude, Babson College, Wellesley Hills, MA (Aug 2019 - Dec 2022)
-- Study Abroad Program in Statistics, The London School of Economics and Political Science, London, UK (Sept 2020 - Jun 2021)
+- M.S. Computer Science, Northeastern University, Boston, MA (Expected Dec 2026) | GPA: 3.8/4.0 — Advanced Algorithms, Distributed Scalable Systems, Operating System Implementations, Relational Languages, Modern Storage Systems
+- B.S. Computer Science, University of Maryland - Baltimore County (May 2024) | GPA: 3.5/4.0, Dean's List — Algorithms, Machine Learning, Software Engineering, Mobile Development, Operating Systems
 
 Projects:
-- GitGood (TypeScript, React, Node.js, Redux, Chrome Extension API) - Full-stack platform helping developers discover and contribute to open-source projects with GitHub integration
-- Movie Recommender Application (React, Spring Boot, Elasticsearch, AWS EC2) - Full-stack movie discovery platform with personalized recommendations and sub-second search capability
-EOF
+- Incremental S3 Backup (Go) - Ported an incremental filesystem backup system from C to Go, storing snapshots in S3 and supporting chained incremental backups; added exclusion filtering for nonessential paths to reduce backup volume; optimized directory scanning and in-memory metadata management for faster traversal and lower memory overhead
+- EGOS OS (C++) - Engineered core components of a custom operating system using C and Assembly on a RISC-V emulator, implementing virtual memory, scheduling, and file system support; designed custom system calls enabling secure page-granularity virtual memory sharing between processes for inter-process communication
+- Image Manipulator (Java) - Built an image manipulation application using design patterns such as the command pattern, supporting rotate/compress/color-adjust via both command line and GUI interfaces, with upload and save in .ppm, .jpg, and .png formats
+- NukeNester (ReactJS) - Bitcamp 2024 Best Sustainability Hack; web application for proper disposal and tracking of nuclear waste using Google Sign-in (PropelAuth, GoogleOAuth), Google Maps visualization of waste-site impact, and a search engine for locating suitable disposal sites

@@ -64,7 +64,7 @@ For each Greenhouse job:
   Store as job.description
 ```
 
-**Why separate?** Greenhouse requires an individual API call per job description. This is parallel (async/await) but still expensive, so it's optional via `--desc` flag in jobs.mjs.
+**Why separate?** Greenhouse requires an individual API call per job description. In production `jobs.mjs` fetches these by default for each kept job (disable with `--no-desc`); this test harness always fetches them.
 
 **In test-ml:** Always run to ensure descriptions are rich for scoring.
 
@@ -165,40 +165,36 @@ node test/test-ml.mjs --mock-resume --top 50 --all
 | **Data Impact** | None (read-only) | Writes new rows to Sheets |
 | **Resume Source** | Hardcoded companies (10) or --mock-resume | Configured via portals.yml |
 | **Filtering** | Same filters as jobs.mjs | Identical |
-| **Scoring** | Full embedding + cosine similarity | _(Future: will integrate ML scoring)_ |
+| **Scoring** | Full embedding + cosine similarity | Done in `score.mjs` (separate step), not jobs.mjs |
 | **Use Case** | Development, debugging, validation | Production job scanning |
 
 ---
 
-## How test-ml.mjs Prepares for Integration into jobs.mjs
+## Relationship to the production pipeline
 
-### Current Flow (jobs.mjs):
-```
-1. Fetch jobs from all enabled companies
-2. Filter jobs (title, location, YOE, recency)
-3. Deduplicate against Sheets
-4. ✓ Append to Potential (all qualified jobs have equal weight)
-```
+`test-ml.mjs` is the standalone harness; the production pipeline is now **two scripts** that
+reuse the same `scoreJobs()` model this harness validates:
 
-### Future Flow (jobs.mjs + ML scoring):
+### Production flow (implemented)
 ```
-1. Fetch jobs from all enabled companies
-2. Filter jobs (title, location, YOE, recency)
-3. Deduplicate against Sheets
-4. ✗ Score remaining jobs against cached resume (NEW)
-5. ✓ Append to Potential with .score column
-6. ✓ User sorts by score to see best matches first
+jobs.mjs   1. Fetch jobs from all enabled companies
+           2. Filter jobs (title, recency, US, dedup, YOE)
+           3. Fetch + cache each kept job's description → data/job-descriptions.json
+           4. Append to Potential (cols A–J)
+score.mjs  5. Read Potential, join descriptions by link
+           6. scoreJobs(resume, jobs) → cosine similarity
+           7. Write Match Score (col K), then sort the sheet by score, highest first
 ```
 
-**What test-ml.mjs validates:**
+Scoring lives in its own `score.mjs` step (not inside `jobs.mjs`) so the embedding model is
+only loaded when you actually want to rank, and a scan stays a fast, pure-Node operation.
+
+**What test-ml.mjs still validates (in isolation, no Sheets):**
 - ✓ Parser loads and caches resume correctly
 - ✓ Jobs fetch across multiple ATS platforms
-- ✓ Greenhouse descriptions can be fetched in parallel
+- ✓ Descriptions can be fetched/parsed
 - ✓ Filters work as expected
 - ✓ Scorer embeds and ranks jobs correctly
-- ✓ Output is human-readable and sensible
-
-Once test-ml.mjs passes, the `scoreJobs()` function is ready to be called in jobs.mjs's append-to-Sheets flow.
 
 ---
 
@@ -286,9 +282,9 @@ Once test-ml.mjs passes, the `scoreJobs()` function is ready to be called in job
 - Once downloaded, embedding is fully offline (zero API calls)
 
 ### Greenhouse descriptions show as empty
-- Greenhouse list API doesn't include descriptions
-- You must run with `--desc` flag to fetch them individually
-- Each fetch is one API call, runs in parallel (configurable concurrency)
+- Greenhouse list API doesn't include descriptions — they're fetched per-job
+- In production `jobs.mjs` does this by default (disable with `--no-desc`); this harness always does
+- Each fetch is one API call (Greenhouse/SmartRecruiters); Ashby/Lever/Amazon include them inline
 
 ### Scores seem low (all <0.7)
 - This is normal if the resume and job descriptions are semantically different

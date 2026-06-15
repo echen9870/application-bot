@@ -8,10 +8,11 @@
  *
  * Flow:
  *   1. Load resume text (src/ml/parser.mjs → data/resume.{txt,md,pdf})
- *   2. Read the Potential sheet (A:K)
+ *   2. Read the Potential sheet's real data rows (A2:K, extent via the column-B counter)
  *   3. Join each row's job description from data/job-descriptions.json (by link)
  *   4. Score every row with scoreJobs() — cosine similarity, 0–1
  *   5. Map cosine → 1–10 and write it to Potential column K ("Match Score")
+ *   6. Sort the sheet by Match Score, highest first
  *
  * The 1–10 scale matches the convention documented in user.yml. The underlying number is
  * the raw cosine similarity from the existing model: score10 = round(1 + cosine * 9, 1).

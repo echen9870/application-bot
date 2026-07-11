@@ -1,0 +1,165 @@
+# Module APIs (exports reference)
+
+Load this when writing or modifying code in `src/` and you need exact function signatures instead of re-reading every file.
+
+### src/config.mjs
+```js
+export function loadConfig(path = 'portals.yml')   // → { scan, titleFilter, companies }
+// scan = { recency_hours, max_yoe, concurrency, fetch_timeout_ms, retries } with defaults
+// {48, 3, 10, 10_000, 3}. Cached after first call. Throws if portals.yml missing.
+export function resetConfigCache()                 // test helper
+```
+
+### src/fetch.mjs
+```js
+export async function fetchWithTimeout(url, timeoutMs=10_000, options={})  // → Response
+export async function fetchJson(url, { timeoutMs=10_000, retries=3 } = {}) // → parsed JSON
+export async function fetchResponse(url, { timeoutMs=10_000, retries=3 } = {}) // → Response
+export function isPermanentError(err)        // → true for 4xx (except 429); false for 5xx, 429, network
+// Retries use linear backoff (500ms × attempt). fetchJson skips retries on permanent 4xx
+// errors so dead links fail fast (~100ms) instead of burning 4 attempts. fetchResponse
+// never throws on !ok status — only network errors / timeouts trigger retries.
+```
+
+### src/ats.mjs
+```js
+export const ATS = { greenhouse, ashby, lever, smartrecruiters, workday, oraclecloud, amazon, googlecareers, applecareers }
+// Each: { boardApi(slug), [jobApi(slug,id)], parse(json, company, slug?), parseLink(host, path), [fetchAll(url, fetchJson, opts)] }
+
+export function detectApi(company)                   // portals.yml entry → { type, url } | null
+export function extractGHSlug(apiUrl)                // → 'stripe' from /v1/boards/stripe/jobs
+export function parseJobs(type, json, company, apiUrl?)  // dispatch to ATS[type].parse
+export function parseLink(url)                       // job URL → { type, slug, id } | { type:'generic', url } | null
+export function cleanDescription(html)               // decode entities + strip tags + collapse + lowercase
+```
+
+**`fetchDescription` (optional, per-ATS hook):** `async fetchDescription(job, fetchJson, opts) → string` returns the cleaned, lowercased job description (or `''` on failure). Defined for the two ATSes whose list API omits descriptions: `greenhouse` (fetches `jobApi(_slug, _id)` → `.content`) and `smartrecruiters` (fetches `jobApi(_slug, _id)` → joins `jobAd.sections.{jobDescription,qualifications,additionalInformation}.text`). Both rely on the parser carrying `_slug`/`_id` on each job. ATSes that include descriptions inline (`ashby`, `amazon`, `lever`, `oraclecloud`, `atlassian`) set `job.description` in `parse()` and define no hook.
+
+**`fetchAll` (optional, per-ATS hook):** for ATSes that don't fit the "one GET → one JSON page" pattern. Defined by:
+- `workday` — POSTs to `/wday/cxs/{tenant}/{site}/jobs` with `{appliedFacets, limit, offset, searchText}`; paginates 5 pages × 20 = 100 jobs.
+- `oraclecloud` — GETs `/hcmRestApi/.../recruitingCEJobRequisitions` with finder/expand/facetsList; injects `offset=N` into finder query for pagination, 5 pages × 200 = 1000 jobs.
+- `amazon` — GETs `amazon.jobs/en/search.json`; paginates 5 pages × 100 = 500 jobs (sorted by recent).
+- `googlecareers` — GETs `google.com/about/careers/applications/jobs/results?page=N`; regex-extracts `(id, title)` pairs from server-rendered HTML (`aria-label="Learn more about {title}"`); 8 pages, breaks early on no-new-results.
+- `applecareers` — GETs `jobs.apple.com/en-us/search?location=united-states-USA&page=N`; regex-extracts `(id, title, posted-date, city)` quadruples; 8 pages.
+- `icims` — Generic iCIMS adapter for `careers-{slug}.icims.com/jobs/search?ss=1&in_iframe=1`. Paginates via `&pr={page}` 0-indexed up to 20 pages. Finds anchor positions, then slices each block between consecutive anchors to extract location (US-STATE-City format, multi-location pipe-separated) and posted date (M/D/YYYY format converted to ISO). Used by Peraton, Joby Aviation, Berkley, General Dynamics. Note: some iCIMS portals omit location/date fields (Berkley, Joby) — adapter handles gracefully but `isUS()` filter will reject jobs with empty location.
+
+When `fetchAll` is defined, `jobs.mjs` calls it instead of `fetchJson`. The returned object is then passed to `parse(json, company)` as usual — embed any auxiliary info you need (e.g. `_info` for Workday tenant/site, `_info` for Oracle host/site) on the returned object so `parse` can build correct URLs.
+
+### src/potential-writer.mjs
+```js
+export async function appendToPotential(sheets, jobs, { dateFound?, source? } = {})
+// Writes rows to Potential!A{firstEmpty}:J via values.update, re-applies checkbox validation.
+// `source` ('scan' | 'websearch') is written to column J; jobs.mjs passes 'scan', write-potential.mjs 'websearch'.
+// Returns { written, firstEmptyRow }.
+export async function fetchSeenLinks(sheets)         // → Set<string> from Potential G + Applied E + Ignored E
+export async function getFirstEmptyRow(sheets)       // → row number via column B counter
+export function buildCheckboxRequest(sheetId, endRow=1001)  // BOOLEAN data-validation request
+```
+
+### src/ml/descriptions.mjs
+```js
+export function loadDescriptions()        // → { [link]: { company, role, description, fetchedAt } }  (whole cache, {} if absent)
+export function getDescription(link)      // → cached description string | ''
+export function saveDescriptions(jobs)    // merge jobs[].{link,company,role,description} → data/job-descriptions.json (atomic tmp+rename); skips empty descriptions; returns count written
+export function deleteDescriptions(links) // remove entries by link, persist; returns count removed (apply.mjs evicts ignored jobs)
+```
+`jobs.mjs` calls `saveDescriptions(newJobs)` after writing to Potential. The cache is keyed by job **link** (same value stored in Potential col G), so the ML scorer joins jobs→descriptions by link. Gitignored — derived data, can be large.
+
+### src/ml/scorer.mjs
+```js
+export async function embed(text)                     // → number[] (384-dim, all-MiniLM-L6-v2, local, free)
+export async function scoreMatch(resumeText, jobText) // → number 0–1 (cosine similarity)
+export async function scoreJobs(resumeText, jobs)     // → jobs[] each with .score/.cosine/.modelProb, sorted desc
+// If data/model.json exists: score = (1−α)·cosine + α·modelProb, α = min(0.7, nLabels/200);
+// otherwise pure cosine (.modelProb null). Uses job.description, falls back to title-only text.
+export function buildJobText(job)                     // → the exact text embedded for a job (shared with training)
+```
+
+### src/ml/model.mjs
+```js
+export function trainLogistic(X, y, { epochs=300, lr=0.1, lambda=0.01 })
+// → { weights: number[384], bias, meta: { trainedAt, nPos, nNeg } }
+// Gradient descent, L2 regularization, positives upweighted nNeg/nPos. Throws on empty/single-class input.
+export function predictLogistic(model, embedding)  // → probability 0–1 (sigmoid)
+export function evaluateHoldout(X, y, { testFrac=0.2, seed=42, threshold=0.5 })
+// → { precision, recall, nTestPos, nTestNeg } | null (class < 5 examples)
+// Stratified 80/20 split, seeded shuffle (reproducible), throwaway model on train split.
+export function saveModel(model)                   // → data/model.json (atomic tmp+rename)
+export function loadModel()                        // → model | null (null = scorer falls back to pure cosine)
+```
+
+### src/ml/training-data.mjs
+```js
+export function loadTrainingData()        // → { [link]: { label: 0|1, company, role, text, embedding, labeledAt } }
+export function saveTrainingData(entries) // merge into data/training-data.json (atomic); keyed by link, relabels overwrite
+```
+
+### src/train.mjs
+```js
+export async function retrain()  // → { trained, nPos, nNeg, accuracy? } — trains from stored labels;
+// skips (keeps old model) unless ≥10 examples per class. Called in-process by apply.mjs.
+// CLI: node src/train.mjs [--bootstrap]  (bootstrap seeds labels from Applied/Ignored sheets)
+```
+
+### src/ml/parser.mjs
+```js
+export async function parseResume({ force? } = {})    // → resume text. PDF→pdf-parse+Gemini cleanup, or data/resume.{txt,md} direct. Caches to data/resume-parsed.txt.
+```
+
+### src/sheets-client.mjs
+```js
+export const SPREADSHEET_ID       // spreadsheet ID string
+export const RED_BG               // { red, green, blue } for Rejected row background
+export const RED_TEXT             // { red, green, blue } for Rejected row text
+export function createSheetsClient()              // → google.sheets v4 client
+export async function getColumn(sheets, sheetName, col)  // → Set<string> of non-empty values (skips header)
+export async function getSheetId(sheets, tabName)        // → numeric sheetId for batchUpdate requests
+export function redRowRequest(sheetId, rowIndex, numCols=7)  // → repeatCell request object for red formatting
+```
+
+### src/filters.mjs
+```js
+export const US_STATES            // Set of 2-letter lowercase state abbreviations + 'dc'
+export const NON_US_COUNTRY       // string[] of country/city names to reject
+export const NON_US_COUNTRY_CODES // Set of 2-letter lowercase ISO country codes to reject
+
+export function extractMinYOE(title)        // → number | null  (0 = new grad/intern, null = no signal)
+export function extractMinYOEFromDesc(desc) // → number | null  (desc must be lowercased; null = no signal)
+export function yoeLabel(title)             // → "" | "New Grad" | "N+ YOE"
+export function isUS(location)              // → boolean  (true = keep, false = reject)
+export function buildTitleFilter(tf)        // tf = { positive: string[], negative: string[] } → (title: string) => boolean
+export function looksLikeJobUrl(url)        // → boolean  (rejects /blog/, /news/, /podcast/, etc.)
+```
+
+`jobs.mjs` re-exports all filter functions so tests can import from `../src/jobs.mjs` without change.
+
+### src/jobs.mjs
+```js
+// Re-exports for test suite (tests import from src/jobs.mjs):
+export { extractMinYOE, extractMinYOEFromDesc, isUS, buildTitleFilter } from './filters.mjs'
+export { buildCheckboxRequest } from './potential-writer.mjs'
+```
+
+### src/apply.mjs
+```js
+export function categorizeRows(dataRows)
+// dataRows: array of raw row arrays from Potential!A:J (no header row)
+// Returns: { toApply: Entry[], toIgnore: Entry[] }
+// Entry: { found, company, role, location, link }
+// "checked" = col A is "✓" OR "TRUE" (case-insensitive); blank/unchecked rows → toIgnore
+// Skips rows where both company and role are empty.
+// Defensive: col A is coerced via String(r[0] ?? '') so native booleans, numbers, null,
+// or undefined from formula cells can't crash the apply pipeline.
+// Source column (J) is read by the sheet but not propagated to Applied/Ignored.
+```
+
+### src/gmail-sync.mjs
+```js
+export function classify(subject, snippet)               // → 'Offer' | 'Interview' | 'Rejected' | null
+export function extractCompany(subject, snippet, sender) // → string | null
+export function normalize(name)                          // → lowercase alphanum, strips legal suffixes
+export function shouldUpdate(current, next)              // → boolean (respects status rank, never downgrades)
+```
+
+Classification priority order: Offer > Interview > Rejected (first match wins).
+Status rank: Applied=1, Rejected=2, Interview=3, Offer=6. Rejected only updates from Applied (rank 1).

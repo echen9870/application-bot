@@ -12,9 +12,10 @@
  * Writes are atomic (tmp file + rename) so a crash mid-write can't corrupt the cache.
  *
  * Exports:
- *   loadDescriptions()      → object map  { [link]: { company, role, description, fetchedAt } }
- *   getDescription(link)    → string      (cached description, or '' if none)
- *   saveDescriptions(jobs)  → number      (count of non-empty descriptions merged + persisted)
+ *   loadDescriptions()        → object map  { [link]: { company, role, description, fetchedAt } }
+ *   getDescription(link)      → string      (cached description, or '' if none)
+ *   saveDescriptions(jobs)    → number      (count of non-empty descriptions merged + persisted)
+ *   deleteDescriptions(links) → number      (count of entries removed + persisted)
  */
 
 import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'fs';
@@ -56,9 +57,31 @@ export function saveDescriptions(jobs) {
     };
   }
 
+  persist(cache);
+  return withDesc.length;
+}
+
+/**
+ * Remove entries by link and persist. Used by apply.mjs to evict ignored jobs —
+ * their text is already snapshotted in training-data.json, so keeping the (large)
+ * description here only bloats the cache. Applied jobs are kept.
+ *
+ * @param {Iterable<string>} links
+ * @returns {number} number of entries removed
+ */
+export function deleteDescriptions(links) {
+  const cache = loadDescriptions();
+  let removed = 0;
+  for (const link of links || []) {
+    if (link in cache) { delete cache[link]; removed++; }
+  }
+  if (removed > 0) persist(cache);
+  return removed;
+}
+
+function persist(cache) {
   mkdirSync(dirname(CACHE_PATH), { recursive: true });
   const tmp = `${CACHE_PATH}.tmp`;
   writeFileSync(tmp, JSON.stringify(cache, null, 2), 'utf-8');
   renameSync(tmp, CACHE_PATH);
-  return withDesc.length;
 }

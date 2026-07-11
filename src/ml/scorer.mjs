@@ -11,6 +11,12 @@
  *   embed(text)                        → Float32Array (384-dim vector)
  *   scoreMatch(resumeText, jobText)    → number  (0–1, higher = better match)
  *   scoreJobs(resumeText, jobs)        → jobs[] sorted by score desc, each with .score
+ *   buildJobText(job)                  → string  (the text embedded for a job)
+ *
+ * When a trained model exists (data/model.json, built from apply/ignore feedback via
+ * src/train.mjs), scoreJobs blends it with cosine: score = (1−α)·cosine + α·modelProb,
+ * α = min(0.7, nLabels/200). Cosine keeps ≥30% weight as an anchor; with no model the
+ * behavior is pure cosine, exactly as before.
  *
  * Job text fallback (when no description available):
  *   "${role} at ${company} in ${location}" — less rich but consistent across all ATS
@@ -18,6 +24,7 @@
  */
 
 import { pipeline } from '@xenova/transformers';
+import { loadModel, predictLogistic } from './model.mjs';
 
 const MODEL = 'Xenova/all-MiniLM-L6-v2';
 
@@ -90,13 +97,26 @@ export async function scoreJobs(resumeText, jobs) {
   console.log(`  [scorer] Embedding resume...`);
   const resumeVec = await embed(resumeText);
 
+  // Feedback model trained on apply/ignore decisions (null until enough labels exist)
+  const model  = loadModel();
+  const nLabels = model ? model.meta.nPos + model.meta.nNeg : 0;
+  const alpha   = model ? Math.min(0.7, nLabels / 200) : 0;
+  if (model) {
+    console.log(`  [scorer] Blending feedback model (${model.meta.nPos} pos / ${model.meta.nNeg} neg, α=${alpha.toFixed(2)})`);
+  }
+
   console.log(`  [scorer] Scoring ${jobs.length} job(s)...`);
   const scored = await Promise.all(
     jobs.map(async job => {
       const jobText = buildJobText(job);
       const jobVec  = await embed(jobText);
-      const score   = parseFloat(cosineSimilarity(resumeVec, jobVec).toFixed(4));
-      return { ...job, score };
+      const cosine  = parseFloat(cosineSimilarity(resumeVec, jobVec).toFixed(4));
+      const dimOk = model && model.weights.length === jobVec.length;
+      const modelProb = dimOk ? parseFloat(predictLogistic(model, jobVec).toFixed(4)) : null;
+      const score = modelProb == null
+        ? cosine
+        : parseFloat(((1 - alpha) * cosine + alpha * modelProb).toFixed(4));
+      return { ...job, score, cosine, modelProb };
     })
   );
 
@@ -104,13 +124,12 @@ export async function scoreJobs(resumeText, jobs) {
   return scored.sort((a, b) => b.score - a.score);
 }
 
-// ── Internal ─────────────────────────────────────────────────────────────────
-
 /**
  * Build the text to embed for a job.
  * Prefer full description (Ashby always has this); fall back to structured fields.
+ * Exported so apply.mjs/train.mjs snapshot training text with the exact same formula.
  */
-function buildJobText(job) {
+export function buildJobText(job) {
   if (job.description && job.description.trim().length > 50) {
     // Prefix with role/company so the title context is never lost
     return `${job.role} at ${job.company}\n\n${job.description}`;

@@ -205,8 +205,9 @@ tracked_companies:
   - name: Retool
     careers_url: https://retool.com/careers
     scan_method: websearch
-    notes: Acquired by Figma (already in scanner)
-    enabled: false
+    scan_query: site:retool.com/careers "software engineer" OR "engineer" 2026
+    notes: Internal tools builder. Lever ATS backend.
+    enabled: true
   - name: Linear
     careers_url: https://jobs.ashbyhq.com/linear
     api: https://api.ashbyhq.com/posting-api/job-board/linear
@@ -632,12 +633,6 @@ tracked_companies:
     api: https://capitalone.wd12.myworkdayjobs.com/Capital_One
     scan_method: workday
     notes: Digital bank
-    enabled: true
-  - name: Cashapp
-    careers_url: https://job-boards.greenhouse.io/block
-    api: https://boards-api.greenhouse.io/v1/boards/block/jobs
-    scan_method: greenhouse
-    notes: Block/Square payment app
     enabled: true
   - name: CGI
     careers_url: https://www.cgi.com/careers
@@ -1151,12 +1146,6 @@ tracked_companies:
     api: https://boards-api.greenhouse.io/v1/boards/imc/jobs
     scan_method: greenhouse
     enabled: true
-  - name: IMC Trading
-    careers_url: https://imc.com/us/careers/
-    api: https://boards-api.greenhouse.io/v1/boards/imc/jobs
-    scan_method: greenhouse
-    notes: Market maker
-    enabled: true
   - name: impact.com
     careers_url: https://www.impactcom.com/careers
     api: https://boards-api.greenhouse.io/v1/boards/impact/jobs
@@ -1236,12 +1225,6 @@ tracked_companies:
     notes: APL defense research
     enabled: true
   - name: JP Morgan
-    careers_url: https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
-    api: https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
-    scan_method: oraclecloud
-    notes: Investment bank
-    enabled: true
-  - name: JP Morgan Chase
     careers_url: https://jpmc.fa.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
     api: https://jpmc.fa.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
     scan_method: oraclecloud
@@ -2720,12 +2703,6 @@ tracked_companies:
     scan_method: ashby
     notes: GPU cloud for ML.
     enabled: true
-  - name: Modal Labs
-    careers_url: https://modal.com/careers
-    api: https://api.ashbyhq.com/posting-api/job-board/modal
-    scan_method: ashby
-    notes: Serverless GPU compute.
-    enabled: true
   - name: Sambanova
     careers_url: https://sambanova.ai/careers
     api: https://boards-api.greenhouse.io/v1/boards/sambanovasystems/jobs
@@ -2834,12 +2811,6 @@ tracked_companies:
     scan_method: ashby
     notes: French open-source LLM lab.
     enabled: true
-  - name: Lucid
-    careers_url: https://www.lucidmotors.com/careers
-    api: https://boards-api.greenhouse.io/v1/boards/lucidmotors/jobs
-    scan_method: greenhouse
-    notes: EV manufacturer.
-    enabled: true
   - name: Uber
     careers_url: https://www.uber.com/us/en/careers/
     scan_method: websearch
@@ -2899,4 +2870,298 @@ tracked_companies:
     scan_method: websearch
     scan_query: site:fly.io/jobs ("software engineer" OR "engineer") 2026
     notes: Edge platform.
+    enabled: true
+  - name: Stability AI
+    careers_url: https://stability.ai/careers
+    scan_method: websearch
+    scan_query: site:stability.ai/careers "software engineer" OR "engineer" 2026
+    notes: Generative AI (Stable Diffusion). Custom portal.
+    enabled: true
+  - name: CoreWeave
+    careers_url: https://coreweave.com/careers
+    scan_method: websearch
+    scan_query: site:coreweave.com/careers "software engineer" OR "engineer" 2026
+    notes: GPU cloud infrastructure. Backed by NVIDIA. 178 open positions.
+    enabled: true
+  - name: Zed
+    careers_url: https://zed.dev/jobs
+    scan_method: websearch
+    scan_query: site:zed.dev "software engineer" OR "engineer" 2026
+    notes: Code editor by Zed Industries. High-performance Rust.
+    enabled: true
+  - name: Solana Labs
+    careers_url: https://jobs.solana.com/jobs
+    scan_method: websearch
+    scan_query: site:jobs.solana.com "software engineer" OR "protocol engineer" 2026
+    notes: Blockchain platform. Rust-heavy. Web3.
+    enabled: true
+  - name: Injective Labs
+    careers_url: https://web3.career/web3-companies/injectivelabs
+    scan_method: websearch
+    scan_query: site:injectivelabs "software engineer" OR "engineer" 2026
+    notes: DeFi blockchain platform. Protocol engineering roles.
+    enabled: true
+  - name: Cognition AI
+    careers_url: https://www.cognition.ai/careers
+    scan_method: websearch
+    scan_query: site:cognition.ai "software engineer" OR "engineer" 2026
+    notes: Autonomous agents (Devin). AI coding. Series C funded.
+    enabled: true
+  - name: Lovable
+    careers_url: https://lovable.dev/careers
+    scan_method: websearch
+    scan_query: site:lovable.dev "engineer" 2026
+    notes: App generator from natural language. Generative UI.
+    enabled: true
+  - name: Exa
+    careers_url: https://exa.ai/careers
+    scan_method: websearch
+    scan_query: site:exa.ai "engineer" 2026
+    notes: Semantic search engine (became unicorn May 2026). Series C $250M.
+    enabled: true
+  - name: Nexthop AI
+    careers_url: https://nexthop.ai/careers
+    scan_method: websearch
+    scan_query: site:nexthop.ai "engineer" 2026
+    notes: Supply chain AI (became unicorn March 2026). Series B $500M.
+    enabled: true
+  - name: LiteLLM
+    careers_url: https://litellm.ai/careers
+    scan_method: websearch
+    scan_query: site:litellm.ai "engineer" 2026
+    notes: LLM gateway/proxy. Trusted by Adobe, Netflix, NASA.
+    enabled: true
+  - name: Humane AI
+    careers_url: https://www.humanetech.com/careers
+    scan_method: websearch
+    scan_query: site:humanetech.com "engineer" 2026
+    notes: AI wearable device. Conversational AI hardware.
+    enabled: true
+  - name: Polymarket
+    careers_url: https://polymarket.com/careers
+    scan_method: websearch
+    scan_query: site:polymarket.com "engineer" 2026
+    notes: Prediction markets on Ethereum. Crypto/DeFi.
+    enabled: true
+  - name: Rainbow Wallet
+    careers_url: https://rainbow.me/careers
+    scan_method: websearch
+    scan_query: site:rainbow.me "engineer" 2026
+    notes: Ethereum wallet. Crypto/blockchain.
+    enabled: true
+  - name: Privy
+    careers_url: https://privy.io/careers
+    scan_method: websearch
+    scan_query: site:privy.io "engineer" 2026
+    notes: Web3 authentication. Crypto infrastructure.
+    enabled: true
+  - name: Magic Eden
+    careers_url: https://magiceden.io/careers
+    scan_method: websearch
+    scan_query: site:magiceden.io "engineer" 2026
+    notes: NFT marketplace. Solana/multi-chain. Series B.
+    enabled: true
+  - name: Jupiter (Solana DEX)
+    careers_url: https://jup.ag/careers
+    scan_method: websearch
+    scan_query: site:jup.ag "engineer" 2026
+    notes: Solana DEX aggregator. DeFi.
+    enabled: true
+  - name: Phantom Wallet
+    careers_url: https://phantom.app/careers
+    scan_method: websearch
+    scan_query: site:phantom.app "engineer" 2026
+    notes: Multi-chain crypto wallet. Series C.
+    enabled: true
+  - name: Alchemy
+    careers_url: https://www.alchemy.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/alchemy
+    scan_method: ashby
+    notes: Web3 developer platform. Unicorn. Series C $200M.
+    enabled: true
+  - name: Helius
+    careers_url: https://helius.dev/careers
+    scan_method: websearch
+    scan_query: site:helius.dev "engineer" 2026
+    notes: Solana RPC infrastructure. Web3.
+    enabled: true
+  - name: Magic Labs
+    careers_url: https://magic.link/careers
+    scan_method: websearch
+    scan_query: site:magic.link "engineer" 2026
+    notes: Web3 authentication (formerly Magic). Series B.
+    enabled: true
+  - name: DeepSeek
+    careers_url: https://www.deepseek.com/careers
+    scan_method: websearch
+    scan_query: site:deepseek.com "engineer" 2026
+    notes: Chinese AI lab. Competing with Claude/GPT. Series unknown.
+    enabled: true
+  - name: Aleph Alpha
+    careers_url: https://www.aleph-alpha.com/careers
+    scan_method: websearch
+    scan_query: site:aleph-alpha.com "engineer" 2026
+    notes: European LLM/AI research lab.
+    enabled: true
+  - name: Midjourney
+    careers_url: https://www.midjourney.com/careers
+    scan_method: websearch
+    scan_query: site:midjourney.com "engineer" 2026
+    notes: AI image generation. Competing with DALL-E.
+    enabled: true
+  - name: Assembly AI
+    careers_url: https://www.assemblyai.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/assemblyai
+    scan_method: ashby
+    notes: Speech-to-text AI. Series B.
+    enabled: true
+  - name: Pika Labs
+    careers_url: https://pika.art/careers
+    scan_method: websearch
+    scan_query: site:pika.art "engineer" 2026
+    notes: AI video generation. Competing with Runway.
+    enabled: true
+  - name: Modelz
+    careers_url: https://modelz.ai/careers
+    scan_method: websearch
+    scan_query: site:modelz.ai "engineer" 2026
+    notes: ML model deployment platform.
+    enabled: true
+  - name: Replicate
+    careers_url: https://replicate.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/replicate
+    scan_method: ashby
+    notes: Run open-source ML models. Series A.
+    enabled: true
+  - name: Clearml
+    careers_url: https://clear.ml/careers
+    scan_method: websearch
+    scan_query: site:clear.ml "engineer" 2026
+    notes: ML operations platform. MLOps.
+    enabled: true
+  - name: DVC
+    careers_url: https://dvc.org/careers
+    scan_method: websearch
+    scan_query: site:dvc.org "engineer" 2026
+    notes: Data versioning for ML. Open-source.
+    enabled: true
+  - name: GitHub Copilot Team
+    careers_url: https://github.com/careers
+    scan_method: websearch
+    scan_query: site:github.com/careers "engineer" 2026
+    notes: AI coding assistant. Part of GitHub.
+    enabled: true
+  - name: Tabnine
+    careers_url: https://www.tabnine.com/careers
+    scan_method: websearch
+    scan_query: site:tabnine.com "engineer" 2026
+    notes: AI code completion. Series B funded.
+    enabled: true
+  - name: Codeium
+    careers_url: https://codeium.com/careers
+    scan_method: websearch
+    scan_query: site:codeium.com "engineer" 2026
+    notes: Free AI coding assistant. Series B.
+    enabled: true
+  - name: Snorkel AI
+    careers_url: https://snorkel.ai/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/snorkel
+    scan_method: ashby
+    notes: Data programming. ML infrastructure. Series B.
+    enabled: true
+  - name: Landing AI
+    careers_url: https://www.landing.ai/careers
+    scan_method: websearch
+    scan_query: site:landing.ai "engineer" 2026
+    notes: Computer vision AI. Founded by Andrew Ng. Series unknown.
+    enabled: true
+  - name: Twelve Labs
+    careers_url: https://twelvelabs.io/careers
+    scan_method: websearch
+    scan_query: site:twelvelabs.io "engineer" 2026
+    notes: Video understanding AI. Series B.
+    enabled: true
+  - name: Jasper AI
+    careers_url: https://www.jasper.ai/careers
+    scan_method: websearch
+    scan_query: site:jasper.ai "engineer" 2026
+    notes: Content generation AI. Series C.
+    enabled: true
+  - name: Copy.ai
+    careers_url: https://copy.ai/careers
+    scan_method: websearch
+    scan_query: site:copy.ai "engineer" 2026
+    notes: Content generation. Competing with Jasper.
+    enabled: true
+  - name: D-ID
+    careers_url: https://www.d-id.com/careers
+    scan_method: websearch
+    scan_query: site:d-id.com "engineer" 2026
+    notes: AI video generation (avatars). Series B.
+    enabled: true
+  - name: Opus Clip
+    careers_url: https://opusclip.com/careers
+    scan_method: websearch
+    scan_query: site:opusclip.com "engineer" 2026
+    notes: AI video repurposing. Series A.
+    enabled: true
+  - name: Vimeo AI Studio
+    careers_url: https://vimeo.com/careers
+    scan_method: websearch
+    scan_query: site:vimeo.com "engineer" 2026
+    notes: Video platform with AI features. Public company.
+    enabled: true
+  - name: Gather
+    careers_url: https://www.gather.town/careers
+    scan_method: websearch
+    scan_query: site:gather.town "engineer" 2026
+    notes: Virtual spaces/metaverse. Series B.
+    enabled: true
+  - name: Roblox Studio
+    careers_url: https://corp.roblox.com/careers/
+    scan_method: websearch
+    scan_query: site:roblox.com/careers "engineer" 2026
+    notes: Metaverse platform. Public company.
+    enabled: true
+  - name: Decentraland
+    careers_url: https://decentraland.org/careers
+    scan_method: websearch
+    scan_query: site:decentraland.org "engineer" 2026
+    notes: Decentralized virtual world. DAO.
+    enabled: true
+  - name: Coda
+    careers_url: https://coda.io/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/coda
+    scan_method: ashby
+    notes: Docs and tables. Series B.
+    enabled: true
+  - name: Typeform
+    careers_url: https://www.typeform.com/careers/
+    scan_method: websearch
+    scan_query: site:typeform.com/careers "engineer" 2026
+    notes: Forms and surveys. Series C.
+    enabled: true
+  - name: SurveyMonkey
+    careers_url: https://www.surveymonkey.com/careers
+    scan_method: websearch
+    scan_query: site:surveymonkey.com "engineer" 2026
+    notes: Survey platform. Public company.
+    enabled: true
+  - name: 15Five
+    careers_url: https://www.15five.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/15five
+    scan_method: ashby
+    notes: People development platform. Series B.
+    enabled: true
+  - name: Calendly
+    careers_url: https://calendly.com/careers
+    api: https://api.ashbyhq.com/posting-api/job-board/calendly
+    scan_method: ashby
+    notes: Scheduling platform. Series B. 250+ employees.
+    enabled: true
+  - name: Stripe Carbon Removal
+    careers_url: https://stripe.com/climate/careers
+    scan_method: websearch
+    scan_query: site:stripe.com/climate "engineer" 2026
+    notes: Stripe's climate tech division.
     enabled: true

@@ -13,3 +13,5 @@ gmail-token.json
 .playwright-mcp/
 data/job-descriptions.json
 data/resume-parsed.txt
+data/training-data.json
+data/model.json

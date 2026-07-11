@@ -29,6 +29,8 @@ import {
 
 import { categorizeRows } from '../src/apply.mjs';
 
+import { trainLogistic, predictLogistic, loadModel } from '../src/ml/model.mjs';
+
 import { detectApi, parseLink, parseJobs, extractGHSlug, ATS, cleanDescription } from '../src/ats.mjs';
 
 import { isPermanentError } from '../src/fetch.mjs';
@@ -737,4 +739,150 @@ test('looksLikeJobUrl: empty / invalid → false', () => {
   assert.equal(looksLikeJobUrl(''),         false);
   assert.equal(looksLikeJobUrl(null),       false);
   assert.equal(looksLikeJobUrl('not-url'),  false);
+});
+
+// ── ml/model.mjs — logistic regression head ──────────────────────────
+
+// Tiny separable set in 4-dim: positives point along +x, negatives along -x.
+function syntheticSet(nPos, nNeg) {
+  const X = [], y = [];
+  for (let i = 0; i < nPos; i++) { X.push([ 1, 0.1 * (i % 3), 0, 0]); y.push(1); }
+  for (let i = 0; i < nNeg; i++) { X.push([-1, 0, 0.1 * (i % 3), 0]); y.push(0); }
+  return { X, y };
+}
+
+test('trainLogistic: learns a separable set', () => {
+  const { X, y } = syntheticSet(10, 10);
+  const model = trainLogistic(X, y);
+  assert.ok(predictLogistic(model, [1, 0, 0, 0]) > 0.5);
+  assert.ok(predictLogistic(model, [-1, 0, 0, 0]) < 0.5);
+  assert.equal(model.meta.nPos, 10);
+  assert.equal(model.meta.nNeg, 10);
+});
+
+test('trainLogistic: class weighting handles imbalance', () => {
+  const { X, y } = syntheticSet(3, 30);   // rare positives
+  const model = trainLogistic(X, y);
+  assert.ok(predictLogistic(model, [1, 0, 0, 0]) > 0.5, 'minority class still classified');
+  assert.ok(predictLogistic(model, [-1, 0, 0, 0]) < 0.5);
+});
+
+test('trainLogistic: rejects single-class or empty input', () => {
+  assert.throws(() => trainLogistic([], []));
+  assert.throws(() => trainLogistic([[1, 0]], [1]));
+});
+
+test('predictLogistic: output bounded (0, 1)', () => {
+  const model = { weights: [10, 0], bias: 0, meta: {} };
+  const hi = predictLogistic(model, [1, 0]);
+  const lo = predictLogistic(model, [-1, 0]);
+  assert.ok(hi > 0 && hi < 1 && lo > 0 && lo < 1);
+  assert.ok(hi > 0.99 && lo < 0.01);
+});
+
+test('loadModel: null or valid shape (never garbage)', () => {
+  const m = loadModel();
+  assert.ok(m === null || (Array.isArray(m.weights) && typeof m.bias === 'number'));
+});
+
+// ── ml/training-data.mjs + model persistence + retrain guard ────────
+// These write files, so they run chdir'd into a temp dir (restored via finally)
+// to never touch the real data/ directory.
+
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+async function inTempDir(fn) {
+  const orig = process.cwd();
+  const dir = mkdtempSync(join(tmpdir(), 'career-ops-test-'));
+  try { process.chdir(dir); await fn(); }
+  finally { process.chdir(orig); rmSync(dir, { recursive: true, force: true }); }
+}
+
+test('training-data: save/load round-trip, overwrite by link, invalid entries dropped', async () => {
+  const { loadTrainingData, saveTrainingData } = await import('../src/ml/training-data.mjs');
+  await inTempDir(() => {
+    assert.deepEqual(loadTrainingData(), {});           // absent file → {}
+    const written = saveTrainingData([
+      { link: 'https://x/1', label: 1, company: 'A', role: 'SWE', text: 't', embedding: [0.1, 0.2] },
+      { link: 'https://x/2', label: 0, embedding: [0.3] },
+      { link: '',            label: 1, embedding: [1] },  // no link → dropped
+      { link: 'https://x/3', label: 2, embedding: [1] },  // bad label → dropped
+      { link: 'https://x/4', label: 1 },                  // no embedding → dropped
+    ]);
+    assert.equal(written, 2);
+    let store = loadTrainingData();
+    assert.equal(Object.keys(store).length, 2);
+    assert.equal(store['https://x/1'].label, 1);
+    // Relabel the same link → overwrites, no duplicate
+    saveTrainingData([{ link: 'https://x/1', label: 0, embedding: [0.1, 0.2] }]);
+    store = loadTrainingData();
+    assert.equal(Object.keys(store).length, 2);
+    assert.equal(store['https://x/1'].label, 0);
+  });
+});
+
+test('model: saveModel/loadModel round-trip', async () => {
+  const { trainLogistic, saveModel, loadModel: load } = await import('../src/ml/model.mjs');
+  await inTempDir(() => {
+    const { X, y } = syntheticSet(10, 10);
+    const model = trainLogistic(X, y);
+    saveModel(model);
+    const loaded = load();
+    assert.deepEqual(loaded.weights, model.weights);
+    assert.equal(loaded.bias, model.bias);
+    assert.equal(loaded.meta.nPos, 10);
+  });
+});
+
+test('retrain: guard skips training when labels are insufficient', async () => {
+  const { retrain } = await import('../src/train.mjs');
+  const { saveTrainingData } = await import('../src/ml/training-data.mjs');
+  await inTempDir(async () => {
+    // Empty store → skipped
+    let res = await retrain();
+    assert.equal(res.trained, false);
+    // One class only (below MIN_PER_CLASS for negatives) → still skipped
+    saveTrainingData(Array.from({ length: 12 }, (_, i) =>
+      ({ link: `https://x/${i}`, label: 1, text: 'SWE at X\n\nreal description here', embedding: [1, 0] })));
+    res = await retrain();
+    assert.equal(res.trained, false);
+    assert.equal(res.nPos, 12);
+    // Title-only entries (no "\n\n" description marker) are excluded from training
+    saveTrainingData(Array.from({ length: 12 }, (_, i) =>
+      ({ link: `https://x/t${i}`, label: 0, text: 'SWE at Y in NYC', embedding: [0, 1] })));
+    res = await retrain();
+    assert.equal(res.trained, false, 'title-only negatives must not count toward the guard');
+    assert.equal(res.nNeg, 0);
+  });
+});
+
+test('evaluateHoldout: metrics on separable data, null when a class is tiny', async () => {
+  const { evaluateHoldout } = await import('../src/ml/model.mjs');
+  const { X, y } = syntheticSet(20, 40);
+  const ho = evaluateHoldout(X, y);
+  assert.ok(ho.precision === 1 && ho.recall === 1, 'separable data → perfect holdout metrics');
+  assert.equal(ho.nTestPos, 4);   // floor(20 * 0.2)
+  assert.equal(ho.nTestNeg, 8);
+  // Deterministic across runs (seeded shuffle)
+  assert.deepEqual(evaluateHoldout(X, y), ho);
+  // Too few positives to split → null
+  const small = syntheticSet(3, 40);
+  assert.equal(evaluateHoldout(small.X, small.y), null);
+});
+
+test('deleteDescriptions: removes only named links, persists', async () => {
+  const { loadDescriptions, saveDescriptions, deleteDescriptions } = await import('../src/ml/descriptions.mjs');
+  await inTempDir(() => {
+    saveDescriptions([
+      { link: 'https://x/keep', company: 'A', role: 'r', description: 'long enough description text' },
+      { link: 'https://x/drop', company: 'B', role: 'r', description: 'long enough description text' },
+    ]);
+    assert.equal(deleteDescriptions(['https://x/drop', 'https://x/never-existed']), 1);
+    const cache = loadDescriptions();
+    assert.ok('https://x/keep' in cache);
+    assert.ok(!('https://x/drop' in cache));
+    assert.equal(deleteDescriptions([]), 0);
+  });
 });

@@ -7,6 +7,10 @@
  *   blank                           → moves to Ignored sheet
  * Deduplicates against existing Applied/Ignored link columns, then clears Potential.
  *
+ * Feedback loop: every processed row is also recorded as a training label
+ * (applied = 1, ignored = 0) with its embedding, and the scoring model is retrained
+ * (src/train.mjs). Failures there never block the apply flow.
+ *
  * Usage:
  *   node src/apply.mjs            # process all rows
  *   node src/apply.mjs --dry-run  # preview without writing
@@ -102,6 +106,38 @@ async function main() {
       insertDataOption: 'INSERT_ROWS',
       requestBody: { values: req.values },
     });
+  }
+
+  // Feedback loop: record each decision as a training label (applied=1, ignored=0)
+  // and retrain the scoring model. Must never block the apply flow — the description
+  // cache still holds these links, so a failed run can be recovered via train.mjs --bootstrap.
+  try {
+    const { loadDescriptions, deleteDescriptions } = await import('./ml/descriptions.mjs');
+    const { embed, buildJobText } = await import('./ml/scorer.mjs');
+    const { saveTrainingData } = await import('./ml/training-data.mjs');
+    const { retrain } = await import('./train.mjs');
+
+    const labeled = [
+      ...newApply.map(j => ({ ...j, label: 1 })),
+      ...newIgnore.map(j => ({ ...j, label: 0 })),
+    ].filter(j => j.link);
+
+    const descCache = loadDescriptions();   // load the (large) cache once, not per link
+    const entries = [];
+    for (const j of labeled) {
+      const text = buildJobText({ ...j, description: descCache[j.link]?.description || '' });
+      entries.push({ link: j.link, label: j.label, company: j.company, role: j.role, text, embedding: await embed(text) });
+    }
+    const written = saveTrainingData(entries);
+    if (written > 0) console.log(`\nRecorded ${written} training label(s) → data/training-data.json`);
+    await retrain();
+
+    // Evict ignored jobs' descriptions AFTER labeling — their text now lives in
+    // training-data.json, so the cache copy is dead weight. Applied jobs stay cached.
+    const evicted = deleteDescriptions(newIgnore.map(j => j.link).filter(Boolean));
+    if (evicted > 0) console.log(`Evicted ${evicted} ignored job description(s) from cache`);
+  } catch (e) {
+    console.error(`  [train] Skipped (${e.message}) — apply flow unaffected.`);
   }
 
   // Clear through column K so stale Match Scores don't carry into the next scan's rows.

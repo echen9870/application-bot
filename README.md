@@ -23,6 +23,43 @@ node src/jobs.mjs --companies "Stripe, OpenAI, Glean" --all && node src/prune.mj
 
 ---
 
+## ML Scoring (Feedback Loop)
+
+Every time you run `/apply`, the pipeline learns from your decisions and improves ranking for next time.
+
+### How it works
+
+1. **Resume embedding** — Your resume is converted to a 384-dimensional vector using [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), a lightweight pre-trained transformer. The embedding captures semantic meaning without any fine-tuning.
+
+2. **Job embedding** — Each job description (title + responsibilities + requirements) is embedded the same way, creating a comparable 384-dim vector.
+
+3. **Base score (cosine similarity)** — The Match Score starts as cosine similarity between your resume and the job description, ranging 0–1. This measures "does this JD resemble my background?"
+
+4. **Feedback model** — When you `/apply`:
+   - Each job you checked is labeled 1 (applied), unchecked is 0 (ignored)
+   - A logistic regression head (384 weights + 1 bias) trains on description-bearing jobs only
+   - It learns "will Eric apply to this?" rather than just "does this match the resume"
+   - Training happens in-process: fast (<1s), no external API calls
+   - Class imbalance is handled by upweighting the rare positive class
+
+5. **Blended score** — Final Match Score = `(1−α)·cosine + α·modelProb`, where:
+   - α = min(0.7, nLabels / 200) — the model's influence grows with feedback but cosine always keeps ≥30% weight as an anchor
+   - Currently α ≈ 0.7 with 36 positives + 355 negatives labeled (description-bearing only)
+
+### Performance
+
+On a stratified 80/20 holdout (validation set never seen during training):
+- **Precision: 21.6%** — of jobs the model flags "apply," ~1 in 5 you actually applied to
+- **Recall: 65.3%** — of jobs you applied to, the model flags ~2 in 3
+
+This improves as you provide more feedback (currently 36 positive examples). The holdout metrics are reproducible (seeded shuffle); each run reports current skill.
+
+### Key insight
+
+The model trains **only on description-bearing labels** — entries where the job description was available. Title-only entries ("Software Engineer at X") embed nearly-identically for wildly different jobs and teach the model title phrasing rather than your preferences. Filtering to descriptions raised precision from 14% to 21% at launch (2026-07-10).
+
+---
+
 ## Sheets
 
 | Sheet | Purpose |

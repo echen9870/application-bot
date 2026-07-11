@@ -1,6 +1,6 @@
 ---
 name: scanall
-description: Full scan — API companies (Greenhouse/Ashby/Lever/SmartRecruiters) + web search for websearch-only companies, then prune dead links. Combines /scan and /websearch-jobs into one pass.
+description: Full scan — API companies (Greenhouse/Ashby/Lever/SmartRecruiters) + web search for websearch-only companies, then prune dead links and score + sort by Match Score. Combines /scan and /websearch-jobs into one pass.
 user_invocable: true
 args: flags
 argument-hint: "[--all] [--dry-run]"
@@ -86,13 +86,22 @@ For each remaining generic websearch link:
 
 This is dramatically smaller than before — most websearch results survive into Potential as ATS links that prune already validated.
 
-## Step 5 — Report
+## Step 5 — Score and sort
+
+```bash
+node src/score.mjs
+```
+
+Scores every Potential row (embedding cosine, blended with the apply/ignore feedback model when trained), writes Match Score to column K, sorts the sheet best-first.
+
+## Step 6 — Report
 
 Summarize:
 - API scan: companies scanned, new scan-sourced jobs written, filters hit
 - Websearch: companies searched, jobs found, jobs written after `write-potential.mjs` filters
 - Prune: websearch rows checked, dead rows removed
 - Playwright: generic links verified, dead rows removed
+- Scoring mode (cosine-only vs blended) and top matches
 - **Total new live jobs in Potential** (split by Source)
 
 Remind the user to review Potential and run `/apply` when ready.

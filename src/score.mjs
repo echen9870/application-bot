@@ -4,7 +4,8 @@
  *
  * This is the production wiring around the embedding model in src/ml/scorer.mjs (the same
  * model test/test-ml.mjs exercises). It does NOT introduce a new scoring algorithm — it
- * reuses scoreJobs() (resume↔job-description cosine similarity via local all-MiniLM-L6-v2).
+ * reuses scoreJobs() (resume↔job-description cosine similarity via local all-MiniLM-L6-v2,
+ * blended with the apply/ignore feedback model from data/model.json when one is trained).
  *
  * Flow:
  *   1. Load resume text (src/ml/parser.mjs → data/resume.{txt,md,pdf})
@@ -29,6 +30,7 @@ import { getFirstEmptyRow } from './potential-writer.mjs';
 import { parseResume } from './ml/parser.mjs';
 import { scoreJobs } from './ml/scorer.mjs';
 import { loadDescriptions } from './ml/descriptions.mjs';
+import { loadModel } from './ml/model.mjs';
 
 const SCORE_COL = 'K';                 // Potential column for the match score
 const SCORE_HEADER = 'Match Score';
@@ -85,6 +87,11 @@ async function main() {
   if (scorable.length === 0) { console.log('No scorable rows in Potential.'); return; }
   const withDesc = scorable.filter(j => j.description.trim().length > 50).length;
   console.log(`Scoring ${scorable.length} job(s) (${withDesc} with cached descriptions, ${scorable.length - withDesc} title-only).`);
+
+  const model = loadModel();
+  console.log(model
+    ? `Mode: blended — cosine + feedback model (${model.meta.nPos} applied / ${model.meta.nNeg} ignored labels)`
+    : 'Mode: cosine only (no trained feedback model yet — labels accrue on each /apply)');
 
   // 3 — load resume + score with the existing embedding model
   const resumeText = await parseResume();

@@ -1,6 +1,6 @@
 ---
 name: scan
-description: Run the full job pipeline — scan API portals, filter by title/location/YOE, write to Potential sheet, then prune dead links. Covers all Greenhouse/Ashby/SmartRecruiters/Lever companies.
+description: Run the full job pipeline — scan API portals, filter by title/location/YOE, write to Potential sheet, prune dead links, then score + sort by Match Score. Covers all Greenhouse/Ashby/SmartRecruiters/Lever companies.
 user_invocable: true
 args: flags
 argument-hint: "[--companies 'Stripe,OpenAI'] [--all] [--dry-run]"
@@ -8,7 +8,7 @@ argument-hint: "[--companies 'Stripe,OpenAI'] [--all] [--dry-run]"
 
 # scan
 
-Full pipeline: scan → filter → write to Potential → prune dead links.
+Full pipeline: scan → filter → write to Potential → prune dead links → score + sort.
 
 ## Step 1 — Run the scanner
 
@@ -34,13 +34,22 @@ node src/prune.mjs
 
 This checks Greenhouse/Ashby/Lever links against their board APIs and drops any job IDs no longer present. Takes ~30s regardless of sheet size.
 
-## Step 3 — Report
+## Step 3 — Score and sort
+
+```bash
+node src/score.mjs
+```
+
+Scores every Potential row against the resume (embedding cosine, blended with the apply/ignore feedback model when trained), writes Match Score to column K, and sorts the sheet best-first. Skip this step if the scan was `--dry-run` or wrote 0 new jobs to an empty sheet.
+
+## Step 4 — Report
 
 Summarize:
 - How many companies were scanned
 - How many new jobs were written to Potential
 - How many were filtered (non-US, YOE, title, recency, duplicates)
 - How many rows prune removed
+- Scoring mode (cosine-only vs blended) and the top few matches
 - Any errors (transient SR 404s are normal rate-limiting; safe to ignore)
 
 Remind the user to review Potential and run `/apply` when ready.

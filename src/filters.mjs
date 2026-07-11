@@ -11,7 +11,7 @@ export const US_STATES = new Set([
   'va','wa','wv','wi','wy','dc',
 ]);
 
-export const NON_US_COUNTRY = [
+const NON_US_COUNTRY = [
   'canada','ontario','toronto','vancouver','montreal','calgary','ottawa','quebec','alberta',
   'united kingdom','uk','germany','france','netherlands','sweden','spain','poland','serbia',
   'japan','australia','india','brazil','singapore','israel','dubai','uae','mexico','argentina',

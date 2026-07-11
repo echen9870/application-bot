@@ -31,7 +31,25 @@ export function loadConfig(path = PORTALS_PATH) {
     titleFilter: raw.title_filter || {},
     companies:   raw.tracked_companies || [],
   };
+  warnDuplicates(_cache.companies);
   return _cache;
+}
+
+// Duplicate entries mean double API fetches per scan and double websearch spend —
+// warn loudly so they get removed instead of accumulating (35 were purged 2026-07-10).
+function warnDuplicates(companies) {
+  const seen = new Map();
+  const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  for (const c of companies) {
+    for (const key of [norm(c.name), c.api?.trim(), c.careers_url?.trim()]) {
+      if (!key) continue;
+      if (seen.has(key) && seen.get(key) !== c) {
+        console.warn(`  [config] WARNING: duplicate portals.yml entry "${c.name}" (matches "${seen.get(key).name}") — remove one`);
+        break;
+      }
+      if (!seen.has(key)) seen.set(key, c);
+    }
+  }
 }
 
 // Companies with `enabled` not explicitly false. Every consumer that iterates

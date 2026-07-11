@@ -99,6 +99,18 @@ programming_languages: [Java, JavaScript, TypeScript, C, C++, Python, Elixir, Go
 # Non-language tools/technologies (small bonus each, matched literally).
 preferred_skills: [PostgreSQL, MongoDB, DynamoDB, Kafka, AWS, Docker, Grafana, Spring, Django, Flask, Express]
 
+# Title strings matched against the job TITLE only (not the JD body), by
+# embedding cosine; the best match blends into the score with weight 0.3
+# (TITLE_BETA in rubric.mjs). Tested 2026-07-11: mean positive rank 90.1 → 80.8,
+# p@50 26% → 32%, stable for β in 0.2–0.4.
+preferred_titles:
+  - Software Engineer New Grad
+  - Backend Software Engineer
+  - Software Engineer I
+  - Systems Engineer
+  - Software Engineer Intern
+  - Infrastructure Engineer
+
 # Keywords that reliably mark jobs you IGNORE (word-boundary match; each hit
 # subtracts from the score). Data-backed from apply/ignore history 2026-07-11:
 # terraform 0 applies/40 ignores, azure 0/32, agile 1/46, full stack 1/46,

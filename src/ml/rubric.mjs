@@ -18,12 +18,14 @@
  *     contributes its own small bonus.
  *   - penalty_keywords  — literal keywords that reliably mark ignored jobs;
  *     each hit subtracts from the score.
+ *   - preferred_titles  — title strings compared (by embedding cosine) against
+ *     the job TITLE alone, blended into the body score with weight TITLE_BETA.
  * Plus a yoe window: jobs demanding more than yoe.max are heavily discounted.
  *
  * Exports:
  *   loadRubric(path?)                              → parsed rubric | null
- *   embedRubric(rubric)                            → { domains, antis, skills, yoe } (async)
- *   rubricScore(embeddedRubric, jobVec, jobText, jobRole)
+ *   embedRubric(rubric)                            → { domains, antis, skills, titles, yoe } (async)
+ *   rubricScore(embeddedRubric, jobVec, jobText, jobRole, roleVec?)
  *                                                  → { score, topDomain, antiHit, yoeCapped }
  */
 
@@ -38,6 +40,9 @@ const LANG_BONUS_SCALE  = 0.1;   // max programming-language bonus, separate fro
 const PENALTY_SCALE     = 0.2;   // max penalty-keyword deduction (all penalties present)
 const ANTI_PENALTY      = 0.5;   // multiply score when a job resembles an anti most
 const YOE_PENALTY       = 0.3;   // multiply score when the job demands too much experience
+const TITLE_BETA        = 0.3;   // title-blend weight: score = (1-β)·body + β·titleScore
+                                 // (β sweep 2026-07-11: 0.3 best mean rank 80.8 vs 90.1 at β=0,
+                                 //  stable across 0.2–0.4; see scripts/eval-rubric.mjs)
 
 // ── Load ───────────────────────────────────────────────────────────────────
 
@@ -92,7 +97,16 @@ export async function embedRubric(rubric) {
   const penalties = (Array.isArray(rubric.penalty_keywords) ? rubric.penalty_keywords : [])
     .map(s => String(s).toLowerCase());
 
-  return { domains, antis, skills, languages, penalties, yoe: rubric.yoe || {} };
+  // preferred_titles are embedded once here like domains/antis, but compared
+  // against a separately-embedded job TITLE (not the JD body) at score time
+  // via rubricScore's roleVec param.
+  const titleDefs = Array.isArray(rubric.preferred_titles) ? rubric.preferred_titles : [];
+  const titles = await Promise.all(titleDefs.map(async t => ({
+    name: String(t),
+    vec:  await embed(String(t)),
+  })));
+
+  return { domains, antis, skills, languages, penalties, titles, yoe: rubric.yoe || {} };
 }
 
 // ── Score ────────────────────────────────────────────────────────────────────
@@ -129,14 +143,24 @@ function escapeRegex(s) {
  * final score is multiplied by YOE_PENALTY (not zeroed — the YOE parsers throw
  * occasional false positives that shouldn't nuke an otherwise good job).
  *
+ * Title blend: when the caller passes a roleVec (embedding of the job's title —
+ * jobs arrive here as pre-embedded vectors, so the caller must embed the title)
+ * and the rubric has preferred_titles, the body score is blended with
+ * titleScore = max cosine(roleVec, titleVec):
+ * score = (1−TITLE_BETA)·body + TITLE_BETA·titleScore. Keyword bonuses/penalties
+ * and the anti margin apply to the body score before the blend (they read
+ * jobText, not the title); the YOE gate applies after, as a global override.
+ * No roleVec or no titles → pure body score, unchanged behavior.
+ *
  * @param {object} embeddedRubric  from embedRubric()
  * @param {number[]} jobVec        embedded job text
  * @param {string} jobText         raw job text (for skill match + YOE-from-desc)
  * @param {string} jobRole         job title (for YOE-from-title)
+ * @param {number[]} [roleVec]     embedded job title (enables the title blend)
  * @returns {{ score: number, topDomain: string|null, antiHit: string|null, yoeCapped: boolean }}
  */
-export function rubricScore(embeddedRubric, jobVec, jobText, jobRole) {
-  const { domains, antis, skills, languages = [], penalties = [], yoe } = embeddedRubric;
+export function rubricScore(embeddedRubric, jobVec, jobText, jobRole, roleVec) {
+  const { domains, antis, skills, languages = [], penalties = [], titles = [], yoe } = embeddedRubric;
 
   // 1 — best preferred domain (weighted for the score, raw for the anti margin)
   const maxWeight = domains.reduce((m, d) => Math.max(m, d.weight), 0) || 1;
@@ -180,7 +204,17 @@ export function rubricScore(embeddedRubric, jobVec, jobText, jobRole) {
   // positive lists, these are backed by high counts — see rubric.yml).
   if (penalties.length > 0) score -= keywordFraction(penalties) * PENALTY_SCALE;
 
-  // 4 — YOE gate
+  // 4 — title blend (no-op without a roleVec or preferred_titles)
+  if (roleVec && titles.length > 0) {
+    let titleScore = 0;
+    for (const t of titles) {
+      const c = cosine(roleVec, t.vec);
+      if (c > titleScore) titleScore = c;
+    }
+    score = (1 - TITLE_BETA) * score + TITLE_BETA * titleScore;
+  }
+
+  // 5 — YOE gate
   let yoeCapped = false;
   if (typeof yoe.max === 'number') {
     const fromTitle = extractMinYOE(jobRole || '');
@@ -189,7 +223,7 @@ export function rubricScore(embeddedRubric, jobVec, jobText, jobRole) {
     if (demanded > yoe.max) { score *= YOE_PENALTY; yoeCapped = true; }
   }
 
-  // 5 — clamp
+  // 6 — clamp
   score = Math.max(0, Math.min(1, score));
   return { score, topDomain, antiHit, yoeCapped };
 }

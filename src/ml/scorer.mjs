@@ -122,6 +122,14 @@ export async function scoreJobs(resumeText, jobs) {
   }
 
   console.log(`  [scorer] Scoring ${jobs.length} job(s)...`);
+  // Title vectors for the rubric's title blend — cached by role string, since
+  // many postings share the same title.
+  const roleVecCache = new Map();
+  const getRoleVec = async role => {
+    if (!role) return undefined;
+    if (!roleVecCache.has(role)) roleVecCache.set(role, await embed(role));
+    return roleVecCache.get(role);
+  };
   const scored = await Promise.all(
     jobs.map(async job => {
       const jobText = buildJobText(job);
@@ -132,7 +140,8 @@ export async function scoreJobs(resumeText, jobs) {
       let anchor = cosine;
       let rubricInfo = null;
       if (embeddedRubric) {
-        const r = rubricScore(embeddedRubric, jobVec, jobText, job.role || '');
+        const roleVec = await getRoleVec(job.role || '');
+        const r = rubricScore(embeddedRubric, jobVec, jobText, job.role || '', roleVec);
         anchor = parseFloat(r.score.toFixed(4));
         rubricInfo = { topDomain: r.topDomain, antiHit: r.antiHit, yoeCapped: r.yoeCapped };
       }

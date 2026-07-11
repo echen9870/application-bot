@@ -1003,3 +1003,24 @@ test('rubricScore: penalty keywords subtract, word-boundary matched', async () =
   const noHit = rubricScore(er, vec, 'we buy agilent hardware', 'SWE');
   assert.equal(noHit.score, clean.score);
 });
+
+test('rubricScore: title blend applies only when roleVec and titles are present', async () => {
+  const { rubricScore } = await import('../src/ml/rubric.mjs');
+  const er = {
+    domains: [{ name: 'Dist', weight: 1, vec: [1, 0, 0, 0] }],
+    antis: [], skills: [], languages: [], penalties: [],
+    titles: [{ name: 'Software Engineer I', vec: [0, 1, 0, 0] }],
+    yoe: {},
+  };
+  const jobVec = [1, 0, 0, 0];                       // body score = 1
+  // No roleVec → pure body score, unchanged behavior
+  const noRole = rubricScore(er, jobVec, '', 'SWE');
+  assert.equal(noRole.score, 1);
+  // roleVec matching the title exactly → blend keeps score at 1
+  const match = rubricScore(er, jobVec, '', 'SWE', [0, 1, 0, 0]);
+  assert.ok(Math.abs(match.score - 1) < 1e-9);
+  // roleVec orthogonal to every title → titleScore 0 pulls score to (1-β)
+  const miss = rubricScore(er, jobVec, '', 'SWE', [0, 0, 1, 0]);
+  assert.ok(miss.score < noRole.score, 'non-matching title lowers the blended score');
+  assert.ok(Math.abs(miss.score - 0.7) < 1e-9, `expected (1-β)=0.7, got ${miss.score}`);
+});

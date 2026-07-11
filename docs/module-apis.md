@@ -80,15 +80,17 @@ export function buildJobText(job)                     // → the exact text embe
 ### src/ml/rubric.mjs
 ```js
 export function loadRubric(path = 'rubric.yml')  // → parsed rubric | null (missing/unparseable → null, warns, never throws)
-export async function embedRubric(rubric)        // → { domains: {name,weight,vec}[], antis: {name,vec}[], skills, languages, penalties: string[] (lowercased), yoe }
-//   embeds each domain/anti description once via embed() from scorer.mjs.
-export function rubricScore(embeddedRubric, jobVec, jobText, jobRole)
+export async function embedRubric(rubric)        // → { domains: {name,weight,vec}[], antis: {name,vec}[], titles: {name,vec}[], skills, languages, penalties: string[] (lowercased), yoe }
+//   embeds each domain/anti/preferred-title description once via embed() from scorer.mjs.
+export function rubricScore(embeddedRubric, jobVec, jobText, jobRole, roleVec?)
 //   → { score: 0–1, topDomain: string|null, antiHit: string|null, yoeCapped: boolean }
 //   domainScore = max over domains of cosine(jobVec, domain.vec)·(weight/maxWeight).
 //   anti margin: penalize (×0.5) only when best anti cosine > best raw domain cosine.
 //   keyword buckets (all word-boundary literal matches against jobText):
 //     preferred_skills ×0.1 + programming_languages ×0.1 added;
 //     penalty_keywords ×0.2 subtracted (data-backed ignore signals).
+//   title blend: with roleVec (caller-embedded job title) + preferred_titles,
+//     score = 0.7·body + 0.3·max cosine(roleVec, title.vec); no roleVec → pure body.
 //   YOE gate: extractMinYOE(jobRole)/extractMinYOEFromDesc(jobText) > yoe.max → ×0.3.
 //   score clamped to [0,1]. Pure function (takes vecs) — testable without the model.
 ```

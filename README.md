@@ -54,6 +54,28 @@ On a stratified 80/20 holdout (validation set never seen during training):
 
 This improves as you provide more feedback (currently 36 positive examples). The holdout metrics are reproducible (seeded shuffle); each run reports current skill.
 
+### Evaluation metrics — what they mean and why these ones
+
+Two different questions get two different metric sets.
+
+**1. Is the feedback model learning?** (`src/train.mjs`, printed after every retrain)
+
+The model is evaluated on a **stratified 80/20 holdout**: 20% of labels are hidden during training and predicted afterwards, with "stratified" meaning the apply/ignore ratio is preserved in both halves (the shuffle is seeded, so runs are reproducible). On that held-out set we report, for the *positive* class only:
+
+- **Precision** — of the jobs the model flags "would apply," what fraction did you actually apply to? Low precision = the score cries wolf.
+- **Recall** — of the jobs you actually applied to, what fraction did the model flag? Low recall = good jobs get buried.
+
+Plain *accuracy* is deliberately never reported: with ~9% positives, a model that says "ignore everything" scores 91% accurate while being useless. Precision/recall on the rare class is the honest view. Because a single 80/20 split of ~390 labels is noisy, any change to the training pipeline is judged over **multiple seeds** (typically 7 different splits) — a "win" that only appears on one split is split luck, not signal.
+
+**2. Does the anchor (rubric or resume) rank well?** (`scripts/eval-rubric.mjs`)
+
+The anchor isn't a classifier — it produces a *ranking* of the Potential sheet, and what matters is whether jobs you'd apply to float to the top. So it's measured with ranking metrics over all stored labels (no holdout needed — the rubric is hand-written, not fit to the labels, so it can't memorize them the way a trained model can):
+
+- **Mean positive rank** — sort all ~390 labeled jobs by score, then average the positions of your 36 actual applies. Random ordering ≈ 196; lower is better. This is the primary tuning target because it uses every positive, so it's the most stable number at this sample size.
+- **Precision@25 / precision@50** — of the top 25 (or 50) ranked jobs, what fraction are actual applies? This mirrors real usage: you review the top of the sorted sheet, so it measures "how good is the first screenful." It's coarser (one job moving across the cutoff swings p@25 by 4 points), which is why it's the sanity check rather than the target.
+
+A change must not trade these off blindly — several experiments improved mean rank while dropping p@25, meaning the *middle* of the ranking got better while the top got worse; those were rejected. The standing caveat: all of this is computed on 36 positives, so small deltas (a few rank points, one p@25 step) are noise — only changes that move mean rank by ~10%+ with flat-or-better precision get adopted.
+
 ### Key insight
 
 The model trains **only on description-bearing labels** — entries where the job description was available. Title-only entries ("Software Engineer at X") embed nearly-identically for wildly different jobs and teach the model title phrasing rather than your preferences. Filtering to descriptions raised precision from 14% to 21% at launch (2026-07-10).
@@ -84,7 +106,8 @@ The rubric wasn't written once and trusted — every change was measured against
 | First draft (aspirational domains) | 224.8 | Hand-written "what I want" sentences — **lost to the resume** |
 | Resume-derived content | 200.6 | Rebuilt domains from coursework + projects (work history excluded); removed a Frontend anti-preference that penalized actual applies at 2× the rate of ignores |
 | Weight grid search | 132.5 | Discovery: a *general new-grad SWE* catch-all domain at dominant weight beats every specialist emphasis — first config to beat the resume |
-| Parallel experiments (3 agents) | **90.1** | Title-list catch-all, mined domains, keyword penalties (below) |
+| Parallel experiments (3 agents) | 90.1 | Title-list catch-all, mined domains, keyword penalties (below) |
+| Structural experiments (5 agents) | **80.8** | `preferred_titles` blend — job title embedded separately, blended at β=0.3 (below) |
 
 The final round ran three independent, parallel experiments against the same labels:
 
@@ -96,7 +119,9 @@ The final round ran three independent, parallel experiments against the same lab
 
 **Caveats:** everything is tuned on 36 historical applies — a compass, not a guarantee. The tuning also revealed that stated and revealed preferences disagree (kubernetes/devops are *penalty* keywords despite infra being an aspirational domain); the yml documents this so you can override it deliberately. Re-run the eval as labels accumulate.
 
-Final: **mean rank 90.1 vs 178.7, precision@25 40% vs 20%, precision@50 26% vs 12%** — half your applies rank in the top quarter, and 10 of the top-25 slots are jobs you'd actually apply to.
+A second round tested five *structural* changes (new sections/mechanics rather than content), each in an isolated worktree against the same labels. Four were discarded on the evidence: phrase-level domain embeddings (splitting prose into short phrases *lost* ~18 rank points — isolated phrases let single-keyword matches dominate), base+additive specialist bonuses (every τ/weight combo lost to max-over-domains), per-keyword statistical weights (low-count keyword weights flip sign under resampling; cost 8 points of p@25), and a continuous anti-preference penalty (safe but moved mean rank only 90.1 → 88.6 with zero precision change). One shipped: a **`preferred_titles` section** — a handful of target titles embedded and compared against the job *title* alone (the body embedding dilutes the title in ~500 words of JD), blended as `0.7·body + 0.3·titleScore`. That took mean rank 90.1 → **80.8** and p@50 26% → 32%, stable for β in 0.2–0.4.
+
+Final: **mean rank 80.8 vs 178.7, precision@25 40% vs 20%, precision@50 32% vs 12%**.
 
 ---
 

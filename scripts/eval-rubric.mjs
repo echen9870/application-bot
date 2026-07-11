@@ -63,13 +63,22 @@ async function main() {
   const resumeVec      = await embed(await parseResume());
   const embeddedRubric = await embedRubric(rubric);
 
+  // Embed each distinct job title once for the rubric's title blend (jobs
+  // arrive as stored body vectors; the title vector is computed here).
+  const roleVecCache = new Map();
+  for (const e of entries) {
+    const role = e.role || '';
+    if (role && !roleVecCache.has(role)) roleVecCache.set(role, await embed(role));
+  }
+
   // Score every job with each anchor, reusing the job's stored embedding.
   const rows = entries.map(e => {
     const jobVec = e.embedding;
+    const role   = e.role || '';
     return {
       label:  e.label,
       resume: cosine(resumeVec, jobVec),
-      rubric: rubricScore(embeddedRubric, jobVec, e.text, e.role || '').score,
+      rubric: rubricScore(embeddedRubric, jobVec, e.text, role, roleVecCache.get(role)).score,
     };
   });
 

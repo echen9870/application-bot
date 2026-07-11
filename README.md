@@ -58,6 +58,46 @@ This improves as you provide more feedback (currently 36 positive examples). The
 
 The model trains **only on description-bearing labels** — entries where the job description was available. Title-only entries ("Software Engineer at X") embed nearly-identically for wildly different jobs and teach the model title phrasing rather than your preferences. Filtering to descriptions raised precision from 14% to 21% at launch (2026-07-10).
 
+### Rubric mode
+
+Cosine similarity measures what your resume *resembles*; it can't know what you *want*. Drop a hand-edited **`rubric.yml`** at the repo root and scoring auto-switches to "rubric mode": the rubric score replaces resume cosine as the anchor in the blend above (the feedback model is untouched). The rubric declares:
+
+- `preferred_domains` — weighted, full-sentence descriptions of the work you want (they're embedded, so sentences beat keyword lists)
+- `anti_preferences` — full-sentence descriptions of work you want to avoid (a job is penalized only when it resembles an anti *more* than any preferred domain)
+- `preferred_skills` — plain keywords matched literally against the JD (small bonus per hit)
+- `yoe` — an experience window; jobs demanding more than `yoe.max` are discounted
+
+Edit it freely, then **validate before you trust it**:
+
+```bash
+node scripts/eval-rubric.mjs   # resume vs rubric ranking on your real apply/ignore labels
+```
+
+It replays your stored labels and prints precision@25/@50 and mean positive rank for both anchors, with a verdict on whether the rubric ranks your actual applies higher than the resume does. Tune the domain descriptions/weights until it beats the resume. Delete/rename `rubric.yml` to return to resume mode.
+
+### How the rubric was tuned (and why it beats the resume)
+
+The rubric wasn't written once and trusted — every change was measured against the real apply/ignore labels. The journey, with mean positive rank (lower = your actual applies rank higher; resume baseline 178.7):
+
+| Iteration | Mean rank | What changed |
+|---|---|---|
+| First draft (aspirational domains) | 224.8 | Hand-written "what I want" sentences — **lost to the resume** |
+| Resume-derived content | 200.6 | Rebuilt domains from coursework + projects (work history excluded); removed a Frontend anti-preference that penalized actual applies at 2× the rate of ignores |
+| Weight grid search | 132.5 | Discovery: a *general new-grad SWE* catch-all domain at dominant weight beats every specialist emphasis — first config to beat the resume |
+| Parallel experiments (3 agents) | **90.1** | Title-list catch-all, mined domains, keyword penalties (below) |
+
+The final round ran three independent, parallel experiments against the same labels:
+
+1. **Domain wording** — the single biggest lever: writing the catch-all domain as a bare **job-title list** ("Software Engineer, New Grad, Software Engineer I, …") instead of prose. JDs lead with their title, so title phrases embed far closer to them than candidate-perspective sentences. Also added two domains mined from the actual applied set (Fintech & Trading, Developer Tools). Null results worth knowing: "job-ad voice" prose tested *worse*, shorter prose hurt, an AI-infra domain didn't help.
+2. **Scoring mechanics** — confirmed `max` over domains beats mean/softmax aggregation; found the anti-preference and YOE gates never fire on current data (harmless insurance, unproven).
+3. **Keyword mining** — the honest split: *positive* keyword tuning is statistical noise at 36 applies (greedy "improvements" fail leave-one-out stability), but *negative* keywords carry real signal at high counts: `terraform` appears in 0 applies / 40 ignores, `azure` 0/32, `agile` 1/46. These became the `penalty_keywords` bucket (subtract 0.2 × fraction matched).
+
+**Why a rubric can beat the resume at all:** the resume is one long document — its embedding is an average of everything you've ever done, so it matches generic JDs indiscriminately. The rubric is a *set* of targeted vectors scored by best-match, plus literal keyword signals the embedding can't express (nothing in embedding space says "terraform in a JD means Eric skips it" — the label data does).
+
+**Caveats:** everything is tuned on 36 historical applies — a compass, not a guarantee. The tuning also revealed that stated and revealed preferences disagree (kubernetes/devops are *penalty* keywords despite infra being an aspirational domain); the yml documents this so you can override it deliberately. Re-run the eval as labels accumulate.
+
+Final: **mean rank 90.1 vs 178.7, precision@25 40% vs 20%, precision@50 26% vs 12%** — half your applies rank in the top quarter, and 10 of the top-25 slots are jobs you'd actually apply to.
+
 ---
 
 ## Sheets

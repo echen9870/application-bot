@@ -1,0 +1,108 @@
+# rubric.yml — hand-edited preference rubric for job scoring.
+#
+# This file lets you tell the scorer what you WANT, not just what your resume
+# happens to say. When it exists, score.mjs runs in "rubric mode": the rubric
+# score replaces the resume-cosine anchor in the blend with the feedback model.
+# Delete or rename this file to fall back to plain resume-cosine scoring.
+#
+# Edit freely. Guidance:
+#   - domain / anti descriptions are FULL SENTENCES — they are embedded and
+#     compared against the job description, and sentences embed far better than
+#     bare keyword lists. Describe the kind of work, not just tech names.
+#   - weights scale how much a matched domain counts; they are normalized by the
+#     max weight, so only their ratios matter.
+#   - programming_languages and preferred_skills are plain keywords matched
+#     literally against the JD text (word-boundary, case-insensitive) — NOT
+#     embedded. Each list contributes its own small bonus.
+#   - validate a rubric edit with:  node scripts/eval-rubric.mjs
+#
+# Content derived from resume skills, coursework, and projects (work history
+# intentionally excluded — the feedback model already learns from what you
+# actually applied to).
+
+# Acceptable years-of-experience window for the roles you want.
+yoe:
+  min: 0
+  max: 3
+
+# Kinds of work you actively want. Higher weight = stronger pull.
+# Weights tuned against real apply/ignore labels 2026-07-11 (eval-rubric.mjs):
+# the general new-grad domain must stay dominant — grid search showed ranking
+# quality degrades steadily as specialist weights approach it. At 2.0/1.2 the
+# rubric beats resume ranking (mean positive rank 132.5 vs 178.7).
+preferred_domains:
+  - name: Distributed & Storage Systems
+    description: >-
+      Building distributed and scalable systems, cloud storage and backup
+      systems, filesystems and snapshots, modern storage engines, message
+      queues like Kafka, and fault-tolerant backend services that scale
+      across many machines.
+    weight: 1.2
+  - name: Operating Systems & Systems Programming
+    description: >-
+      Operating system internals and low-level systems programming in C, C++
+      or Go — virtual memory, scheduling, filesystem implementation, system
+      calls, inter-process communication, concurrency, and performance-critical
+      code close to the hardware.
+    weight: 1.2
+  - name: Backend / API Engineering
+    description: >-
+      Server-side application and API engineering: designing REST APIs,
+      authentication and OAuth sign-in flows, backend services in frameworks
+      like Spring, Django, Flask or Express, and the business logic that powers
+      web and mobile products from the backend.
+    weight: 1.2
+  - name: Databases & Data Infrastructure
+    description: >-
+      Working with relational and NoSQL databases such as PostgreSQL, MongoDB
+      and DynamoDB — query languages, data modeling and schemas, data
+      pipelines, and the reliability and performance of data-intensive
+      applications.
+    weight: 1.2
+  # The catch-all is a bare TITLE LIST, not prose — JDs lead with their title,
+  # so title phrases embed much closer to them (mean rank 132.5 → 108.9 when
+  # this switched from prose; "job-ad voice" prose tested worse, 2026-07-11).
+  - name: Software Engineering (general)
+    description: >-
+      Software Engineer, New Grad, Software Engineer I, Early Career Software
+      Engineer, Graduate Software Engineer, Software Engineer Intern
+    weight: 2.0
+  # Two themes mined from the actual applied set (Affirm/Ramp/DRW/Point72/
+  # Optiver/Goldman; Glean/Notion/OpenAI dev tools). 1.5 balances mean rank
+  # against precision — 1.8 ranked better but cost p@25.
+  - name: Fintech & Trading Systems
+    description: >-
+      Software Engineer at a fintech, trading firm or bank building payments,
+      lending, trading and quantitative systems.
+    weight: 1.5
+  - name: Developer Tools & Productivity
+    description: >-
+      Software Engineer building developer tools, developer productivity,
+      internal platforms and infrastructure for engineers.
+    weight: 1.5
+
+# Kinds of work you want to avoid. A job is only penalized when it resembles one
+# of these MORE than any preferred domain above.
+# (A Frontend/UI anti was tried and removed 2026-07-11: generic JDs mention
+# React/UI in passing, and it penalized actual applies at 2x the rate of
+# ignores — see eval-rubric.mjs before re-adding.)
+anti_preferences:
+  - name: Mobile Development
+    description: >-
+      Building native mobile applications for iOS or Android using Swift,
+      Kotlin, Objective-C or React Native, focused on app UI, screens and
+      device features.
+
+# Programming languages from the resume (own bonus bucket, matched literally).
+programming_languages: [Java, JavaScript, TypeScript, C, C++, Python, Elixir, Go]
+
+# Non-language tools/technologies (small bonus each, matched literally).
+preferred_skills: [PostgreSQL, MongoDB, DynamoDB, Kafka, AWS, Docker, Grafana, Spring, Django, Flask, Express]
+
+# Keywords that reliably mark jobs you IGNORE (word-boundary match; each hit
+# subtracts from the score). Data-backed from apply/ignore history 2026-07-11:
+# terraform 0 applies/40 ignores, azure 0/32, agile 1/46, full stack 1/46,
+# kubernetes 3/67. Note kubernetes/devops earned their place from revealed
+# behavior even though infra is an aspirational domain — delete them here if
+# you want to stop penalizing infra-tooling JDs.
+penalty_keywords: [terraform, azure, computer vision, full stack, agile, ansible, kubernetes, scala, robotics, devops, ruby, angular]

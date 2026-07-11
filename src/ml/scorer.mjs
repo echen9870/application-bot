@@ -14,9 +14,15 @@
  *   buildJobText(job)                  → string  (the text embedded for a job)
  *
  * When a trained model exists (data/model.json, built from apply/ignore feedback via
- * src/train.mjs), scoreJobs blends it with cosine: score = (1−α)·cosine + α·modelProb,
- * α = min(0.7, nLabels/200). Cosine keeps ≥30% weight as an anchor; with no model the
- * behavior is pure cosine, exactly as before.
+ * src/train.mjs), scoreJobs blends it with the anchor: score = (1−α)·anchor + α·modelProb,
+ * α = min(0.7, nLabels/200). The anchor keeps ≥30% weight; with no model the behavior is
+ * pure anchor, exactly as before.
+ *
+ * The anchor is the resume↔job cosine by default. When rubric.yml exists (see
+ * src/ml/rubric.mjs), scoreJobs switches to "rubric mode": the rubric score replaces the
+ * resume cosine as the anchor, so ranking reflects what the user WANTS, not just what the
+ * resume resembles. The feedback-model blend is identical either way, and `.cosine` is
+ * always populated with the resume cosine for comparison.
  *
  * Job text fallback (when no description available):
  *   "${role} at ${company} in ${location}" — less rich but consistent across all ATS
@@ -25,6 +31,7 @@
 
 import { pipeline } from '@xenova/transformers';
 import { loadModel, predictLogistic } from './model.mjs';
+import { loadRubric, embedRubric, rubricScore } from './rubric.mjs';
 
 const MODEL = 'Xenova/all-MiniLM-L6-v2';
 
@@ -105,18 +112,39 @@ export async function scoreJobs(resumeText, jobs) {
     console.log(`  [scorer] Blending feedback model (${model.meta.nPos} pos / ${model.meta.nNeg} neg, α=${alpha.toFixed(2)})`);
   }
 
+  // Rubric mode: when rubric.yml exists, its score replaces the resume cosine as the
+  // blend anchor. Embed the rubric's domain/anti descriptions once, reuse across all jobs.
+  const rubric = loadRubric();
+  let embeddedRubric = null;
+  if (rubric) {
+    embeddedRubric = await embedRubric(rubric);
+    console.log(`  [scorer] Rubric mode (${embeddedRubric.domains.length} domains, ${embeddedRubric.antis.length} anti-preferences)`);
+  }
+
   console.log(`  [scorer] Scoring ${jobs.length} job(s)...`);
   const scored = await Promise.all(
     jobs.map(async job => {
       const jobText = buildJobText(job);
       const jobVec  = await embed(jobText);
       const cosine  = parseFloat(cosineSimilarity(resumeVec, jobVec).toFixed(4));
+
+      // Anchor = rubric score (rubric mode) or resume cosine (default).
+      let anchor = cosine;
+      let rubricInfo = null;
+      if (embeddedRubric) {
+        const r = rubricScore(embeddedRubric, jobVec, jobText, job.role || '');
+        anchor = parseFloat(r.score.toFixed(4));
+        rubricInfo = { topDomain: r.topDomain, antiHit: r.antiHit, yoeCapped: r.yoeCapped };
+      }
+
       const dimOk = model && model.weights.length === jobVec.length;
       const modelProb = dimOk ? parseFloat(predictLogistic(model, jobVec).toFixed(4)) : null;
       const score = modelProb == null
-        ? cosine
-        : parseFloat(((1 - alpha) * cosine + alpha * modelProb).toFixed(4));
-      return { ...job, score, cosine, modelProb };
+        ? anchor
+        : parseFloat(((1 - alpha) * anchor + alpha * modelProb).toFixed(4));
+      const out = { ...job, score, cosine, modelProb };
+      if (rubricInfo) out.rubricInfo = rubricInfo;
+      return out;
     })
   );
 

@@ -103,6 +103,12 @@ Productionizes `scoreJobs()` from `src/ml/scorer.mjs` against the Potential shee
 
 `--dry-run` prints the ranked summary without writing. `--top N` sets how many rows the console summary lists (default 20). **Note:** `user.yml`'s richer rubric (`scoring_weights`, company `tiers`, location/industry prefs) is **not** consumed. Folding it in is a possible future enhancement.
 
+### Rubric mode (rubric.yml)
+
+By default the anchor in the blend is the resume↔job cosine — "does this JD resemble my background?". A hand-edited **`rubric.yml`** at the repo root instead expresses what you *want* (preferred domains as weighted full-sentence descriptions, anti-preferences, a YOE window, and literal-match preferred skills). When the file exists, `scoreJobs` auto-switches to rubric mode: `rubricScore()` (in `src/ml/rubric.mjs`) replaces the resume cosine as the anchor, so `score = (1−α)·rubric + α·modelProb`. The feedback-model blend is unchanged, and `.cosine` still holds the resume cosine for comparison. The console mode line shows `rubric` vs `resume cosine`, and the top-N listing tags each row with its matched domain plus `[anti:…]`/`[YOE]` flags. Delete/rename `rubric.yml` to fall back to resume mode. See `docs/module-apis.md` for `rubricScore`'s exact rules (weighted domain max, anti margin penalty ×0.5, skill bonus ×0.1, YOE gate ×0.3).
+
+**Validate before trusting a rubric edit:** `node scripts/eval-rubric.mjs` replays your stored apply/ignore labels (`data/training-data.json`, description-bearing entries) and reports precision@25, precision@50, and mean positive rank for the resume anchor vs the rubric anchor — no Sheets access. A rubric that ranks your real applies higher (lower mean positive rank) is beating the resume; if it doesn't, tune the domain descriptions/weights and re-run.
+
 ---
 
 ## Write-Potential (src/write-potential.mjs)

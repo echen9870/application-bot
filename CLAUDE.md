@@ -47,10 +47,14 @@ career-ops/
       model.mjs           ← logistic-regression feedback model (train/predict/holdout-eval, data/model.json)
       training-data.mjs   ← labeled apply/ignore store (data/training-data.json, keyed by link)
       descriptions.mjs    ← job-description cache (data/job-descriptions.json, keyed by link)
+      rubric.mjs          ← preference-rubric scoring (loadRubric/embedRubric/rubricScore); anchor when rubric.yml exists
+  scripts/
+    eval-rubric.mjs       ← offline harness: resume vs rubric ranking on stored labels (no Sheets)
   test/
     test-all.mjs          ← test suite (node:test, no deps)
     test-ml.mjs           ← standalone ML pipeline test (no Sheets needed)
   portals.yml             ← company list + scan config
+  rubric.yml              ← hand-edited preference rubric; presence auto-enables rubric-mode scoring
   .env                    ← secrets (gitignored)
   service-account.json    ← Google service account (gitignored)
   gmail-credentials.json  ← Gmail OAuth app credentials (gitignored, user-provided)
@@ -140,6 +144,8 @@ This file covers what's needed every session. For deeper detail, load the releva
 - `echo '[...]' | node src/write-potential.mjs` — append websearch results to Potential (used by `/websearch-jobs`, `/scanall`).
 
 **Cost optimization:** `/scanall` and `/websearch-jobs` are token-heavy (95 web searches) — invoke with the cheapest model: `claude --model claude-haiku-4-5-20251001 /scanall`. `prune.mjs`/`score.mjs` are plain Node scripts — run directly, never inside a Claude session.
+
+**Rubric mode:** if `rubric.yml` exists at the repo root, `score.mjs` scores against your hand-edited preference rubric (what you *want*) instead of resume cosine; validate a rubric edit with `node scripts/eval-rubric.mjs` before trusting it. See `docs/pipeline-scripts.md` → Score.
 
 For write flows, exact filter order, flags, and per-script internals, load `docs/pipeline-scripts.md`.
 

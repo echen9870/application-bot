@@ -70,10 +70,29 @@ export function deleteDescriptions(links) // remove entries by link, persist; re
 export async function embed(text)                     // → number[] (384-dim, all-MiniLM-L6-v2, local, free)
 export async function scoreMatch(resumeText, jobText) // → number 0–1 (cosine similarity)
 export async function scoreJobs(resumeText, jobs)     // → jobs[] each with .score/.cosine/.modelProb, sorted desc
-// If data/model.json exists: score = (1−α)·cosine + α·modelProb, α = min(0.7, nLabels/200);
-// otherwise pure cosine (.modelProb null). Uses job.description, falls back to title-only text.
+// If data/model.json exists: score = (1−α)·anchor + α·modelProb, α = min(0.7, nLabels/200);
+// otherwise pure anchor (.modelProb null). Uses job.description, falls back to title-only text.
+// Anchor = resume cosine by default. If rubric.yml exists ("rubric mode"), anchor = rubricScore
+// and each job also gets .rubricInfo = { topDomain, antiHit, yoeCapped }. .cosine always = resume cosine.
 export function buildJobText(job)                     // → the exact text embedded for a job (shared with training)
 ```
+
+### src/ml/rubric.mjs
+```js
+export function loadRubric(path = 'rubric.yml')  // → parsed rubric | null (missing/unparseable → null, warns, never throws)
+export async function embedRubric(rubric)        // → { domains: {name,weight,vec}[], antis: {name,vec}[], skills, languages, penalties: string[] (lowercased), yoe }
+//   embeds each domain/anti description once via embed() from scorer.mjs.
+export function rubricScore(embeddedRubric, jobVec, jobText, jobRole)
+//   → { score: 0–1, topDomain: string|null, antiHit: string|null, yoeCapped: boolean }
+//   domainScore = max over domains of cosine(jobVec, domain.vec)·(weight/maxWeight).
+//   anti margin: penalize (×0.5) only when best anti cosine > best raw domain cosine.
+//   keyword buckets (all word-boundary literal matches against jobText):
+//     preferred_skills ×0.1 + programming_languages ×0.1 added;
+//     penalty_keywords ×0.2 subtracted (data-backed ignore signals).
+//   YOE gate: extractMinYOE(jobRole)/extractMinYOEFromDesc(jobText) > yoe.max → ×0.3.
+//   score clamped to [0,1]. Pure function (takes vecs) — testable without the model.
+```
+When `rubric.yml` exists, `scoreJobs` uses `rubricScore(...).score` as the blend anchor in place of resume cosine and attaches `.rubricInfo = { topDomain, antiHit, yoeCapped }` to each job.
 
 ### src/ml/model.mjs
 ```js

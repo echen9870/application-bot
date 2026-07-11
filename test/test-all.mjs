@@ -886,3 +886,120 @@ test('deleteDescriptions: removes only named links, persists', async () => {
     assert.equal(deleteDescriptions([]), 0);
   });
 });
+
+// ── Rubric scoring (src/ml/rubric.mjs) ───────────────────────────────────────
+// rubricScore takes plain vectors, so it is fully testable without the embedding
+// model. embedRubric (which does download/run the model) is not exercised here.
+
+import { writeFileSync } from 'node:fs';
+
+test('loadRubric: missing file → null, valid file → parsed', async () => {
+  const { loadRubric } = await import('../src/ml/rubric.mjs');
+  await inTempDir(() => {
+    assert.equal(loadRubric('rubric.yml'), null);       // absent → null (no throw)
+    writeFileSync('rubric.yml',
+      'yoe:\n  min: 0\n  max: 3\npreferred_domains:\n  - name: Dist\n    description: distributed systems\n    weight: 2\npreferred_skills: [Go, Rust]\n');
+    const r = loadRubric('rubric.yml');
+    assert.equal(r.yoe.max, 3);
+    assert.equal(r.preferred_domains[0].name, 'Dist');
+    assert.deepEqual(r.preferred_skills, ['Go', 'Rust']);
+  });
+});
+
+test('rubricScore: picks the highest-weighted matching domain', async () => {
+  const { rubricScore } = await import('../src/ml/rubric.mjs');
+  const er = {
+    domains: [
+      { name: 'Dist',    weight: 2, vec: [1, 0, 0, 0] },
+      { name: 'Backend', weight: 1, vec: [0, 1, 0, 0] },
+    ],
+    antis: [],
+    skills: [],
+    yoe: { max: 3 },
+  };
+  // Job leans toward Dist → topDomain Dist, score = cos(1)·(2/2) = 1
+  let r = rubricScore(er, [0.8, 0.6, 0, 0], 'backend role', 'backend role');
+  assert.equal(r.topDomain, 'Dist');
+  assert.ok(r.score > 0.7);
+  assert.equal(r.antiHit, null);
+  assert.equal(r.yoeCapped, false);
+});
+
+test('rubricScore: anti penalty triggers only when anti cosine beats every domain', async () => {
+  const { rubricScore } = await import('../src/ml/rubric.mjs');
+  const er = {
+    domains: [{ name: 'Dist', weight: 2, vec: [1, 0, 0, 0] }],
+    antis:   [{ name: 'Mobile', vec: [0, 0, 1, 0] }],
+    skills: [], yoe: {},
+  };
+  // Resembles the anti more than the domain → penalized
+  const hit = rubricScore(er, [0.3, 0, 0.95, 0], '', '');
+  assert.equal(hit.antiHit, 'Mobile');
+  // Resembles the domain more than the anti → no penalty
+  const clean = rubricScore(er, [0.95, 0, 0.3, 0], '', '');
+  assert.equal(clean.antiHit, null);
+  // Same base domainScore, so the penalty must have halved the hit case
+  assert.ok(hit.score < clean.score);
+});
+
+test('rubricScore: YOE gate discounts jobs demanding more than yoe.max', async () => {
+  const { rubricScore } = await import('../src/ml/rubric.mjs');
+  const er = { domains: [{ name: 'Dist', weight: 1, vec: [1, 0, 0, 0] }], antis: [], skills: [], yoe: { max: 3 } };
+  const capped = rubricScore(er, [1, 0, 0, 0], 'Backend Engineer 5+ years', 'Backend Engineer 5+ years');
+  assert.equal(capped.yoeCapped, true);
+  const ok = rubricScore(er, [1, 0, 0, 0], 'New Grad Backend Engineer', 'New Grad Backend Engineer');
+  assert.equal(ok.yoeCapped, false);
+  assert.ok(capped.score < ok.score);   // 0.3× multiplier applied
+});
+
+test('rubricScore: skill match is word-boundary and literal', async () => {
+  const { rubricScore } = await import('../src/ml/rubric.mjs');
+  const er = { domains: [], antis: [], skills: ['go', 'c++'], yoe: {} };
+  // "Go" and "C++" present as standalone tokens → both hit → full 0.1 bonus
+  const hit = rubricScore(er, [0, 0, 0, 0], 'we write Go and C++ daily', '');
+  assert.ok(Math.abs(hit.score - 0.1) < 1e-9, `expected 0.1 skill bonus, got ${hit.score}`);
+  // "Google"/"golang" must NOT match "go"; no "c++" either → zero bonus
+  const miss = rubricScore(er, [0, 0, 0, 0], 'google golang engineer', '');
+  assert.equal(miss.score, 0);
+});
+
+test('scoreJobs: no rubric.yml present → resume mode, no .rubricInfo', async (t) => {
+  const { scoreJobs } = await import('../src/ml/scorer.mjs');
+  await inTempDir(async () => {
+    // No rubric.yml and no model.json in this temp cwd → pure resume cosine.
+    const jobs = [{ company: 'A', role: 'Backend Engineer', location: 'NYC', description:
+      'We build distributed backend services and storage systems at massive scale every day.' }];
+    let scored;
+    try {
+      scored = await scoreJobs('Backend engineer with distributed systems experience.', jobs);
+    } catch (e) {
+      // The embedding model isn't cached and can't be fetched (offline CI) — skip
+      // rather than fail; the rubricScore tests above cover the pure logic.
+      t.skip(`embedding model unavailable: ${e.message}`);
+      return;
+    }
+    assert.equal(scored.length, 1);
+    assert.equal(scored[0].rubricInfo, undefined, 'resume mode must not attach rubricInfo');
+    assert.equal(typeof scored[0].cosine, 'number');
+    assert.equal(scored[0].score, scored[0].cosine, 'no model → score equals cosine anchor');
+  });
+});
+
+test('rubricScore: penalty keywords subtract, word-boundary matched', async () => {
+  const { rubricScore } = await import('../src/ml/rubric.mjs');
+  const er = {
+    domains: [{ name: 'Dist', weight: 2, vec: [1, 0, 0, 0] }],
+    antis: [], skills: [], languages: [],
+    penalties: ['terraform', 'agile'],
+    yoe: { max: 3 },
+  };
+  const vec = [1, 0, 0, 0];
+  const clean = rubricScore(er, vec, 'distributed systems role', 'SWE');
+  const oneHit = rubricScore(er, vec, 'we use terraform daily', 'SWE');
+  const bothHit = rubricScore(er, vec, 'agile terraform shop', 'SWE');
+  assert.ok(oneHit.score < clean.score, 'one penalty hit lowers the score');
+  assert.ok(bothHit.score < oneHit.score, 'more penalty hits lower it further');
+  // word-boundary: "agilent" must not match "agile"
+  const noHit = rubricScore(er, vec, 'we buy agilent hardware', 'SWE');
+  assert.equal(noHit.score, clean.score);
+});

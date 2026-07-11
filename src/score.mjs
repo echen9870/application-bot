@@ -31,6 +31,7 @@ import { parseResume } from './ml/parser.mjs';
 import { scoreJobs } from './ml/scorer.mjs';
 import { loadDescriptions } from './ml/descriptions.mjs';
 import { loadModel } from './ml/model.mjs';
+import { loadRubric } from './ml/rubric.mjs';
 
 const SCORE_COL = 'K';                 // Potential column for the match score
 const SCORE_HEADER = 'Match Score';
@@ -89,9 +90,12 @@ async function main() {
   console.log(`Scoring ${scorable.length} job(s) (${withDesc} with cached descriptions, ${scorable.length - withDesc} title-only).`);
 
   const model = loadModel();
+  const rubric = loadRubric();
+  const anchorLabel = rubric ? 'rubric' : 'resume cosine';
   console.log(model
-    ? `Mode: blended — cosine + feedback model (${model.meta.nPos} applied / ${model.meta.nNeg} ignored labels)`
-    : 'Mode: cosine only (no trained feedback model yet — labels accrue on each /apply)');
+    ? `Mode: blended — ${anchorLabel} + feedback model (${model.meta.nPos} applied / ${model.meta.nNeg} ignored labels)`
+    : `Mode: ${anchorLabel} only (no trained feedback model yet — labels accrue on each /apply)`);
+  if (rubric) console.log('      rubric mode active (rubric.yml) — anchor is preference rubric, not resume');
 
   // 3 — load resume + score with the existing embedding model
   const resumeText = await parseResume();
@@ -112,7 +116,13 @@ async function main() {
   for (let i = 0; i < Math.min(topN, scored.length); i++) {
     const j = scored[i];
     const rank = String(i + 1).padStart(2);
-    console.log(`  ${rank}. ${toTen(j.score).toFixed(1).padStart(4)}/10  ${scoreBar(j.score)}  [${j.company}] ${j.role}`);
+    let suffix = '';
+    if (j.rubricInfo) {
+      if (j.rubricInfo.topDomain) suffix += `  ·${j.rubricInfo.topDomain}`;
+      if (j.rubricInfo.antiHit)   suffix += `  [anti:${j.rubricInfo.antiHit}]`;
+      if (j.rubricInfo.yoeCapped) suffix += '  [YOE]';
+    }
+    console.log(`  ${rank}. ${toTen(j.score).toFixed(1).padStart(4)}/10  ${scoreBar(j.score)}  [${j.company}] ${j.role}${suffix}`);
   }
   const cosines = scored.map(j => j.score);
   const avg = cosines.reduce((s, c) => s + c, 0) / cosines.length;

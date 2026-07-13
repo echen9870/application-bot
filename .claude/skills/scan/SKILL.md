@@ -17,7 +17,7 @@ node src/jobs.mjs {{flags}}
 ```
 
 **Key flags:**
-- `--companies "Stripe, OpenAI, Glean"` — scan only these companies (comma-separated, case-insensitive). Omit to scan all ~320 API-scannable companies.
+- `--companies "Stripe, OpenAI, Glean"` — scan only these companies (comma-separated, case-insensitive). Omit to scan all ~430 API-scannable companies.
 - `--all` — skip the 24h recency filter; returns all currently open jobs matching filters. Use when adding new companies or doing a full refresh.
 - `--dry-run` — preview without writing to the sheet.
 - `--no-desc` — skip job-description fetching. Descriptions are fetched **by default** (used for description-level YOE filtering and cached to `data/job-descriptions.json` for ML scoring); pass this to skip the per-job fetches for a faster scan.

@@ -2,14 +2,14 @@
 
 Personal job search pipeline for Eric Chen — MS CS student at Northeastern University, targeting backend / distributed systems / infrastructure roles (new grad, fall 2026 intern), graduating August 2026.
 
-Zero-token scanning across **525 companies** spanning 14 ATS platforms. No AI required for day-to-day use.
+Zero-token scanning across **567 companies** spanning 14 ATS platforms. No AI required for day-to-day use.
 
 ---
 
 ## How it works
 
 ```
-npm run scan           # scan all 525 portals → filter → write to Potential → prune dead links
+npm run scan           # scan all 567 portals → filter → write to Potential → prune dead links
                        # review in Google Sheets, check ✓ on jobs you applied to
 node src/apply.mjs     # ✓ rows → Applied, rest → Ignored
 ```
@@ -173,9 +173,6 @@ node src/apply.mjs --dry-run   # preview without writing
 node src/prune.mjs             # remove dead links from Potential via HTTP (no browser, ~30s)
 node src/prune.mjs --dry-run   # preview which rows would be removed
 
-node src/gmail-sync.mjs        # sync Gmail → update Applied sheet statuses
-node src/gmail-sync.mjs --dry-run
-
 node src/probe-ats.mjs                     # find ATS APIs for websearch-only companies
 node src/probe-ats.mjs --apply             # also patch portals.yml with found APIs
 node src/probe-ats.mjs --company "Stripe"  # probe a specific company
@@ -183,7 +180,7 @@ node src/probe-ats.mjs --company "Stripe"  # probe a specific company
 node src/check-liveness.mjs              # health-check every API endpoint in portals.yml
 node src/check-liveness.mjs --verbose    # also show HTTP status per company
 
-npm test                       # run 86-test suite (filters, parsers, classifiers)
+npm test                       # run 95-test suite (filters, parsers, classifiers)
 ```
 
 ### Websearch (Claude Code skill)
@@ -227,14 +224,6 @@ echo 'GOOGLE_SPREADSHEET_ID=1yt7LzUNz_wG-HEiRmhmHk826EGeskgBOrk7ABGNV5lY' > .env
 
 # Run first scan
 npm run scan
-```
-
-For Gmail sync (optional):
-```bash
-# In GCP Console: enable Gmail API, create OAuth Desktop credentials
-mv ~/Downloads/client_secret_*.json gmail-credentials.json
-node src/gmail-auth.mjs    # authorize, saves gmail-token.json
-node src/gmail-sync.mjs    # sync inbox → Applied statuses
 ```
 
 ---
@@ -316,7 +305,7 @@ See `CLAUDE.md` for the full Empty ATS playbook.
 - Node.js (ES modules, no transpilation)
 - js-yaml — portals config
 - googleapis — Google Sheets API
-- node:test + node:assert — 86-test suite, zero extra deps
+- node:test + node:assert — 95-test suite, zero extra deps
 - Playwright MCP — optional, only for link verification of generic websearch URLs
 - Anthropic SDK — optional (legacy `evaluate.mjs` removed; deep evaluation now via Claude Code skills)
 
@@ -329,11 +318,9 @@ src/
   jobs.mjs              ← daily scanner (entry point)
   apply.mjs             ← Potential → Applied/Ignored
   prune.mjs             ← remove dead links from Potential
-  gmail-sync.mjs        ← Gmail → Applied status sync
   write-potential.mjs   ← stdin JSON → Potential (used by /websearch-jobs)
   check-liveness.mjs    ← health-check all API endpoints in portals.yml
   probe-ats.mjs         ← discover ATS APIs for websearch-only companies
-  gmail-auth.mjs        ← one-time OAuth setup for Gmail
   config.mjs            ← portals.yml loader with defaults
   sheets-client.mjs     ← Google Sheets auth + helpers
   filters.mjs           ← isUS, extractMinYOE, buildTitleFilter, looksLikeJobUrl
@@ -341,7 +328,7 @@ src/
   fetch.mjs             ← fetchJson/fetchResponse with timeout + retry/backoff
   potential-writer.mjs  ← appendToPotential, fetchSeenLinks, buildCheckboxRequest
 
-test/test-all.mjs       ← 86 tests covering filters, parsers, classifiers
-portals.yml             ← 525 companies + scan config
-.claude/skills/         ← /scan, /scanall, /apply, /websearch-jobs, /probe-ats
+test/test-all.mjs       ← 95 tests covering filters, parsers, classifiers
+portals.yml             ← 567 companies + scan config
+.claude/skills/         ← /scan, /scanall, /apply, /websearch-jobs
 ```

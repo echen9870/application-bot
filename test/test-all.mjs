@@ -20,12 +20,6 @@ import {
 
 import { looksLikeJobUrl } from '../src/filters.mjs';
 
-import {
-  classify,
-  extractCompany,
-  normalize,
-  shouldUpdate,
-} from '../src/gmail-sync.mjs';
 
 import { categorizeRows } from '../src/apply.mjs';
 
@@ -179,99 +173,6 @@ test('isUS: bare non-US ISO country codes excluded', () => {
 test('isUS: Remote with non-US country keywords excluded', () => {
   assert.equal(isUS('Remote Hungary, Romania, Greece & Spain'), false);
   assert.equal(isUS('Remote Canada'), false);
-});
-
-// ── Gmail classification ─────────────────────────────────────────────
-
-test('classify: rejection signals', () => {
-  assert.equal(classify('Application update', 'We decided to move forward with other candidates'), 'Rejected');
-  assert.equal(classify('We regret to inform you', ''), 'Rejected');
-  assert.equal(classify('Update on your application', 'unfortunately not a match for this role'), 'Rejected');
-  assert.equal(classify('Your application', 'We are not moving forward with your application'), 'Rejected');
-  assert.equal(classify('Position update', 'The position has been filled'), 'Rejected');
-});
-
-test('classify: interview signals', () => {
-  assert.equal(classify("We'd like to schedule a call", ''), 'Interview');
-  assert.equal(classify('Next steps', 'Please book a time on our Calendly'), 'Interview');
-  assert.equal(classify('Technical interview invitation', ''), 'Interview');
-  assert.equal(classify('HackerRank assessment', 'complete your coding assessment'), 'Interview');
-  assert.equal(classify('Moving you forward', 'excited to invite you to the next round'), 'Interview');
-});
-
-test('classify: offer signals', () => {
-  assert.equal(classify("We'd like to extend an offer", ''), 'Offer');
-  assert.equal(classify('Offer letter enclosed', 'pleased to offer you the position'), 'Offer');
-});
-
-test('classify: offer takes priority over interview signals', () => {
-  assert.equal(classify('Offer of employment', 'please schedule a call to discuss'), 'Offer');
-});
-
-test('classify: acknowledgment / unknown → null', () => {
-  assert.equal(classify('Thank you for applying', 'We received your application'), null);
-  assert.equal(classify('Application received', 'Our team will review your profile'), null);
-  assert.equal(classify('Weekly digest', 'New jobs matching your criteria'), null);
-});
-
-// ── Company extraction ───────────────────────────────────────────────
-
-test('extractCompany: "applied to Company" pattern', () => {
-  const c = extractCompany('Your application to Stripe for Backend Engineer', '', 'jobs@lever.co');
-  assert.ok(c?.toLowerCase().includes('stripe'), `Expected Stripe, got: ${c}`);
-});
-
-test('extractCompany: "at Company" at end of subject', () => {
-  const c = extractCompany('[Next Steps] Your Interview at Palantir', '', 'recruiting@greenhouse.io');
-  assert.ok(c?.toLowerCase().includes('palantir'), `Expected Palantir, got: ${c}`);
-});
-
-test('extractCompany: sender domain fallback', () => {
-  const c = extractCompany('Your application update', '', 'careers@arcesium.com');
-  assert.ok(c?.toLowerCase().includes('arcesium'), `Expected arcesium, got: ${c}`);
-});
-
-test('extractCompany: generic sender → null', () => {
-  const c = extractCompany('Application update', '', 'no-reply@greenhouse.io');
-  assert.equal(c, null);
-});
-
-// ── Status rank (no downgrade) ───────────────────────────────────────
-
-test('shouldUpdate: upgrade always allowed', () => {
-  assert.equal(shouldUpdate('Applied', 'Interview'),  true);
-  assert.equal(shouldUpdate('Applied', 'Offer'),      true);
-  assert.equal(shouldUpdate('Interview', 'Offer'),    true);
-});
-
-test('shouldUpdate: downgrade blocked', () => {
-  assert.equal(shouldUpdate('Offer', 'Interview'),    false);
-  assert.equal(shouldUpdate('Offer', 'Rejected'),     false);
-});
-
-test('shouldUpdate: rejected only updates from Applied', () => {
-  assert.equal(shouldUpdate('Applied',   'Rejected'), true);
-  assert.equal(shouldUpdate('Interview', 'Rejected'), false);  // don't downgrade interview to rejected
-  assert.equal(shouldUpdate('Offer',     'Rejected'), false);
-});
-
-test('shouldUpdate: same rank is a no-op', () => {
-  assert.equal(shouldUpdate('Interview', 'Interview'), false);
-});
-
-// ── normalize ────────────────────────────────────────────────────────
-
-test('normalize: strips legal suffixes and punctuation', () => {
-  assert.equal(normalize('Stripe, Inc.'), 'stripe');
-  assert.equal(normalize('Anthropic LLC'), 'anthropic');
-  assert.equal(normalize('Meta Technologies'), 'meta');
-  assert.equal(normalize('OpenAI Labs'), 'openai');
-});
-
-test('normalize: handles empty / null', () => {
-  assert.equal(normalize(''), '');
-  assert.equal(normalize(null), '');
-  assert.equal(normalize(undefined), '');
 });
 
 // ── apply.mjs categorizeRows ─────────────────────────────────────────

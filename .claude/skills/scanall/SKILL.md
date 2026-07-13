@@ -22,7 +22,7 @@ These rows are written to Potential with `Source = scan`. They are recent (≤ `
 
 Note how many new jobs were written and how many were filtered.
 
-## Step 2 — Websearch for websearch-only companies
+## Step 2 — Spawn parallel Haiku subagents for websearch-only companies
 
 Get the list of companies with `scan_method: websearch`:
 
@@ -38,70 +38,57 @@ console.log(JSON.stringify(list, null, 2));
 EOF
 ```
 
-For each company in that list, use WebSearch:
+**Organize companies into batches of 10-12 and spawn Haiku subagents in parallel** (6+ agents for ~120 companies). Each agent will:
+
+1. Run WebSearch for each company (one query per company for complete coverage)
+2. Extract: `company`, `role`, `location`, `link`, `posted` (YYYY-MM-DD or empty)
+3. Write results to Potential via `write-potential.mjs`
+4. Report: jobs found, jobs written after filters
+
+For each company, use:
 - If `scan_query` is set, use that query exactly
 - Otherwise: `site:[careers_url domain] ("software engineer" OR "backend engineer" OR "new grad" OR "intern") 2026`
 
-Work through them in parallel batches of 10.
+> **Do NOT OR-batch `site:` domains into one query.** One query per company is required for complete coverage.
 
-**Do NOT pre-filter results in-context.** Just extract `company`, `role`, `location`, `link`, `posted` (YYYY-MM-DD or empty) for every result that has a usable URL. `write-potential.mjs` will reject blog posts, non-job URLs, wrong-country jobs, dupes, and senior roles algorithmically — Claude doesn't need to spend tokens making those judgment calls.
+**Do NOT pre-filter in-context.** Dump every result with a usable URL. `write-potential.mjs` handles dedup, title filter, YOE filter, US-only filter, and URL heuristic (`looksLikeJobUrl`) automatically — tags all rows with `Source = websearch`.
 
-Write results to Potential (tagged `Source = websearch`):
+## Step 3 — Await parallel agent completion
 
-```bash
-echo '<JSON_ARRAY>' | node src/write-potential.mjs
-```
+Wait for all Haiku subagents (6+ batches) to complete. Each agent writes results directly to Potential via `write-potential.mjs`. You will be notified automatically when all batches finish.
 
-`write-potential.mjs` handles dedup, title filter, YOE filter, US-only filter, and a `looksLikeJobUrl()` check that drops `/blog/`, `/news/`, `/podcast/`, `/insights/`, etc.
-
-## Step 3 — Prune dead websearch links
+## Step 4 — Prune dead websearch links
 
 ```bash
 node src/prune.mjs
 ```
 
-Prune now restricts itself to `Source = websearch` rows. Scan rows are skipped (they're recent). For each websearch link:
-- **Greenhouse / Lever**: individual job endpoint (404 = dead). Lever's old false-positive issue is gone — we no longer trust the board listing.
-- **Ashby**: full board listing, check if UUID still present.
-- **Generic** (Stripe, Apple, custom portals): HTTP GET + check final URL for `?error=true`.
+Prune restricts itself to `Source = websearch` rows. Scan rows are skipped (they're recent). For each websearch link:
+- **Greenhouse / Lever / Ashby / SmartRecruiters**: Use ATS API to verify
+- **Generic** (Stripe, Apple, custom portals): HTTP GET + check final URL for redirects/404
 
-Trust prune's verdict for any ATS-known link — no Playwright needed.
+Removes dead rows automatically. Expect ~30–50% of websearch results to be live.
 
-## Step 4 — Playwright-verify only generic websearch links
-
-After prune, only links prune couldn't determine remain unverified — these are the `generic` ones (Stripe, Apple, ByteDance, custom careers pages). Playwright-verify those:
-
-```js
-// Query Potential!G2:J for rows where Source = 'websearch'
-// Filter to generic links: NOT matching greenhouse|ashby|lever|smartrecruiters host patterns
-```
-
-For each remaining generic websearch link:
-1. `browser_navigate` to the URL
-2. `browser_snapshot` to check content:
-   - **Active**: job title visible + Apply button present
-   - **Dead**: redirected to generic careers page, "not found", job filled, or no content
-3. Collect row numbers of dead listings
-4. Delete dead rows in one batch (sort descending to avoid index shift)
-
-This is dramatically smaller than before — most websearch results survive into Potential as ATS links that prune already validated.
-
-## Step 5 — Score and sort
+## Step 5 — Score all jobs (unified pass)
 
 ```bash
 node src/score.mjs
 ```
 
-Scores every Potential row (embedding cosine, blended with the apply/ignore feedback model when trained), writes Match Score to column K, sorts the sheet best-first.
+Score **all Potential jobs** (API scan + websearch survivors together) with blended model (rubric + feedback). Writes Match Score to column K and sorts the sheet best-first.
+
+**This ensures every job is ranked uniformly regardless of source, and no jobs are left unscored.**
 
 ## Step 6 — Report
 
 Summarize:
-- API scan: companies scanned, new scan-sourced jobs written, filters hit
-- Websearch: companies searched, jobs found, jobs written after `write-potential.mjs` filters
-- Prune: websearch rows checked, dead rows removed
-- Playwright: generic links verified, dead rows removed
-- Scoring mode (cosine-only vs blended) and top matches
-- **Total new live jobs in Potential** (split by Source)
+- **API scan**: companies scanned, new scan-sourced jobs written, filters hit
+- **Websearch**: parallel batches spawned, companies searched, jobs found and written after `write-potential.mjs` filters
+- **Prune**: websearch rows checked, dead rows removed, live links remaining
+- **Scoring**: mode (cosine-only vs blended), score range, top 20 ranked matches by Match Score
+- **Total new live jobs in Potential** (split by Source: API scan vs websearch)
 
-Remind the user to review Potential and run `/apply` when ready.
+Include link to Potential sheet sorted best-first. Remind the user to:
+- Review top matches by Match Score
+- Check ✓ boxes for jobs to apply to
+- Run `npm run apply` to move rows, record feedback labels, and retrain the model

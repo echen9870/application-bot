@@ -18,6 +18,7 @@
     "train:bootstrap": "node src/train.mjs --bootstrap",
     "probe": "node src/probe-ats.mjs",
     "probe:apply": "node src/probe-ats.mjs --apply",
+    "liveness": "node src/check-liveness.mjs",
     "test": "node test/test-all.mjs",
     "test:ml": "node test/test-ml.mjs",
     "test:ml:mock": "node test/test-ml.mjs --mock-resume"
@@ -29,11 +30,10 @@
     "career",
     "automation"
   ],
-  "author": "Santiago Fernández de Valderrama <hi@santifer.io> (https://santifer.io)",
-  "homepage": "https://santifer.io",
+  "author": "Eric Chen <echen9870@gmail.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/santifer/career-ops"
+    "url": "https://github.com/echen9870/application-bot"
   },
   "license": "MIT",
   "dependencies": {

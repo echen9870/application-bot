@@ -173,14 +173,3 @@ export function categorizeRows(dataRows)
 // or undefined from formula cells can't crash the apply pipeline.
 // Source column (J) is read by the sheet but not propagated to Applied/Ignored.
 ```
-
-### src/gmail-sync.mjs
-```js
-export function classify(subject, snippet)               // → 'Offer' | 'Interview' | 'Rejected' | null
-export function extractCompany(subject, snippet, sender) // → string | null
-export function normalize(name)                          // → lowercase alphanum, strips legal suffixes
-export function shouldUpdate(current, next)              // → boolean (respects status rank, never downgrades)
-```
-
-Classification priority order: Offer > Interview > Rejected (first match wins).
-Status rank: Applied=1, Rejected=2, Interview=3, Offer=6. Rejected only updates from Applied (rank 1).

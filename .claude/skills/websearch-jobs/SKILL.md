@@ -27,61 +27,66 @@ EOF
 
 If `{{companies}}` was provided, filter the list to only those companies (case-insensitive match on name).
 
-If no args, search **all companies** in the list. Issue the WebSearch calls in parallel batches of 10 — but **one WebSearch call per company**.
+If no args, search **all companies** in the list.
 
-> **Do NOT OR-batch `site:` domains into a single query.** WebSearch returns a fixed ~10 results per query regardless of how many `site:` filters you combine. Tested 2026-05-14: three companies searched separately returned 27 unique links; the same three OR'd into one query returned only 10, dropping one company entirely. One query per company is required for complete coverage.
+## Step 2 — Spawn parallel Haiku subagents for websearch batches
 
-## Step 2 — Search for jobs
+**Do NOT search companies manually.** Instead, organize companies into batches of 10 and **spawn Haiku subagents in parallel** to search each batch.
 
-For each selected company, use WebSearch with:
+Each subagent will:
+1. Run WebSearch for each company (one query per company for complete coverage)
+2. Extract: company, title, location, URL, posted date (YYYY-MM-DD or empty)
+3. Write results to Potential via `write-potential.mjs`
+4. Report jobs found and written
+
+> **Do NOT OR-batch `site:` domains into a single query.** WebSearch returns a fixed ~10 results per query regardless of how many `site:` filters you combine. One query per company is required for complete coverage.
+
+**For each company, use:**
 - If `scan_query` is set in the config, use that query exactly
 - Otherwise use: `site:[careers_url domain] ("software engineer" OR "backend engineer" OR "new grad" OR "intern") 2026`
 
-For each search result, extract:
-- `company`: company name
-- `role`: job title
-- `location`: city/state or "Remote"
-- `link`: direct URL to the job posting
-- `posted`: date if visible (YYYY-MM-DD), else empty string
+**Do NOT pre-filter results in-context.** Dump every result with a usable URL. `write-potential.mjs` rejects blog posts, podcasts, non-job URLs, wrong-country jobs, senior roles, and dupes algorithmically.
 
-**Do NOT pre-filter in-context.** Dump every result with a usable URL. `write-potential.mjs` rejects blog posts, podcasts, non-job URLs, wrong-country jobs, senior roles, and dupes algorithmically.
+## Step 3 — Await parallel agent completion
 
-## Step 3 — Write to Potential sheet
+Wait for all Haiku subagents (websearch batches) to complete. Each agent writes results directly to Potential via `write-potential.mjs`, which handles:
+- Deduplication
+- Title filter (removes senior/staff roles)
+- YOE filter (removes 3+ YOE roles)
+- US-only filter
+- URL heuristic (`looksLikeJobUrl`) that drops `/blog/`, `/news/`, `/podcast/`, etc.
+- Tags all rows with `Source = websearch` for later pruning
 
-Build a JSON array of job objects and pipe it to `write-potential.mjs`:
+Subagents run autonomously in background. You will be notified when all complete.
+
+## Step 4 — Prune dead links
 
 ```bash
-echo '<JSON_ARRAY>' | node src/write-potential.mjs
+node src/prune.mjs
 ```
 
-The script handles deduplication, title filter, YOE filter, US-only filter, and a URL heuristic (`looksLikeJobUrl`) that drops `/blog/`, `/news/`, `/podcast/`, etc. Rows are tagged `Source = websearch` so `prune.mjs` knows to verify them later.
+Prune checks all `Source = websearch` rows (skips API scan rows). For each websearch link:
+- **Greenhouse / Lever / Ashby / SmartRecruiters**: Use ATS API to verify
+- **Generic links** (Stripe, Apple, custom portals): HTTP GET + check for redirects/404
 
-## Step 4 — Verify with Playwright
+Removes dead rows automatically. Expect ~30–50% of websearch results to be live.
 
-Web search results go stale — always verify every job that was written to Potential before reporting done.
+## Step 5 — Score and sort
 
-For each job added in Step 3:
-1. `browser_navigate` to the job URL
-2. Check the page title and URL after navigation:
-   - **Active**: title contains the job title and/or an Apply button is present
-   - **Dead**: redirected to a generic careers page, title is just the company name, "not found", "page doesn't exist", "job has been filled", or Ashby showing only "Jobs" with no content
-3. Collect the sheet row numbers of all dead listings
-4. Delete dead rows from the Potential sheet in a single batch (sort row numbers descending to avoid index shifting):
-
-```js
-// Delete dead rows via Sheets API batchUpdate with deleteDimension requests
-// Sort deadRows descending before building requests
+```bash
+node src/score.mjs
 ```
 
-Expect ~30–50% of web search results to be live. Proceed to Step 5 only after dead rows are removed.
+Score all Potential jobs (API scan + websearch survivors) with blended model (rubric + feedback). Writes Match Score to column K and sorts sheet best-first.
 
-## Step 5 — Report
+## Step 6 — Report
 
 Summarize:
-- Which companies were searched
-- How many jobs were found per company
-- How many passed filters and were written to Potential
-- How many survived Playwright verification (and how many were removed)
-- Any companies with no results or search errors
+- Parallel batches spawned and agents completed
+- Total companies searched across all batches
+- Total jobs found and written to Potential (after write-potential.mjs filters)
+- Prune results: dead links removed, live links remaining
+- Scoring mode and top ranked matches (from score.mjs)
+- **Total new live jobs in Potential** (ranked by Match Score)
 
-Remind the user to check their Potential sheet and run `/apply` when ready.
+Remind the user to check their Potential sheet (sorted best-first) and run `/apply` when ready.

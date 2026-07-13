@@ -183,6 +183,7 @@ npm test    # runs test/test-all.mjs — pure Node.js (node:test + node:assert),
 | `npm run train:bootstrap` | `node src/train.mjs --bootstrap` — seed labels from Applied/Ignored sheets, then train |
 | `npm run probe` | `node src/probe-ats.mjs` |
 | `npm run probe:apply` | `node src/probe-ats.mjs --apply` |
+| `npm run liveness` | `node src/check-liveness.mjs` — health-check every API endpoint in portals.yml |
 | `npm test` | `node test/test-all.mjs` |
 
 ---
@@ -212,8 +213,3 @@ Never trust WebSearch/WebFetch to verify if a job posting is still active. For i
 
 Exception in batch mode (`claude -p`): use WebFetch and mark report with `**Verification:** unconfirmed (batch mode)`.
 
----
-
-## CI
-
-`.github/workflows/test.yml` runs `node test/test-all.mjs` on every PR to `main`. Tests are pure Node.js, no secrets required — all pure-function unit tests.

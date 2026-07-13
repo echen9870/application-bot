@@ -1,6 +1,6 @@
 # Pipeline Script Internals
 
-Load this when debugging or modifying `jobs.mjs`, `apply.mjs`, `score.mjs`, `train.mjs`, `write-potential.mjs`, `prune.mjs`, or `gmail-sync.mjs` — the write flows, filter order, and flags each script depends on.
+Load this when debugging or modifying `jobs.mjs`, `apply.mjs`, `score.mjs`, `train.mjs`, `write-potential.mjs`, or `prune.mjs` — the write flows, filter order, and flags each script depends on.
 
 **Daily workflow:** `npm run scan` → review Potential sheet (sorted by Match Score) → check ✓ → `npm run apply`
 
@@ -98,10 +98,10 @@ Productionizes `scoreJobs()` from `src/ml/scorer.mjs` against the Potential shee
 1. Find the data extent via the column-B (Date Found) counter — `getFirstEmptyRow()` — and read exactly `Potential!A2:K{lastDataRow}` (avoids the hundreds of trailing checkbox-only rows that an open-ended `A:K` read returns, which previously overflowed the grid on clear).
 2. Join each row's description from `data/job-descriptions.json` (by link, via `loadDescriptions()`); rows without one are scored on title-only text.
 3. `parseResume()` → resume text; `scoreJobs(resumeText, jobs)` → score 0–1 per job.
-4. Map to 1–10 (`score10 = round(1 + score·9, 1)`, the scale in `user.yml`) and `values.update` → `Potential!K1:K{lastDataRow}` (header "Match Score" + one score per row, aligned by row), then sort the sheet by score descending.
+4. Map to 1–10 (`score10 = round(1 + score·9, 1)`) and `values.update` → `Potential!K1:K{lastDataRow}` (header "Match Score" + one score per row, aligned by row), then sort the sheet by score descending.
 5. `values.clear` → `Potential!K{firstEmpty}:K` to wipe stale scores below the current data.
 
-`--dry-run` prints the ranked summary without writing. `--top N` sets how many rows the console summary lists (default 20). **Note:** `user.yml`'s richer rubric (`scoring_weights`, company `tiers`, location/industry prefs) is **not** consumed. Folding it in is a possible future enhancement.
+`--dry-run` prints the ranked summary without writing. `--top N` sets how many rows the console summary lists (default 20).
 
 ### Rubric mode (rubric.yml)
 
@@ -151,31 +151,3 @@ node src/prune.mjs --dry-run  # preview without deleting
 
 **Cost note:** prune is pure Node.js with no Claude involvement — always run it directly (`node src/prune.mjs`), never inside a Claude session where it would burn tokens unnecessarily.
 
----
-
-## Gmail Sync (src/gmail-sync.mjs)
-
-**First-time setup:**
-1. GCP Console → `application-bot-494504` project → APIs → Enable Gmail API
-2. Credentials → Create OAuth 2.0 Client ID (Desktop app) → download JSON → save as `gmail-credentials.json`
-3. `node src/gmail-auth.mjs` → authorize → saves `gmail-token.json`
-4. All future runs: `node src/gmail-sync.mjs`
-
-**Flags:** `--dry-run`, `--days N` (default: 7)
-
-**Classification logic** (pure keyword matching, Offer > Interview > Rejected priority):
-- Offer → `Offer`
-- Interview signals (schedule, Calendly, HackerRank, coding assessment, take-home, etc.) → `Interview`
-- Rejection signals (not selected, move forward with other, unfortunately, decided to move in a different direction, position has been closed, etc.) → `Rejected`
-- Unknown → `null` (skipped)
-
-**Gmail subject query** (OR'd together): application, interview, offer, next steps, thank you for applying, your application, we reviewed, decision, candidacy, submission, application status, status update, assessment, coding challenge, take-home, update.
-
-**Status rank** (never downgrades): Applied(1) → Rejected(2) → Interview(3) → Offer(6).
-Rejected only ever updates from Applied — never from Interview or Offer.
-
-**Write flow:**
-1. `batchUpdate` statuses for matched rows (Applied col F)
-2. Apply red row formatting (`redRowRequest` from sheets-client) to rows newly set to Rejected in this run only — not a full re-scan
-
-**Company matching:** `normalize()` strips legal suffixes (Inc/LLC/Corp/etc), lowercases, strips non-alphanum. Matched by substring: `normSheet.includes(normEmail) || normEmail.includes(normSheet)`.

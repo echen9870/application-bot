@@ -15,8 +15,8 @@
  *   5. Map cosine → 1–10 and write it to Potential column K ("Match Score")
  *   6. Sort the sheet by Match Score, highest first
  *
- * The 1–10 scale matches the convention documented in user.yml. The underlying number is
- * the raw cosine similarity from the existing model: score10 = round(1 + cosine * 9, 1).
+ * The underlying number is the raw cosine similarity from the existing model:
+ * score10 = round(1 + cosine * 9, 1).
  *
  * Usage:
  *   node src/score.mjs            # score all Potential rows, write column K

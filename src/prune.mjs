@@ -19,6 +19,7 @@ import { createSheetsClient, getSheetId, SPREADSHEET_ID } from './sheets-client.
 import { loadConfig } from './config.mjs';
 import { fetchJson, fetchResponse } from './fetch.mjs';
 import { parseLink, ATS } from './ats.mjs';
+import { looksLikeJobUrl } from './filters.mjs';
 
 const boardCache = new Map(); // cacheKey → Promise<Set<id> | null>
 
@@ -115,6 +116,14 @@ async function main() {
   async function worker() {
     while (idx < toCheck.length) {
       const item = toCheck[idx++];
+      // Aggregator links and generic careers landing pages return 200 but aren't
+      // job postings — reject them before spending an HTTP check.
+      if (!looksLikeJobUrl(item.link)) {
+        checked++;
+        deadRows.push(item.rowNum);
+        console.log(`  ✗ NOT A JOB PAGE  [${item.company}] ${item.role}`);
+        continue;
+      }
       const parsed = parseLink(item.link);
       const alive = await isAlive(parsed, { timeoutMs: TIMEOUT, retries: RETRIES });
       checked++;

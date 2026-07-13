@@ -741,6 +741,47 @@ test('looksLikeJobUrl: empty / invalid → false', () => {
   assert.equal(looksLikeJobUrl('not-url'),  false);
 });
 
+test('looksLikeJobUrl: aggregator / job-board domains rejected', () => {
+  assert.equal(looksLikeJobUrl('https://www.linkedin.com/jobs/view/swe-intern-at-wisk-3832448255'), false);
+  assert.equal(looksLikeJobUrl('https://www.linkedin.com/company/groq/jobs'),                       false);
+  assert.equal(looksLikeJobUrl('https://www.levels.fyi/internships/Costco/Software-Engineer-Intern/'), false);
+  assert.equal(looksLikeJobUrl('https://vault.com/internship-program/vanguard/opportunities'),      false);
+  assert.equal(looksLikeJobUrl('https://www.themuse.com/jobs/ukg/swe-internship-summer-2026'),      false);
+  assert.equal(looksLikeJobUrl('https://www.builtinnyc.com/job/automation-intern/7844775'),         false);
+  assert.equal(looksLikeJobUrl('https://peerlist.io/company/pluralsight/careers/swe-intern/job123'), false);
+  assert.equal(looksLikeJobUrl('https://www.glassdoor.com/job-listing/12345'),                      false);
+  assert.equal(looksLikeJobUrl('https://www.indeed.com/viewjob?jk=abc123'),                         false);
+});
+
+test('looksLikeJobUrl: generic careers landing pages rejected', () => {
+  assert.equal(looksLikeJobUrl('https://www.marketaxess.com/careers/students/internships'),  false);
+  assert.equal(looksLikeJobUrl('https://jobs.spscommerce.com/'),                             false);
+  assert.equal(looksLikeJobUrl('https://www.ice.com/careers/intern'),                        false);
+  assert.equal(looksLikeJobUrl('https://careers.activisionblizzard.com/early-careers'),      false);
+  assert.equal(looksLikeJobUrl('https://careers.fedex.com/career-areas/student-programs/jobs'), false);
+  assert.equal(looksLikeJobUrl('https://jobs.lumen.com/global/en/university-entry-level'),   false);
+  assert.equal(looksLikeJobUrl('https://careers.united.com/us/en/c/student-and-early-career-jobs'), false);
+  assert.equal(looksLikeJobUrl('https://groq.com/careers-at-groq'),                          false);
+  assert.equal(looksLikeJobUrl('https://qumulo.com/careers/job-openings/'),                  false);
+  assert.equal(looksLikeJobUrl('https://us.gsk.com/en-us/careers/early-careers/internships-and-co-ops/'), false);
+  assert.equal(looksLikeJobUrl('https://lumalabs.ai/careers'),                               false);
+  assert.equal(looksLikeJobUrl('https://wandb.ai/site/careers/'),                            false);
+  assert.equal(looksLikeJobUrl('https://www.allstatecorporation.com/careers/entry-level-and-internships.aspx'), false);
+  // SuccessFactors /go/<category>/<id>/ pattern = category listing, not a posting
+  assert.equal(looksLikeJobUrl('https://jobs.commscope.com/go/Early-Career-jobs/9128600/'),  false);
+  assert.equal(looksLikeJobUrl('https://careers.acuityinc.com/go/Students-and-Recent-Grads/7677600/'), false);
+});
+
+test('looksLikeJobUrl: specific postings still accepted', () => {
+  assert.equal(looksLikeJobUrl('https://jobs.careers.microsoft.com/us/en/job/1577325'),      true);
+  assert.equal(looksLikeJobUrl('https://spgi.wd5.myworkdayjobs.com/en-US/Kensho_Careers/job/Software-Engineer-Intern---Summer-2026_319680-1'), true);
+  assert.equal(looksLikeJobUrl('https://jobs.lever.co/peakgames/cfaf2251-1472-4e73-b0a3-e3e88df7aa91'), true);
+  assert.equal(looksLikeJobUrl('https://codeium.com/careers/f2de4048-3f4c-44f1-819e-1c64081ae9b2'), true);
+  assert.equal(looksLikeJobUrl('https://jobs.northropgrumman.com/careers/job/1340069389649'), true);
+  assert.equal(looksLikeJobUrl('https://jobs.solana.com/companies/anza-2/jobs/49586798-software-engineer-networking'), true);
+  assert.equal(looksLikeJobUrl('https://codeium.com/careers/apply?id=58e309a8-5451-466a-b34d-4ea44b60e1e4'), true);
+});
+
 // ── ml/model.mjs — logistic regression head ──────────────────────────
 
 // Tiny separable set in 4-dim: positives point along +x, negatives along -x.

@@ -89,15 +89,31 @@ export function buildTitleFilter(tf) {
   };
 }
 
-// Heuristic check: does this URL look like a job posting (not a blog/news/podcast page)?
+// Heuristic check: does this URL look like a specific job posting (not a blog page,
+// aggregator listing, or generic careers landing page)?
 // Used to filter websearch results without Claude having to inspect each one in-context.
 // Conservative: only rejects obvious non-job URLs, accepts ambiguous cases.
-const NON_JOB_PATH = /\/(blog|news|press|article|story|podcast|webinar|insights?|guides?|resources?|stories|customers?|case-studies)(\/|$)/i;
+const NON_JOB_PATH = /\/(blog|news|press|article|story|podcast|webinar|insights?|guides?|resources?|stories|customers?|case-studies|category|go)(\/|$)/i;
+
+// Job boards / aggregators — never the company's own application page, and their
+// copies of postings go stale fast (the classic "no longer accepting applications").
+const AGGREGATOR_HOST = /(^|\.)(linkedin\.com|levels\.fyi|vault\.com|themuse\.com|builtin\w*\.com|peerlist\.io|glassdoor\.com|indeed\.com|ziprecruiter\.com|wellfound\.com|simplyhired\.com|monster\.com|dice\.com|internset\.com|web3\.career)$/i;
+
+// Path segments that appear on careers *landing* pages. A URL whose path is made up
+// entirely of these words (with no job ID) is a program/category page, not a posting.
+const GENERIC_SEGMENT = /^(?:go|c|en|us|en-us|en_us|global|americas|search|site|company|career-areas|careers?|careers-at-[\w-]+|jobs?|jobs-at-[\w-]+|intern(?:ship)?s?|interns-jobs|internship-program|internship-opportunities|internships?-and-[\w-]+|early-careers?(?:-jobs)?|early-talent|early-in-career|students?|student-programs|students?-and-[\w-]+|new-grads?|new-graduates?|graduates?|campus|university(?:-[\w-]+)?|entry-level(?:-[\w-]+)?(?:\.aspx)?|job-openings|open-positions|open-opportunities|opportunities|openings|positions|vacancies|working-at-[\w-]+|join(?:-us)?|teams?|technology|engineering)$/i;
+
 export function looksLikeJobUrl(url) {
   if (!url) return false;
   try {
     const u = new URL(url);
-    return !NON_JOB_PATH.test(u.pathname);
+    if (AGGREGATOR_HOST.test(u.hostname)) return false;
+    if (NON_JOB_PATH.test(u.pathname)) return false;
+
+    const segments = u.pathname.split('/').filter(Boolean);
+    if (segments.length === 0) return false;                 // bare domain / careers subdomain root
+    if (segments.some(s => /\d{4,}/.test(s))) return true;   // job-ID-shaped segment → specific posting
+    return !segments.every(s => GENERIC_SEGMENT.test(s));    // all-generic path → landing page
   } catch {
     return false;
   }

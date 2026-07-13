@@ -10,8 +10,6 @@
     "jobs:dry": "node src/jobs.mjs --dry-run",
     "apply": "node src/apply.mjs",
     "apply:dry": "node src/apply.mjs --dry-run",
-    "gmail": "node src/gmail-sync.mjs",
-    "gmail:dry": "node src/gmail-sync.mjs --dry-run",
     "prune": "node src/prune.mjs",
     "prune:dry": "node src/prune.mjs --dry-run",
     "score": "node src/score.mjs",

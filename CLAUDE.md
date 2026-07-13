@@ -28,11 +28,9 @@ career-ops/
     score.mjs             ← write Match Score (col K) to Potential, sort by score
     train.mjs             ← retrain feedback model from apply/ignore labels (--bootstrap seeds from sheets)
     prune.mjs             ← remove dead links from Potential (HTTP, no browser)
-    gmail-sync.mjs        ← Gmail → Sheets status sync
     write-potential.mjs   ← append jobs to Potential (stdin JSON array)
     check-liveness.mjs    ← probe all API endpoints in portals.yml for health
     probe-ats.mjs         ← discover ATS API endpoints for websearch-only companies
-    gmail-auth.mjs        ← one-time OAuth setup for Gmail
 
     # Shared modules (no main(); imported by the above)
     config.mjs            ← single portals.yml loader with consistent defaults
@@ -57,9 +55,7 @@ career-ops/
   rubric.yml              ← hand-edited preference rubric; presence auto-enables rubric-mode scoring
   .env                    ← secrets (gitignored)
   service-account.json    ← Google service account (gitignored)
-  gmail-credentials.json  ← Gmail OAuth app credentials (gitignored, user-provided)
-  gmail-token.json        ← Gmail OAuth token (gitignored, created by gmail-auth.mjs)
-  package.json            ← scripts: scan, apply, score, train, prune, probe, gmail, test
+  package.json            ← scripts: scan, apply, score, train, prune, probe, test
 ```
 
 **Run scripts:** always `node src/<file>.mjs`, never `node <file>.mjs` (flat root is stale).
@@ -73,7 +69,7 @@ This file covers what's needed every session. For deeper detail, load the releva
 | File | Load when... |
 |------|--------------|
 | `docs/module-apis.md` | writing/editing code in `src/` and you need exact function signatures |
-| `docs/pipeline-scripts.md` | debugging or modifying jobs/apply/score/prune/write-potential/gmail-sync — write flows, filter order, flags |
+| `docs/pipeline-scripts.md` | debugging or modifying jobs/apply/score/prune/write-potential — write flows, filter order, flags |
 | `docs/ats-config.md` | adding a company to `portals.yml`, or investigating an "Empty ATS" scan result |
 | `docs/common-bugs.md` | something's behaving unexpectedly — checkboxes gone, wrong-row writes, stale prune results |
 
@@ -133,14 +129,13 @@ This file covers what's needed every session. For deeper detail, load the releva
 
 ---
 
-## Job Scanner, Apply, Score, Prune, Gmail Sync
+## Job Scanner, Apply, Score, Prune
 
 **Daily workflow:** `npm run scan` → review Potential sheet (sorted by Match Score) → check ✓ → `npm run apply`
 
 - `npm run scan` = scan all API companies (`jobs.mjs`) → prune dead links (`prune.mjs`) → score + sort by Match Score (`score.mjs`). One command does the whole intake.
 - `npm run apply` — moves checked Potential rows → Applied, unchecked → Ignored, clears Potential. This is also the **feedback loop**: each decision becomes a training label (applied=1/ignored=0) and the scoring model retrains, so future Match Scores learn what you actually apply to.
 - `node src/train.mjs` — retrain the feedback model manually; `--bootstrap` seeds labels from historical Applied/Ignored sheets.
-- `node src/gmail-sync.mjs` — scans Gmail for application status updates, writes to Applied col F.
 - `echo '[...]' | node src/write-potential.mjs` — append websearch results to Potential (used by `/websearch-jobs`, `/scanall`).
 
 **Cost optimization:** `/scanall` and `/websearch-jobs` are token-heavy (95 web searches) — invoke with the cheapest model: `claude --model claude-haiku-4-5-20251001 /scanall`. `prune.mjs`/`score.mjs` are plain Node scripts — run directly, never inside a Claude session.
@@ -165,7 +160,7 @@ For adding a company, fixing a broken/"Empty ATS" endpoint, or the full scan_met
 npm test    # runs test/test-all.mjs — pure Node.js (node:test + node:assert), no extra deps
 ```
 
-**Run tests before committing any change to `src/jobs.mjs`, `src/filters.mjs`, `src/apply.mjs`, `src/gmail-sync.mjs`, `src/ats.mjs`, or `src/potential-writer.mjs`.**
+**Run tests before committing any change to `src/jobs.mjs`, `src/filters.mjs`, `src/apply.mjs`, `src/ats.mjs`, or `src/potential-writer.mjs`.**
 
 ---
 
@@ -188,8 +183,6 @@ npm test    # runs test/test-all.mjs — pure Node.js (node:test + node:assert),
 | `npm run train:bootstrap` | `node src/train.mjs --bootstrap` — seed labels from Applied/Ignored sheets, then train |
 | `npm run probe` | `node src/probe-ats.mjs` |
 | `npm run probe:apply` | `node src/probe-ats.mjs --apply` |
-| `npm run gmail` | `node src/gmail-sync.mjs` |
-| `npm run gmail:dry` | `node src/gmail-sync.mjs --dry-run` |
 | `npm test` | `node test/test-all.mjs` |
 
 ---
@@ -198,7 +191,6 @@ npm test    # runs test/test-all.mjs — pure Node.js (node:test + node:assert),
 
 - `service-account.json` — gitignored. Key ID `ecc22924b5cc`. Project `application-bot-494504`. Rotate at GCP Console if compromised.
 - Old key `2b632b48` was exposed in git history — scrubbed via `git filter-repo` on 2026-05-02, history force-pushed. Anyone with old clones should re-clone.
-- `gmail-credentials.json` and `gmail-token.json` — gitignored, never commit.
 - `.env` — gitignored. Required vars: `GOOGLE_SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_PATH`.
 
 ---

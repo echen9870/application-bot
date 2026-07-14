@@ -124,6 +124,78 @@ function escapeRegex(s) {
 }
 
 /**
+ * Fraction of keywords (lowercased) appearing in text, word-boundary matched so
+ * "go" doesn't hit "google" and "C++" matches literally. 0 for an empty list.
+ */
+export function keywordFraction(list, text) {
+  if (!list || list.length === 0) return 0;
+  const lcText = (text || '').toLowerCase();
+  let hits = 0;
+  for (const kw of list) {
+    const re = new RegExp(`(?<![\\w+#])${escapeRegex(kw)}(?![\\w+#])`, 'i');
+    if (re.test(lcText)) hits++;
+  }
+  return hits / list.length;
+}
+
+/**
+ * Compute every raw rubric signal for one job. This is the shared substrate for
+ * both rubricScore() (the legacy composed score, kept for scripts/eval-rubric.mjs)
+ * and the named features in src/ml/features.mjs.
+ *
+ * @returns {{
+ *   domainMatch: number,       // max weighted domain cosine (weight/maxWeight normalized)
+ *   topDomain: string|null,
+ *   bestRawDomain: number,     // best UN-weighted domain cosine (for the anti margin)
+ *   bestAnti: number,
+ *   antiName: string|null,
+ *   skillFrac: number, langFrac: number, penaltyFrac: number,
+ *   titleMatch: number,        // max cosine(roleVec, preferred title); 0 without roleVec/titles
+ *   yoeGap: number|null,       // demanded − yoe.max; null when undetectable or no yoe.max
+ * }}
+ */
+export function rubricSignals(embeddedRubric, jobVec, jobText, jobRole, roleVec) {
+  const { domains, antis, skills, languages = [], penalties = [], titles = [], yoe } = embeddedRubric;
+
+  const maxWeight = domains.reduce((m, d) => Math.max(m, d.weight), 0) || 1;
+  let domainMatch = 0, bestRawDomain = 0, topDomain = null;
+  for (const d of domains) {
+    const raw = cosine(jobVec, d.vec);
+    const weighted = raw * (d.weight / maxWeight);
+    if (weighted > domainMatch) { domainMatch = weighted; topDomain = d.name; }
+    if (raw > bestRawDomain) bestRawDomain = raw;
+  }
+
+  let bestAnti = 0, antiName = null;
+  for (const a of antis) {
+    const c = cosine(jobVec, a.vec);
+    if (c > bestAnti) { bestAnti = c; antiName = a.name; }
+  }
+
+  let titleMatch = 0;
+  if (roleVec && titles.length > 0) {
+    for (const t of titles) titleMatch = Math.max(titleMatch, cosine(roleVec, t.vec));
+  }
+
+  let yoeGap = null;
+  if (typeof yoe.max === 'number') {
+    const fromTitle = extractMinYOE(jobRole || '');
+    const fromDesc  = extractMinYOEFromDesc((jobText || '').toLowerCase());
+    if (fromTitle != null || fromDesc != null) {
+      yoeGap = Math.max(fromTitle ?? -Infinity, fromDesc ?? -Infinity) - yoe.max;
+    }
+  }
+
+  return {
+    domainMatch, topDomain, bestRawDomain, bestAnti, antiName,
+    skillFrac:   keywordFraction(skills, jobText),
+    langFrac:    keywordFraction(languages, jobText),
+    penaltyFrac: keywordFraction(penalties, jobText),
+    titleMatch, yoeGap,
+  };
+}
+
+/**
  * Score a job against an embedded rubric.
  *
  * domainScore = max over domains of cosine(job, domain) · (weight / maxWeight).
@@ -160,70 +232,35 @@ function escapeRegex(s) {
  * @returns {{ score: number, topDomain: string|null, antiHit: string|null, yoeCapped: boolean }}
  */
 export function rubricScore(embeddedRubric, jobVec, jobText, jobRole, roleVec) {
-  const { domains, antis, skills, languages = [], penalties = [], titles = [], yoe } = embeddedRubric;
+  const s = rubricSignals(embeddedRubric, jobVec, jobText, jobRole, roleVec);
 
-  // 1 — best preferred domain (weighted for the score, raw for the anti margin)
-  const maxWeight = domains.reduce((m, d) => Math.max(m, d.weight), 0) || 1;
-  let domainScore = 0, bestRawDomain = 0, topDomain = null;
-  for (const d of domains) {
-    const raw = cosine(jobVec, d.vec);
-    const weighted = raw * (d.weight / maxWeight);
-    if (weighted > domainScore) { domainScore = weighted; topDomain = d.name; }
-    if (raw > bestRawDomain) bestRawDomain = raw;
-  }
-
-  let score = domainScore;
+  // 1 — best preferred domain
+  let score = s.domainMatch;
 
   // 2 — anti-preference margin penalty
   let antiHit = null;
-  let bestAnti = 0, bestAntiName = null;
-  for (const a of antis) {
-    const c = cosine(jobVec, a.vec);
-    if (c > bestAnti) { bestAnti = c; bestAntiName = a.name; }
-  }
-  if (bestAntiName && bestAnti > bestRawDomain) {
+  if (s.antiName && s.bestAnti > s.bestRawDomain) {
     score *= ANTI_PENALTY;
-    antiHit = bestAntiName;
+    antiHit = s.antiName;
   }
 
-  // 3 — skill + programming-language bonuses (literal, word-boundary match).
+  // 3 — skill + programming-language bonuses, penalty-keyword deduction.
   // Languages get their own bucket so a Go/Java-heavy JD isn't diluted by a
   // long tools list (and vice versa).
-  const lcText = (jobText || '').toLowerCase();
-  const keywordFraction = (list) => {
-    let hits = 0;
-    for (const kw of list) {
-      const re = new RegExp(`(?<![\\w+#])${escapeRegex(kw)}(?![\\w+#])`, 'i');
-      if (re.test(lcText)) hits++;
-    }
-    return hits / list.length;
-  };
-  if (skills.length > 0)    score += keywordFraction(skills)    * SKILL_BONUS_SCALE;
-  if (languages.length > 0) score += keywordFraction(languages) * LANG_BONUS_SCALE;
-  // Penalty keywords: terms that reliably mark ignored jobs (unlike the noisy
-  // positive lists, these are backed by high counts — see rubric.yml).
-  if (penalties.length > 0) score -= keywordFraction(penalties) * PENALTY_SCALE;
+  score += s.skillFrac   * SKILL_BONUS_SCALE;
+  score += s.langFrac    * LANG_BONUS_SCALE;
+  score -= s.penaltyFrac * PENALTY_SCALE;
 
   // 4 — title blend (no-op without a roleVec or preferred_titles)
-  if (roleVec && titles.length > 0) {
-    let titleScore = 0;
-    for (const t of titles) {
-      const c = cosine(roleVec, t.vec);
-      if (c > titleScore) titleScore = c;
-    }
-    score = (1 - TITLE_BETA) * score + TITLE_BETA * titleScore;
+  if (roleVec && embeddedRubric.titles?.length > 0) {
+    score = (1 - TITLE_BETA) * score + TITLE_BETA * s.titleMatch;
   }
 
   // 5 — YOE gate
-  let yoeCapped = false;
-  if (typeof yoe.max === 'number') {
-    const fromTitle = extractMinYOE(jobRole || '');
-    const fromDesc  = extractMinYOEFromDesc(lcText);
-    const demanded  = Math.max(fromTitle ?? -1, fromDesc ?? -1);
-    if (demanded > yoe.max) { score *= YOE_PENALTY; yoeCapped = true; }
-  }
+  const yoeCapped = s.yoeGap != null && s.yoeGap > 0;
+  if (yoeCapped) score *= YOE_PENALTY;
 
   // 6 — clamp
   score = Math.max(0, Math.min(1, score));
-  return { score, topDomain, antiHit, yoeCapped };
+  return { score, topDomain: s.topDomain, antiHit, yoeCapped };
 }

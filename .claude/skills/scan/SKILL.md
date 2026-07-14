@@ -40,7 +40,7 @@ This checks Greenhouse/Ashby/Lever links against their board APIs and drops any 
 node src/score.mjs
 ```
 
-Scores every Potential row against the resume (embedding cosine, blended with the apply/ignore feedback model when trained), writes Match Score to column K, and sorts the sheet best-first. Skip this step if the scan was `--dry-run` or wrote 0 new jobs to an empty sheet.
+Scores every Potential row with the named-feature model (sigmoid over 9 features from rubric.yml + apply/ignore label history; trained weights when available, hand-tuned prior otherwise), writes Match Score to column K plus per-feature contributions to columns L–T, and sorts the sheet best-first. Skip this step if the scan was `--dry-run` or wrote 0 new jobs to an empty sheet.
 
 ## Step 4 — Report
 
@@ -49,7 +49,7 @@ Summarize:
 - How many new jobs were written to Potential
 - How many were filtered (non-US, YOE, title, recency, duplicates)
 - How many rows prune removed
-- Scoring mode (cosine-only vs blended) and the top few matches
+- Scoring mode (trained weights vs prior cold start) and the top few matches
 - Any errors (transient SR 404s are normal rate-limiting; safe to ignore)
 
 Remind the user to review Potential and run `/apply` when ready.

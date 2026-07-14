@@ -55,7 +55,7 @@ Defaults live in `src/config.mjs`; missing keys in portals.yml fall back to the 
 4. Filter out any job whose link is already in `seenLinks` (printed counts reflect post-dedup totals)
 5. `values.append` checked jobs → `Applied!A:G` with status `"Applied"`
 6. `values.append` unchecked jobs → `Ignored!A:E`
-7. `values.clear` → `Potential!A2:K` (includes Source + Match Score columns)
+7. `values.clear` → `Potential!A2:T` (includes Source, Match Score, and the L–T feature columns)
 
 Between steps 6 and 7, apply also feeds the training loop: each processed row is saved as a label (applied=1, ignored=0) and the model retrains — see **Train** below for details. After labeling, ignored jobs' descriptions are evicted from `data/job-descriptions.json` (their text is already snapshotted in the training store; applied jobs stay cached). Wrapped in try/catch so a training failure never blocks the apply flow; `--dry-run` skips it.
 
@@ -66,7 +66,9 @@ Source is not propagated to Applied/Ignored (those sheets stay 7 / 5 columns).
 
 ## Train (src/train.mjs) — the feedback loop
 
-The scoring model is a logistic-regression head over the same MiniLM embeddings scorer.mjs uses, trained on your apply/ignore decisions: it learns "will Eric apply to this?" rather than just "does this JD resemble the resume."
+The scoring model is a logistic regression over the **9 named features** in `src/ml/features.mjs` (domain_match, skill_overlap, language_overlap, penalty_overlap, anti_margin, yoe_gap, company_prior, history_similarity, title_match), trained on your apply/ignore decisions and warm-started from the hand-tuned prior (`DEFAULT_MODEL`). Every learned weight is directly interpretable — training prints a `prior → trained` table per feature.
+
+Features are recomputed at train time from each entry's snapshot (`embedding`, `text`, `role`, `company`). `company_prior` and `history_similarity` are computed **leave-one-out** (the example's own label is excluded) so labels can't leak into their own features.
 
 **Trains only on description-bearing labels** — entries whose stored text contains a real job description (`buildJobText` inserts `\n\n` only in the description path). Title-only entries embed near-identical vectors for very different jobs and teach the model title phrasing rather than preferences; excluding them raised holdout precision from 14% to 21% (7-seed avg, 2026-07-10). Structured features (YOE/intern/remote flags appended to the embedding) were tried and deprecated the same day — at ×1 scale they hurt recall, at ×0.1 they were neutral; the description-only filter beat them outright.
 
@@ -83,7 +85,7 @@ node src/train.mjs --bootstrap  # first seed labels from historical Applied (→
 - Class imbalance (few applied, many ignored) is handled by upweighting positives `nNeg/nPos`.
 - **Skill is reported via a stratified 80/20 holdout** (`evaluateHoldout` in model.mjs, seeded shuffle → reproducible): precision + recall on the positive class, measured on unseen labels. Training accuracy is never reported — at ~4% positive rate the always-ignore baseline scores 96%, making it meaningless. The final model still trains on all labels; the holdout is measurement only.
 - Bootstrap only adds links not already in the store; when a link appears in both sheets, the applied label wins.
-- Output: `data/model.json` `{ weights[384], bias, meta: { trainedAt, nPos, nNeg } }`. Both data files are gitignored.
+- Output: `data/model.json` `{ weights[9], bias, meta: { trainedAt, nPos, nNeg, features } }`. Both data files are gitignored. `loadModel` ignores legacy models without `meta.features` (pre feature-model 384-dim weights), so a stale file just means the prior is used until the next retrain.
 - If labels are ever lost (e.g. a failed apply run), `--bootstrap` rebuilds them from the sheets.
 
 ---
@@ -92,22 +94,23 @@ node src/train.mjs --bootstrap  # first seed labels from historical Applied (→
 
 Productionizes `scoreJobs()` from `src/ml/scorer.mjs` against the Potential sheet (same function `test/test-ml.mjs` exercises). Runs automatically as the last step of `npm run scan`, or standalone via `node src/score.mjs`.
 
-**Scoring formula** (lives in scorer.mjs): cosine(resume, job) blended with the feedback model when `data/model.json` exists — `score = (1−α)·cosine + α·modelProb`, `α = min(0.7, nLabels/200)`. The model's influence grows with label count but cosine always keeps ≥30% weight; with no trained model it's pure cosine. The console prints which mode is active.
+**Scoring formula** (lives in scorer.mjs + features.mjs): `score = sigmoid(bias + Σ weightᵢ·featureᵢ)` over the 9 named features. Weights come from `data/model.json` when trained, otherwise from the hand-tuned prior (`DEFAULT_MODEL` in features.mjs) — there is no blending or anchor; the feature model IS the score, and every job carries a `.features` map plus an `.explanation` with per-feature `weight×value` contributions. The console prints which weights are active (trained vs prior cold start).
 
 **Flow:**
 1. Find the data extent via the column-B (Date Found) counter — `getFirstEmptyRow()` — and read exactly `Potential!A2:K{lastDataRow}` (avoids the hundreds of trailing checkbox-only rows that an open-ended `A:K` read returns, which previously overflowed the grid on clear).
 2. Join each row's description from `data/job-descriptions.json` (by link, via `loadDescriptions()`); rows without one are scored on title-only text.
-3. `parseResume()` → resume text; `scoreJobs(resumeText, jobs)` → score 0–1 per job.
-4. Map to 1–10 (`score10 = round(1 + score·9, 1)`) and `values.update` → `Potential!K1:K{lastDataRow}` (header "Match Score" + one score per row, aligned by row), then sort the sheet by score descending.
-5. `values.clear` → `Potential!K{firstEmpty}:K` to wipe stale scores below the current data.
+3. `scoreJobs(jobs)` → sigmoid probability 0–1 per job (rubric embedded once; label history loaded for company_prior / history_similarity).
+4. Map to 1–10 (`score10 = round(1 + score·9, 1)`) and `values.update` → `Potential!K1:K{lastDataRow}` (header "Match Score" + one score per row, aligned by row).
+5. Write the per-feature breakdown to `Potential!L1:T{lastDataRow}` — one column per feature in `FEATURE_NAMES` order, headers in row 1, each cell the feature's **contribution** (weight×value) to that row's score. Contributions are signed and sum with the model bias to the score's logit, so the sheet shows *why* each job ranked where it did.
+6. Sort the data rows A–T by Match Score descending (checkboxes and feature values move with their rows), then `values.clear` → `Potential!K{firstEmpty}:T` to wipe stale scores/features below the current data.
 
-`--dry-run` prints the ranked summary without writing. `--top N` sets how many rows the console summary lists (default 20).
+`--dry-run` prints the ranked summary without writing. `--top N` sets how many rows the console summary lists (default 20). `--explain N` additionally prints the full per-feature breakdown (`value × weight = contribution`, largest first) for the top N jobs — the fastest way to see *why* something ranked where it did.
 
-### Rubric mode (rubric.yml)
+### rubric.yml — where the preference features come from
 
-By default the anchor in the blend is the resume↔job cosine — "does this JD resemble my background?". A hand-edited **`rubric.yml`** at the repo root instead expresses what you *want* (preferred domains as weighted full-sentence descriptions, anti-preferences, a YOE window, and literal-match preferred skills). When the file exists, `scoreJobs` auto-switches to rubric mode: `rubricScore()` (in `src/ml/rubric.mjs`) replaces the resume cosine as the anchor, so `score = (1−α)·rubric + α·modelProb`. The feedback-model blend is unchanged, and `.cosine` still holds the resume cosine for comparison. The console mode line shows `rubric` vs `resume cosine`, and the top-N listing tags each row with its matched domain plus `[anti:…]`/`[YOE]` flags. Delete/rename `rubric.yml` to fall back to resume mode. See `docs/module-apis.md` for `rubricScore`'s exact rules (weighted domain max, anti margin penalty ×0.5, skill bonus ×0.1, YOE gate ×0.3).
+The hand-edited **`rubric.yml`** at the repo root expresses what you *want*: preferred domains (weighted full-sentence descriptions), anti-preferences, preferred titles, YOE window, and literal-match skill/language/penalty keyword lists. It feeds 7 of the 9 features (domain_match, skill_overlap, language_overlap, penalty_overlap, anti_margin, yoe_gap, title_match); without the file those features are all 0 and only company_prior + history_similarity carry signal, so keep it around. The top-N listing tags each row with its matched domain plus `[anti:…]`/`[YOE]` flags.
 
-**Validate before trusting a rubric edit:** `node scripts/eval-rubric.mjs` replays your stored apply/ignore labels (`data/training-data.json`, description-bearing entries) and reports precision@25, precision@50, and mean positive rank for the resume anchor vs the rubric anchor — no Sheets access. A rubric that ranks your real applies higher (lower mean positive rank) is beating the resume; if it doesn't, tune the domain descriptions/weights and re-run.
+**Validate before trusting a rubric edit:** `node scripts/eval-rubric.mjs` replays your stored apply/ignore labels (`data/training-data.json`, description-bearing entries) and reports precision@25, precision@50, and mean positive rank — no Sheets access. If an edit ranks your real applies lower (higher mean positive rank), tune the domain descriptions/weights and re-run.
 
 ---
 

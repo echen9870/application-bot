@@ -25,7 +25,7 @@ career-ops/
     # Entry-point scripts (have main() guarded by import.meta.url check)
     jobs.mjs              ← job scanner (main daily script)
     apply.mjs             ← process Potential sheet → Applied/Ignored + record training labels
-    score.mjs             ← write Match Score (col K) to Potential, sort by score
+    score.mjs             ← write Match Score (col K) + per-feature contributions (cols L–T) to Potential, sort by score
     train.mjs             ← retrain feedback model from apply/ignore labels (--bootstrap seeds from sheets)
     prune.mjs             ← remove dead links from Potential (HTTP, no browser)
     write-potential.mjs   ← append jobs to Potential (stdin JSON array)
@@ -41,18 +41,19 @@ career-ops/
     potential-writer.mjs  ← appendToPotential, fetchSeenLinks, buildCheckboxRequest
     ml/
       parser.mjs          ← resume parser (PDF→pdf-parse→Gemini cleanup, or TXT/MD direct)
-      scorer.mjs          ← resume×job scoring: MiniLM embeddings, cosine + feedback-model blend
+      scorer.mjs          ← job scoring: sigmoid over 9 named features (MiniLM embeddings for the semantic ones)
+      features.mjs        ← the 9 named features + prior weights (DEFAULT_MODEL), extraction + explainScore
       model.mjs           ← logistic-regression feedback model (train/predict/holdout-eval, data/model.json)
       training-data.mjs   ← labeled apply/ignore store (data/training-data.json, keyed by link)
       descriptions.mjs    ← job-description cache (data/job-descriptions.json, keyed by link)
-      rubric.mjs          ← preference-rubric scoring (loadRubric/embedRubric/rubricScore); anchor when rubric.yml exists
+      rubric.mjs          ← preference-rubric signals (loadRubric/embedRubric/rubricSignals); feeds 7 of the 9 features
   scripts/
     eval-rubric.mjs       ← offline harness: resume vs rubric ranking on stored labels (no Sheets)
   test/
     test-all.mjs          ← test suite (node:test, no deps)
     test-ml.mjs           ← standalone ML pipeline test (no Sheets needed)
   portals.yml             ← company list + scan config
-  rubric.yml              ← hand-edited preference rubric; presence auto-enables rubric-mode scoring
+  rubric.yml              ← hand-edited preference rubric; source of 7 of the 9 scoring features
   .env                    ← secrets (gitignored)
   service-account.json    ← Google service account (gitignored)
   package.json            ← scripts: scan, apply, score, train, prune, probe, test
@@ -97,6 +98,7 @@ This file covers what's needed every session. For deeper detail, load the releva
 | I | I | 8 | Notes |
 | J | J | 9 | Source ("scan" or "websearch") — controls what prune checks |
 | K | K | 10 | Match Score (1–10, written by `score.mjs`; blank until scored) |
+| L–T | L–T | 11–19 | Per-feature contributions (weight×value, one column per feature in `FEATURE_NAMES` order, written by `score.mjs`) |
 
 **Applied** (active applications):
 
@@ -125,7 +127,7 @@ This file covers what's needed every session. For deeper detail, load the releva
 - **Checkbox cells** return `"TRUE"`/`"FALSE"` strings (not booleans) from `values.get`. `apply.mjs` handles both `"TRUE"` and the legacy `"✓"`.
 - **Trailing empty rows** are omitted from `values.get` responses. Intermediate empty rows are included. This makes **column B (Date Found) a reliable row counter**: `(await sheets.spreadsheets.values.get({ range: 'Potential!B2:B' })).data.values.length + 2` = first empty row number. Both `jobs.mjs` and `write-potential.mjs` use this pattern.
 - **Always use `values.update` (not `values.append`) when writing to Potential.** `values.append` detects a "table" ending at the last row with a checkbox `FALSE` value (row 1001) and appends below it. `values.update` with an explicit range writes to the correct row.
-- **Column A checkbox validation is wiped when `apply.mjs` clears `Potential!A2:K`.** `jobs.mjs` and `write-potential.mjs` re-apply it via `buildCheckboxRequest()` after every append. If checkboxes vanish, see `docs/common-bugs.md` for the restore command.
+- **Column A checkbox validation is wiped when `apply.mjs` clears `Potential!A2:T`.** `jobs.mjs` and `write-potential.mjs` re-apply it via `buildCheckboxRequest()` after every append. If checkboxes vanish, see `docs/common-bugs.md` for the restore command.
 
 ---
 
@@ -140,7 +142,7 @@ This file covers what's needed every session. For deeper detail, load the releva
 
 **Cost optimization:** `/scanall` and `/websearch-jobs` are token-heavy (95 web searches) — invoke with the cheapest model: `claude --model claude-haiku-4-5-20251001 /scanall`. `prune.mjs`/`score.mjs` are plain Node scripts — run directly, never inside a Claude session.
 
-**Rubric mode:** if `rubric.yml` exists at the repo root, `score.mjs` scores against your hand-edited preference rubric (what you *want*) instead of resume cosine; validate a rubric edit with `node scripts/eval-rubric.mjs` before trusting it. See `docs/pipeline-scripts.md` → Score.
+**Scoring model:** Match Score = sigmoid over 9 named features (`src/ml/features.mjs`) — 7 from the hand-edited `rubric.yml` (domains/skills/antis/titles/YOE), 2 from label history (company_prior, history_similarity). Weights: `data/model.json` when trained, hand-tuned prior otherwise. `node src/score.mjs --dry-run --explain 5` prints the per-feature breakdown; validate a rubric edit with `node scripts/eval-rubric.mjs` before trusting it. See `docs/pipeline-scripts.md` → Score.
 
 For write flows, exact filter order, flags, and per-script internals, load `docs/pipeline-scripts.md`.
 
@@ -177,7 +179,7 @@ npm test    # runs test/test-all.mjs — pure Node.js (node:test + node:assert),
 | `npm run apply:dry` | `node src/apply.mjs --dry-run` |
 | `npm run prune` | `node src/prune.mjs` |
 | `npm run prune:dry` | `node src/prune.mjs --dry-run` |
-| `npm run score` | `node src/score.mjs` — score Potential rows, write Match Score (col K) |
+| `npm run score` | `node src/score.mjs` — score Potential rows, write Match Score (col K) + feature contributions (cols L–T) |
 | `npm run score:dry` | `node src/score.mjs --dry-run` — print ranking, write nothing |
 | `npm run train` | `node src/train.mjs` — retrain feedback model from stored labels |
 | `npm run train:bootstrap` | `node src/train.mjs --bootstrap` — seed labels from Applied/Ignored sheets, then train |

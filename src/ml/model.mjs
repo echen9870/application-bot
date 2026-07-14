@@ -1,15 +1,16 @@
 /**
- * model.mjs — logistic-regression head over MiniLM embeddings.
+ * model.mjs — logistic-regression head over the named features in features.mjs.
  *
  * Learns "will Eric apply to this job?" from apply.mjs outcomes: each Potential row
  * moved to Applied is a positive (1), each moved to Ignored a negative (0). Input is
- * the same 384-dim normalized embedding scorer.mjs already computes per job, so
- * training and inference add no new model downloads and no new dependencies.
+ * the 9-dim named-feature vector (see src/ml/features.mjs FEATURE_NAMES), so every
+ * learned weight is directly interpretable.
  *
  * Trained with plain gradient descent + L2 regularization; positives are upweighted
- * by nNeg/nPos so the (typically rare) applied class isn't drowned out.
+ * by nNeg/nPos so the (typically rare) applied class isn't drowned out. Training can
+ * warm-start from the hand-tuned prior (DEFAULT_MODEL) via the init option.
  *
- * Storage: data/model.json  { weights: number[384], bias, meta: { trainedAt, nPos, nNeg } }
+ * Storage: data/model.json  { weights: number[9], bias, meta: { trainedAt, nPos, nNeg, features } }
  * Writes are atomic (tmp + rename), same pattern as descriptions.mjs.
  */
 
@@ -28,7 +29,7 @@ function sigmoid(z) {
  * @param {number[]}   y  labels, 0 or 1
  * @returns {{ weights: number[], bias: number, meta: { trainedAt, nPos, nNeg } }}
  */
-export function trainLogistic(X, y, { epochs = 300, lr = 0.1, lambda = 0.01 } = {}) {
+export function trainLogistic(X, y, { epochs = 300, lr = 0.1, lambda = 0.01, init } = {}) {
   if (X.length === 0 || X.length !== y.length) throw new Error('trainLogistic: bad training set');
   const dim  = X[0].length;
   const nPos = y.filter(v => v === 1).length;
@@ -38,8 +39,10 @@ export function trainLogistic(X, y, { epochs = 300, lr = 0.1, lambda = 0.01 } = 
   // Upweight the minority positive class so imbalanced data still learns it.
   const posWeight = nNeg / nPos;
 
-  const weights = new Array(dim).fill(0);
-  let bias = 0;
+  // Optional warm start from a prior model (e.g. the hand-tuned DEFAULT_MODEL in
+  // features.mjs) — with few labels the result stays close to the prior.
+  const weights = init?.weights?.length === dim ? [...init.weights] : new Array(dim).fill(0);
+  let bias = init && typeof init.bias === 'number' ? init.bias : 0;
 
   for (let epoch = 0; epoch < epochs; epoch++) {
     const gradW = new Array(dim).fill(0);
@@ -127,12 +130,18 @@ export function saveModel(model) {
   renameSync(tmp, MODEL_PATH);
 }
 
-/** Load the trained model, or null if none exists (scorer falls back to pure cosine). */
+/**
+ * Load the trained model, or null if none exists (scorer then uses DEFAULT_MODEL's
+ * prior weights). Requires meta.features naming each weight — legacy 384-dim
+ * embedding models (pre feature-model) lack it and are deliberately ignored.
+ */
 export function loadModel() {
   if (!existsSync(MODEL_PATH)) return null;
   try {
     const m = JSON.parse(readFileSync(MODEL_PATH, 'utf-8'));
-    return Array.isArray(m?.weights) && typeof m?.bias === 'number' ? m : null;
+    const valid = Array.isArray(m?.weights) && typeof m?.bias === 'number'
+      && Array.isArray(m?.meta?.features) && m.meta.features.length === m.weights.length;
+    return valid ? m : null;
   } catch {
     return null;
   }

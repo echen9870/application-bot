@@ -75,7 +75,7 @@ Removes dead rows automatically. Expect ~30–50% of websearch results to be liv
 node src/score.mjs
 ```
 
-Score **all Potential jobs** (API scan + websearch survivors together) with blended model (rubric + feedback). Writes Match Score to column K and sorts the sheet best-first.
+Score **all Potential jobs** (API scan + websearch survivors together) with the named-feature model (sigmoid over 9 features: rubric-derived + label history; trained weights or hand-tuned prior). Writes Match Score to column K, per-feature contributions to columns L–T, and sorts the sheet best-first.
 
 **This ensures every job is ranked uniformly regardless of source, and no jobs are left unscored.**
 
@@ -85,7 +85,7 @@ Summarize:
 - **API scan**: companies scanned, new scan-sourced jobs written, filters hit
 - **Websearch**: parallel batches spawned, companies searched, jobs found and written after `write-potential.mjs` filters
 - **Prune**: websearch rows checked, dead rows removed, live links remaining
-- **Scoring**: mode (cosine-only vs blended), score range, top 20 ranked matches by Match Score
+- **Scoring**: mode (trained weights vs prior cold start), score range, top 20 ranked matches by Match Score
 - **Total new live jobs in Potential** (split by Source: API scan vs websearch)
 
 Include link to Potential sheet sorted best-first. Remind the user to:

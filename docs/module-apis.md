@@ -68,13 +68,32 @@ export function deleteDescriptions(links) // remove entries by link, persist; re
 ### src/ml/scorer.mjs
 ```js
 export async function embed(text)                     // → number[] (384-dim, all-MiniLM-L6-v2, local, free)
-export async function scoreMatch(resumeText, jobText) // → number 0–1 (cosine similarity)
-export async function scoreJobs(resumeText, jobs)     // → jobs[] each with .score/.cosine/.modelProb, sorted desc
-// If data/model.json exists: score = (1−α)·anchor + α·modelProb, α = min(0.7, nLabels/200);
-// otherwise pure anchor (.modelProb null). Uses job.description, falls back to title-only text.
-// Anchor = resume cosine by default. If rubric.yml exists ("rubric mode"), anchor = rubricScore
-// and each job also gets .rubricInfo = { topDomain, antiHit, yoeCapped }. .cosine always = resume cosine.
+export async function scoreMatch(resumeText, jobText) // → number 0–1 (cosine similarity; ad-hoc use only)
+export async function scoreJobs(jobs)                 // → jobs[] sorted desc, each with:
+//   .score        sigmoid(bias + Σ weight·feature) over the 9 named features (features.mjs)
+//   .features     { domain_match, ..., title_match } — the values that made the score
+//   .explanation  { z, prob, contributions: [{name, value, weight, contribution}] } sorted by |contribution|
+//   .rubricInfo   { topDomain, antiHit, yoeCapped } (only when rubric.yml exists)
+// Weights: data/model.json (trained) or DEFAULT_MODEL prior (cold start). No blending —
+// the feature model IS the score. Uses job.description, falls back to title-only text.
 export function buildJobText(job)                     // → the exact text embedded for a job (shared with training)
+```
+
+### src/ml/features.mjs
+```js
+export const FEATURE_NAMES   // ['domain_match','skill_overlap','language_overlap','penalty_overlap',
+                             //  'anti_margin','yoe_gap','company_prior','history_similarity','title_match']
+export const DEFAULT_MODEL   // hand-tuned prior { weights[9], bias: -0.5, meta: { source: 'prior', features } }
+export function buildFeatureContext({ embeddedRubric, trainingStore })
+// → { rubric, applied: {link,company,vec}[], companyStats, globalRate, nLabeled } — per-session precompute
+export function extractFeatures(ctx, { jobVec, roleVec?, jobText, jobRole?, company?, excludeLink? })
+// → { features: {name: value}, info: { topDomain, antiHit, yoeCapped } }
+//   rubric features 0 without a rubric; yoe_gap = max(0, demanded − yoe.max) clamped at 5
+//   (penalty-only: under-max and unknown are both 0, so unparseable titles aren't disadvantaged);
+//   company_prior = (nApplied + 3·globalRate)/(nTotal + 3); history_similarity = mean cosine
+//   to top-3 nearest applied embeddings. excludeLink = leave-one-out (training only).
+export function featuresToVector(features)      // → number[9] in FEATURE_NAMES order
+export function explainScore(model, features)   // → { z, prob, contributions[] sorted by |contribution| }
 ```
 
 ### src/ml/rubric.mjs
@@ -82,6 +101,10 @@ export function buildJobText(job)                     // → the exact text embe
 export function loadRubric(path = 'rubric.yml')  // → parsed rubric | null (missing/unparseable → null, warns, never throws)
 export async function embedRubric(rubric)        // → { domains: {name,weight,vec}[], antis: {name,vec}[], titles: {name,vec}[], skills, languages, penalties: string[] (lowercased), yoe }
 //   embeds each domain/anti/preferred-title description once via embed() from scorer.mjs.
+export function keywordFraction(list, text)      // → 0–1 fraction of keywords in text (word-boundary, literal)
+export function rubricSignals(embeddedRubric, jobVec, jobText, jobRole, roleVec?)
+//   → { domainMatch, topDomain, bestRawDomain, bestAnti, antiName, skillFrac, langFrac,
+//       penaltyFrac, titleMatch, yoeGap|null } — raw signals shared by rubricScore and features.mjs
 export function rubricScore(embeddedRubric, jobVec, jobText, jobRole, roleVec?)
 //   → { score: 0–1, topDomain: string|null, antiHit: string|null, yoeCapped: boolean }
 //   domainScore = max over domains of cosine(jobVec, domain.vec)·(weight/maxWeight).
@@ -94,19 +117,21 @@ export function rubricScore(embeddedRubric, jobVec, jobText, jobRole, roleVec?)
 //   YOE gate: extractMinYOE(jobRole)/extractMinYOEFromDesc(jobText) > yoe.max → ×0.3.
 //   score clamped to [0,1]. Pure function (takes vecs) — testable without the model.
 ```
-When `rubric.yml` exists, `scoreJobs` uses `rubricScore(...).score` as the blend anchor in place of resume cosine and attaches `.rubricInfo = { topDomain, antiHit, yoeCapped }` to each job.
+`rubricScore` is kept for `scripts/eval-rubric.mjs`; production scoring consumes `rubricSignals` via `features.mjs`.
 
 ### src/ml/model.mjs
 ```js
-export function trainLogistic(X, y, { epochs=300, lr=0.1, lambda=0.01 })
-// → { weights: number[384], bias, meta: { trainedAt, nPos, nNeg } }
+export function trainLogistic(X, y, { epochs=300, lr=0.1, lambda=0.01, init? })
+// → { weights, bias, meta: { trainedAt, nPos, nNeg } } — dims follow X
 // Gradient descent, L2 regularization, positives upweighted nNeg/nPos. Throws on empty/single-class input.
-export function predictLogistic(model, embedding)  // → probability 0–1 (sigmoid)
-export function evaluateHoldout(X, y, { testFrac=0.2, seed=42, threshold=0.5 })
+// init = optional { weights, bias } warm start (train.mjs passes DEFAULT_MODEL).
+export function predictLogistic(model, featureVec)  // → probability 0–1 (sigmoid)
+export function evaluateHoldout(X, y, { testFrac=0.2, seed=42, threshold=0.5, trainOpts={} })
 // → { precision, recall, nTestPos, nTestNeg } | null (class < 5 examples)
 // Stratified 80/20 split, seeded shuffle (reproducible), throwaway model on train split.
 export function saveModel(model)                   // → data/model.json (atomic tmp+rename)
-export function loadModel()                        // → model | null (null = scorer falls back to pure cosine)
+export function loadModel()                        // → model | null; requires meta.features naming each
+// weight (legacy 384-dim embedding models are ignored → scorer uses the DEFAULT_MODEL prior)
 ```
 
 ### src/ml/training-data.mjs

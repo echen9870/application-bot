@@ -770,12 +770,37 @@ test('model: saveModel/loadModel round-trip', async () => {
   await inTempDir(() => {
     const { X, y } = syntheticSet(10, 10);
     const model = trainLogistic(X, y);
+    model.meta.features = ['f1', 'f2', 'f3', 'f4'];
     saveModel(model);
     const loaded = load();
     assert.deepEqual(loaded.weights, model.weights);
     assert.equal(loaded.bias, model.bias);
     assert.equal(loaded.meta.nPos, 10);
   });
+});
+
+test('loadModel: rejects legacy models without meta.features', async () => {
+  const { trainLogistic, saveModel, loadModel: load } = await import('../src/ml/model.mjs');
+  await inTempDir(() => {
+    const { X, y } = syntheticSet(10, 10);
+    saveModel(trainLogistic(X, y));   // no meta.features (legacy embedding model shape)
+    assert.equal(load(), null, 'model without named features must be ignored');
+    // Mismatched feature count is rejected too
+    const bad = trainLogistic(X, y);
+    bad.meta.features = ['only', 'two'];
+    saveModel(bad);
+    assert.equal(load(), null);
+  });
+});
+
+test('trainLogistic: init warm-starts from a prior', () => {
+  const { X, y } = syntheticSet(10, 10);
+  const prior = { weights: [5, 0, 0, 0], bias: 1 };
+  const model = trainLogistic(X, y, { epochs: 0, init: prior });
+  assert.deepEqual(model.weights, prior.weights, '0 epochs → weights stay at the prior');
+  assert.equal(model.bias, prior.bias);
+  const trained = trainLogistic(X, y, { init: prior });
+  assert.ok(predictLogistic(trained, [1, 0, 0, 0]) > 0.5, 'training from a prior still learns');
 });
 
 test('retrain: guard skips training when labels are insufficient', async () => {
@@ -905,25 +930,28 @@ test('rubricScore: skill match is word-boundary and literal', async () => {
   assert.equal(miss.score, 0);
 });
 
-test('scoreJobs: no rubric.yml present → resume mode, no .rubricInfo', async (t) => {
+test('scoreJobs: no rubric.yml → no .rubricInfo, prior-model score with explanation', async (t) => {
   const { scoreJobs } = await import('../src/ml/scorer.mjs');
+  const { FEATURE_NAMES } = await import('../src/ml/features.mjs');
   await inTempDir(async () => {
-    // No rubric.yml and no model.json in this temp cwd → pure resume cosine.
+    // No rubric.yml, no model.json, no training data in this temp cwd →
+    // DEFAULT_MODEL prior over all-zero features → score = sigmoid(bias).
     const jobs = [{ company: 'A', role: 'Backend Engineer', location: 'NYC', description:
       'We build distributed backend services and storage systems at massive scale every day.' }];
     let scored;
     try {
-      scored = await scoreJobs('Backend engineer with distributed systems experience.', jobs);
+      scored = await scoreJobs(jobs);
     } catch (e) {
       // The embedding model isn't cached and can't be fetched (offline CI) — skip
-      // rather than fail; the rubricScore tests above cover the pure logic.
+      // rather than fail; the feature/rubric tests above cover the pure logic.
       t.skip(`embedding model unavailable: ${e.message}`);
       return;
     }
     assert.equal(scored.length, 1);
-    assert.equal(scored[0].rubricInfo, undefined, 'resume mode must not attach rubricInfo');
-    assert.equal(typeof scored[0].cosine, 'number');
-    assert.equal(scored[0].score, scored[0].cosine, 'no model → score equals cosine anchor');
+    assert.equal(scored[0].rubricInfo, undefined, 'no rubric.yml must not attach rubricInfo');
+    assert.ok(scored[0].score > 0 && scored[0].score < 1);
+    assert.deepEqual(Object.keys(scored[0].features).sort(), [...FEATURE_NAMES].sort());
+    assert.equal(scored[0].explanation.prob, scored[0].score);
   });
 });
 
@@ -965,4 +993,119 @@ test('rubricScore: title blend applies only when roleVec and titles are present'
   const miss = rubricScore(er, jobVec, '', 'SWE', [0, 0, 1, 0]);
   assert.ok(miss.score < noRole.score, 'non-matching title lowers the blended score');
   assert.ok(Math.abs(miss.score - 0.7) < 1e-9, `expected (1-β)=0.7, got ${miss.score}`);
+});
+
+// ── Named-feature model (src/ml/features.mjs) ────────────────────────────────
+// extractFeatures takes plain vectors + a prebuilt context, so it is fully
+// testable without the embedding model.
+
+import {
+  FEATURE_NAMES, DEFAULT_MODEL, buildFeatureContext, extractFeatures,
+  featuresToVector, explainScore,
+} from '../src/ml/features.mjs';
+
+const FEATURE_RUBRIC = {   // 4-dim toy rubric shared by the tests below
+  domains: [{ name: 'Dist', weight: 2, vec: [1, 0, 0, 0] }],
+  antis:   [{ name: 'Mobile', vec: [0, 0, 1, 0] }],
+  skills: ['go'], languages: ['rust'], penalties: ['agile'],
+  titles: [{ name: 'Software Engineer', vec: [0, 1, 0, 0] }],
+  yoe: { max: 3 },
+};
+
+const FEATURE_STORE = {
+  'https://x/a1': { label: 1, company: 'Acme', embedding: [1, 0, 0, 0] },
+  'https://x/a2': { label: 1, company: 'Acme', embedding: [0, 1, 0, 0] },
+  'https://x/i1': { label: 0, company: 'Acme', embedding: [0, 0, 1, 0] },
+  'https://x/i2': { label: 0, company: 'Beta', embedding: [0, 0, 0, 1] },
+};
+
+test('DEFAULT_MODEL: weights align with FEATURE_NAMES and reproduce the worked example', () => {
+  assert.equal(DEFAULT_MODEL.weights.length, FEATURE_NAMES.length);
+  assert.deepEqual(DEFAULT_MODEL.meta.features, FEATURE_NAMES);
+  // Eric's worked example (2026-07-14), minus the dropped resume_cosine term:
+  // z = -0.5 + 1.4·0.8 + 0.9·0.5 + 0.6·0.7 + (-1.2)·0.1 + (-0.8)·(-0.15)
+  //     + (-0.5)·(-1) + 0.7·0.3 + 1.5·0.7 + 0.9·0
+  const ex = explainScore(DEFAULT_MODEL, {
+    domain_match: 0.8, skill_overlap: 0.5, language_overlap: 0.7,
+    penalty_overlap: 0.1, anti_margin: -0.15, yoe_gap: -1,
+    company_prior: 0.3, history_similarity: 0.7, title_match: 0,
+  });
+  assert.ok(Math.abs(ex.z - 3.25) < 1e-6, `expected z=3.25, got ${ex.z}`);
+  assert.ok(ex.prob > 0.95, 'strong match → probability near 1');
+});
+
+test('extractFeatures: rubric-derived features, all 9 present', () => {
+  const ctx = buildFeatureContext({ embeddedRubric: FEATURE_RUBRIC, trainingStore: FEATURE_STORE });
+  const { features, info } = extractFeatures(ctx, {
+    jobVec: [1, 0, 0, 0], roleVec: [0, 1, 0, 0],
+    jobText: 'We write Go and Rust in an agile team', jobRole: 'Software Engineer',
+    company: 'Acme',
+  });
+  assert.deepEqual(Object.keys(features).sort(), [...FEATURE_NAMES].sort());
+  assert.equal(features.domain_match, 1);        // exact domain hit, top weight
+  assert.equal(features.skill_overlap, 1);       // "go" present
+  assert.equal(features.language_overlap, 1);    // "rust" present
+  assert.equal(features.penalty_overlap, 1);     // "agile" present
+  assert.equal(features.anti_margin, -1);        // anti cosine 0 − domain cosine 1
+  assert.equal(features.title_match, 1);         // roleVec equals the preferred title
+  assert.equal(features.yoe_gap, 0);             // no YOE detectable → 0
+  assert.equal(info.topDomain, 'Dist');
+  assert.equal(info.antiHit, null);
+  // company_prior: Acme has 2 applied / 3 labeled, global rate 0.5, k=3
+  const expectedPrior = (2 + 3 * 0.5) / (3 + 3);
+  assert.ok(Math.abs(features.company_prior - expectedPrior) < 1e-4);
+  // history_similarity: cosines to applied vecs are [1, 0] → top-3 mean = 0.5
+  assert.ok(Math.abs(features.history_similarity - 0.5) < 1e-4);
+});
+
+test('extractFeatures: no rubric → rubric-derived features are 0, label features still work', () => {
+  const ctx = buildFeatureContext({ embeddedRubric: null, trainingStore: FEATURE_STORE });
+  const { features } = extractFeatures(ctx, {
+    jobVec: [1, 0, 0, 0], jobText: 'Go and Rust', jobRole: 'SWE', company: 'Beta',
+  });
+  for (const name of ['domain_match', 'skill_overlap', 'language_overlap', 'penalty_overlap', 'anti_margin', 'title_match', 'yoe_gap']) {
+    assert.equal(features[name], 0, `${name} must be 0 without a rubric`);
+  }
+  assert.ok(features.history_similarity > 0);
+  // Beta: 0 applied / 1 labeled, shrunk toward global 0.5
+  assert.ok(Math.abs(features.company_prior - (0 + 3 * 0.5) / (1 + 3)) < 1e-4);
+});
+
+test('extractFeatures: yoe_gap is penalty-only (excess over max) and clamped', () => {
+  const ctx = buildFeatureContext({ embeddedRubric: FEATURE_RUBRIC, trainingStore: {} });
+  const at = (role, text = '') => extractFeatures(ctx,
+    { jobVec: [0, 0, 0, 1], jobText: text, jobRole: role }).features.yoe_gap;
+  assert.equal(at('Backend Engineer 5+ years'), 2);    // demands 5, max 3 → excess 2
+  assert.equal(at('Engineer, 2+ years'), 0);           // under max → no bonus, 0
+  assert.equal(at('Staff Engineer 15+ years'), 5);     // clamped at +5
+  assert.equal(at('New Grad Engineer'), 0);            // 0 YOE, under max → 0
+  assert.equal(at('Backend Engineer'), 0);             // undetectable → 0 (same as under-max)
+});
+
+test('extractFeatures: leave-one-out excludes the example\'s own label', () => {
+  const ctx = buildFeatureContext({ embeddedRubric: null, trainingStore: FEATURE_STORE });
+  // Without exclusion, a1's own embedding gives it a perfect self-similarity of 1.
+  const withSelf = extractFeatures(ctx,
+    { jobVec: [1, 0, 0, 0], jobText: '', jobRole: '', company: 'Acme' }).features;
+  const loo = extractFeatures(ctx,
+    { jobVec: [1, 0, 0, 0], jobText: '', jobRole: '', company: 'Acme', excludeLink: 'https://x/a1' }).features;
+  assert.ok(withSelf.history_similarity > loo.history_similarity, 'self-match must be excluded');
+  assert.equal(loo.history_similarity, 0);   // only a2 remains, orthogonal
+  // company_prior: Acme drops from 2/3 to 1/2 applied
+  const expected = (1 + 3 * 0.5) / (2 + 3);
+  assert.ok(Math.abs(loo.company_prior - expected) < 1e-4);
+});
+
+test('featuresToVector + explainScore: ordering and contribution accounting', () => {
+  const features = Object.fromEntries(FEATURE_NAMES.map((n, i) => [n, (i + 1) / 10]));
+  const vec = featuresToVector(features);
+  assert.equal(vec.length, FEATURE_NAMES.length);
+  assert.equal(vec[0], features[FEATURE_NAMES[0]]);
+  const ex = explainScore(DEFAULT_MODEL, features);
+  const sum = ex.contributions.reduce((t, c) => t + c.contribution, 0);
+  assert.ok(Math.abs(sum + DEFAULT_MODEL.bias - ex.z) < 1e-3, 'contributions must sum to z − bias');
+  // Sorted by |contribution| descending
+  for (let i = 1; i < ex.contributions.length; i++) {
+    assert.ok(Math.abs(ex.contributions[i - 1].contribution) >= Math.abs(ex.contributions[i].contribution));
+  }
 });

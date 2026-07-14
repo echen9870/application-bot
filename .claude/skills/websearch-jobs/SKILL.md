@@ -77,7 +77,7 @@ Removes dead rows automatically. Expect ~30–50% of websearch results to be liv
 node src/score.mjs
 ```
 
-Score all Potential jobs (API scan + websearch survivors) with blended model (rubric + feedback). Writes Match Score to column K and sorts sheet best-first.
+Score all Potential jobs (API scan + websearch survivors) with the named-feature model (sigmoid over 9 features: rubric-derived + label history; trained weights or hand-tuned prior). Writes Match Score to column K, per-feature contributions to columns L–T, and sorts sheet best-first.
 
 ## Step 6 — Report
 

@@ -143,7 +143,7 @@ async function main() {
   // Clear through column K so stale Match Scores don't carry into the next scan's rows.
   await sheets.spreadsheets.values.clear({
     spreadsheetId: SPREADSHEET_ID,
-    range: 'Potential!A2:K',
+    range: 'Potential!A2:T',   // includes Match Score (K) + feature columns (L..T)
   });
 
   console.log(`\nDone. Applied: ${newApply.length}, Ignored: ${newIgnore.length}. Potential cleared.`);

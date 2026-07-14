@@ -2,24 +2,20 @@
  * test/test-ml.mjs — Standalone ML pipeline test (no Google Sheets needed)
  *
  * What this does:
- *   1. Loads your resume from data/ (TXT/MD directly, or PDF via Gemini)
- *   2. Fetches live job listings from a few Ashby companies
- *   3. Applies filters (title keywords, location, YOE) — same as jobs.mjs
- *   4. Scores only the filtered jobs against your resume
- *   5. Prints the top matches, ranked by match score
+ *   1. Fetches live job listings from a few Ashby companies
+ *   2. Applies filters (title keywords, location, YOE) — same as jobs.mjs
+ *   3. Scores the filtered jobs with the named-feature model (rubric + label history)
+ *   4. Prints the top matches with their per-feature breakdown
  *
  * Usage:
  *   node test/test-ml.mjs                   # show top 20 (default)
  *   node test/test-ml.mjs --top 30          # show top 30
- *   node test/test-ml.mjs --mock-resume     # use sample resume, no file needed
  *   node test/test-ml.mjs --all             # skip recency filter (show all jobs)
  *
  * No Google Sheets credentials required.
- * Requires GEMINI_API_KEY in .env only if you have a PDF resume.
  */
 
 import { fileURLToPath } from 'url';
-import { parseResume } from '../src/ml/parser.mjs';
 import { scoreJobs  } from '../src/ml/scorer.mjs';
 import { fetchJson  } from '../src/fetch.mjs';
 import { ATS        } from '../src/ats.mjs';
@@ -52,20 +48,10 @@ const TEST_COMPANIES = [
   { name: 'Cisco',        ats: 'smartrecruiters', slug: 'cisco' },
 ];
 
-// Fallback resume used when --mock-resume flag is passed (no real resume needed)
-const MOCK_RESUME = `
-Software Engineer with 2 years of experience.
-Skills: JavaScript, TypeScript, Node.js, Python, React, PostgreSQL, REST APIs, Git.
-Experience building backend services, data pipelines, and web applications.
-Computer Science degree. Interested in software engineering, full-stack development,
-and machine learning engineering roles.
-`.trim();
-
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
   const args       = process.argv.slice(2);
-  const useMock    = args.includes('--mock-resume');
   const allDates   = args.includes('--all');
   const topIdx     = args.findIndex(a => a === '--top');
   const topN       = topIdx >= 0 ? parseInt(args[topIdx + 1]) || 20 : 20;
@@ -80,19 +66,8 @@ async function main() {
   const RECENCY_CUTOFF = new Date(Date.now() - RECENCY_HOURS * 60 * 60 * 1000);
   const titleOk = buildTitleFilter(titleFilter);
 
-  // Step 1 — Load resume
-  let resumeText;
-  if (useMock) {
-    console.log('\n[1/4] Using mock resume (--mock-resume flag)');
-    resumeText = MOCK_RESUME;
-  } else {
-    console.log('\n[1/4] Loading resume...');
-    resumeText = await parseResume();
-    console.log(`      ${resumeText.split('\n').length} lines loaded.`);
-  }
-
-  // Step 2 — Fetch jobs from multiple ATS platforms
-  console.log('\n[2/4] Fetching job listings from multiple ATS platforms...');
+  // Step 1 — Fetch jobs from multiple ATS platforms
+  console.log('\n[1/3] Fetching job listings from multiple ATS platforms...');
   const allJobs = [];
   let fetchErrors = 0;
 
@@ -119,10 +94,10 @@ async function main() {
 
   console.log(`      Total fetched: ${allJobs.length} jobs`);
 
-  // Step 2.5 — Fetch descriptions for Greenhouse jobs (not included in listing API)
+  // Step 1.5 — Fetch descriptions for Greenhouse jobs (not included in listing API)
   const ghJobs = allJobs.filter(j => j._id && j._slug);
   if (ghJobs.length > 0) {
-    console.log(`\n[2.5/4] Fetching descriptions for ${ghJobs.length} Greenhouse job(s)...`);
+    console.log(`\n[1.5/3] Fetching descriptions for ${ghJobs.length} Greenhouse job(s)...`);
     let fetched = 0, failed = 0;
     for (const job of ghJobs) {
       try {
@@ -139,8 +114,8 @@ async function main() {
     if (failed > 0) console.log(`      ✗ ${failed} descriptions failed (will use fallback)`);
   }
 
-  // Step 3 — Apply filters (same as jobs.mjs)
-  console.log(`\n[3/4] Filtering jobs (title, location, YOE, recency)...`);
+  // Step 2 — Apply filters (same as jobs.mjs)
+  console.log(`\n[2/3] Filtering jobs (title, location, YOE, recency)...`);
   let titleFiltered = 0, nonUS = 0, yoeFiltered = 0, oldFiltered = 0;
 
   const filteredJobs = allJobs.filter(j => {
@@ -163,17 +138,11 @@ async function main() {
     process.exit(0);
   }
 
-  // Step 4 — Score filtered jobs
-  console.log(`\n[4/4] Scoring ${filteredJobs.length} job(s) against resume...`);
-  const scored = await scoreJobs(resumeText, filteredJobs);
+  // Step 3 — Score filtered jobs with the named-feature model
+  console.log(`\n[3/3] Scoring ${filteredJobs.length} job(s) with the feature model...`);
+  const scored = await scoreJobs(filteredJobs);
 
   // ── Results ───────────────────────────────────────────────────────────────
-  console.log(`\n${'━'.repeat(80)}`);
-  console.log(`  Resume Used for Scoring`);
-  console.log('━'.repeat(80));
-  const resumePreview = resumeText.split('\n').slice(0, 5).join(' ').substring(0, 200);
-  console.log(`  ${resumePreview}...`);
-
   console.log(`\n${'━'.repeat(80)}`);
   console.log(`  Top ${Math.min(topN, scored.length)} Matches (out of ${scored.length} qualified)`);
   console.log('━'.repeat(80));
@@ -187,6 +156,12 @@ async function main() {
     console.log(`\n  ${rank}. [${score}] ${bar}`);
     console.log(`      ${j.company} — ${j.role}`);
     if (j.location) console.log(`      📍 ${j.location}`);
+
+    // Top feature contributions — why it scored what it did
+    const top3 = j.explanation.contributions.slice(0, 3)
+      .map(c => `${c.name} ${c.contribution >= 0 ? '+' : ''}${c.contribution.toFixed(2)}`)
+      .join('  ');
+    console.log(`      ${top3}`);
 
     // Show job description snippet being scored
     const descPreview = buildJobText(j).substring(0, 400);

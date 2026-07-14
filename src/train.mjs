@@ -18,13 +18,22 @@
 import { fileURLToPath } from 'url';
 import { trainLogistic, evaluateHoldout, saveModel } from './ml/model.mjs';
 import { loadTrainingData, saveTrainingData } from './ml/training-data.mjs';
+import { loadRubric, embedRubric } from './ml/rubric.mjs';
+import { FEATURE_NAMES, DEFAULT_MODEL, buildFeatureContext, extractFeatures, featuresToVector } from './ml/features.mjs';
 
 const MIN_PER_CLASS = 10;
 
 /**
  * Retrain from the stored labels. Safe to call from apply.mjs — never throws for
  * "not enough data" (returns a status object instead).
- * @returns {{ trained: boolean, nPos: number, nNeg: number, accuracy?: number }}
+ *
+ * The model is a logistic regression over the 9 named features in features.mjs,
+ * warm-started from the hand-tuned prior (DEFAULT_MODEL). Features are recomputed
+ * from each stored entry's snapshot (embedding/text/role/company); company_prior
+ * and history_similarity use leave-one-out so an example's own label can't leak
+ * into its features.
+ *
+ * @returns {{ trained: boolean, nPos: number, nNeg: number, holdout?: object }}
  */
 export async function retrain() {
   const store = loadTrainingData();
@@ -32,8 +41,9 @@ export async function retrain() {
   // exclusively in the description path). Title-only entries embed near-identical
   // vectors for wildly different jobs ("Software Engineer at X in NYC") and teach
   // the model title phrasing rather than actual preferences.
-  const entries = Object.values(store).filter(e => Array.isArray(e.embedding) && e.text?.includes('\n\n'));
-  const nPos = entries.filter(e => e.label === 1).length;
+  const entries = Object.entries(store)
+    .filter(([, e]) => Array.isArray(e.embedding) && e.text?.includes('\n\n'));
+  const nPos = entries.filter(([, e]) => e.label === 1).length;
   const nNeg = entries.length - nPos;
 
   if (nPos < MIN_PER_CLASS || nNeg < MIN_PER_CLASS) {
@@ -41,18 +51,50 @@ export async function retrain() {
     return { trained: false, nPos, nNeg };
   }
 
-  const X = entries.map(e => e.embedding);
-  const y = entries.map(e => e.label);
+  // Feature context over the FULL store (extractFeatures excludes each example's
+  // own label via excludeLink); rubric features need the embedded rubric.
+  const rubric = loadRubric();
+  const embeddedRubric = rubric ? await embedRubric(rubric) : null;
+  const ctx = buildFeatureContext({ embeddedRubric, trainingStore: store });
+
+  const { embed } = await import('./ml/scorer.mjs');
+  const roleVecCache = new Map();
+  const getRoleVec = async role => {
+    if (!role) return undefined;
+    if (!roleVecCache.has(role)) roleVecCache.set(role, await embed(role));
+    return roleVecCache.get(role);
+  };
+
+  console.log(`  [train] Extracting ${FEATURE_NAMES.length} features for ${entries.length} labeled job(s)...`);
+  const X = [], y = [];
+  for (const [link, e] of entries) {
+    const { features } = extractFeatures(ctx, {
+      jobVec: e.embedding,
+      roleVec: await getRoleVec(e.role || ''),
+      jobText: e.text,
+      jobRole: e.role || '',
+      company: e.company || '',
+      excludeLink: link,
+    });
+    X.push(featuresToVector(features));
+    y.push(e.label);
+  }
 
   // Honest skill estimate first (throwaway model on 80%, scored on unseen 20%) —
   // training accuracy is meaningless at ~4% positive rate.
-  const ho = evaluateHoldout(X, y);
+  const ho = evaluateHoldout(X, y, { trainOpts: { init: DEFAULT_MODEL } });
 
   // Final model trains on ALL labels — the holdout was only for measurement.
-  const model = trainLogistic(X, y);
+  const model = trainLogistic(X, y, { init: DEFAULT_MODEL });
+  model.meta.features = FEATURE_NAMES;
   saveModel(model);
 
   console.log(`  [train] Model trained on ${nPos} applied / ${nNeg} ignored → data/model.json`);
+  console.log('  [train] Learned weights (prior → trained):');
+  FEATURE_NAMES.forEach((name, i) => {
+    console.log(`           ${name.padEnd(20)} ${String(DEFAULT_MODEL.weights[i]).padStart(6)} → ${model.weights[i].toFixed(3)}`);
+  });
+  console.log(`           ${'bias'.padEnd(20)} ${String(DEFAULT_MODEL.bias).padStart(6)} → ${model.bias.toFixed(3)}`);
   if (ho) {
     console.log(`  [train] Holdout (${ho.nTestPos} applied / ${ho.nTestNeg} ignored unseen): ` +
       `precision ${(ho.precision * 100).toFixed(0)}% (when it says "apply", how often you did), ` +

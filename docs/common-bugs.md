@@ -7,7 +7,7 @@ Load this when something is behaving unexpectedly — checkboxes vanished, write
 - **Checkbox cells** return `"TRUE"`/`"FALSE"` strings (not booleans) from `values.get`. `apply.mjs` handles both `"TRUE"` and the legacy `"✓"`. Formula cells (e.g. `=IF(...)`) can return real booleans, so `categorizeRows` coerces via `String(r[0] ?? '')` to handle both safely.
 - **Trailing empty rows** are omitted from `values.get` responses; intermediate empty rows are included. This makes **column B (Date Found) a reliable row counter**: `values.length + 2` = first empty row number. Both `jobs.mjs` and `write-potential.mjs` use this pattern.
 - **`values.append` writes to the wrong row.** Sheets detects checkbox `FALSE` values as table content, so append lands below row 1001. Always use `values.update` with an explicit range computed from the column B counter.
-- **Checkbox validation gets wiped.** `apply.mjs` clears `Potential!A2:K`, which wipes column A data validation. `jobs.mjs` and `write-potential.mjs` re-apply it via `buildCheckboxRequest()` after every append, extending the end row past any overflow (`Math.max(1001, lastWrittenRow + 1)`).
+- **Checkbox validation gets wiped.** `apply.mjs` clears `Potential!A2:T`, which wipes column A data validation. `jobs.mjs` and `write-potential.mjs` re-apply it via `buildCheckboxRequest()` after every append, extending the end row past any overflow (`Math.max(1001, lastWrittenRow + 1)`).
 
 **If checkboxes disappear, restore them:**
 ```bash

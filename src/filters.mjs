@@ -110,6 +110,10 @@ export function looksLikeJobUrl(url) {
     if (AGGREGATOR_HOST.test(u.hostname)) return false;
     if (NON_JOB_PATH.test(u.pathname)) return false;
 
+    // Job ID in the query string (embedded Greenhouse/Lever boards on company
+    // sites, e.g. stripe.com/jobs/search?gh_jid=8009143) → specific posting.
+    if (/[?&](gh_jid|lever-id|jobid|job_id|jid|req(uisition)?id|posting)=[\w-]{4,}/i.test(u.search)) return true;
+
     const segments = u.pathname.split('/').filter(Boolean);
     if (segments.length === 0) return false;                 // bare domain / careers subdomain root
     if (segments.some(s => /\d{4,}/.test(s))) return true;   // job-ID-shaped segment → specific posting
@@ -117,4 +121,28 @@ export function looksLikeJobUrl(url) {
   } catch {
     return false;
   }
+}
+
+// Phrases that closed-job pages render while still returning HTTP 200
+// (Stripe, Apple, ByteDance, SmartRecruiters web pages, custom portals).
+// Matched against raw HTML — prune uses this to kill 200-but-dead links
+// without any browser or web search.
+const DEAD_PAGE_PHRASE = new RegExp([
+  'no longer accepting applications',
+  'no longer (?:available|active|open|accepting)',
+  'position (?:has been |is )?(?:filled|closed)',
+  'job (?:posting |opening )?(?:has |is )?(?:been )?(?:closed|filled|expired|removed)',
+  'this (?:job|role|position|posting|listing) (?:has|was|is no longer)',
+  'posting (?:has expired|is no longer)',
+  'job you (?:are looking for|requested) (?:is no longer|could not be found|was not found)',
+  'job not found',
+  'position not found',
+  'requisition .{0,30}not found',
+  'sorry[^<.]{0,60}(?:job|position|posting|page)[^<.]{0,60}(?:closed|filled|expired|exist|found|available)',
+].join('|'), 'i');
+
+// True if an HTML body contains an explicit closed/removed-job phrase.
+// Conservative by design: absence of a phrase does NOT prove the job is live.
+export function looksDeadJobPage(html) {
+  return DEAD_PAGE_PHRASE.test(html || '');
 }

@@ -699,7 +699,13 @@ export const ATS = {
         };
       });
     },
-    parseLink: () => null,   // SR job URLs are not parsed by prune (no liveness check)
+    // https://jobs.smartrecruiters.com/{Company}/{postingId}-{slugged-title}
+    parseLink(host, path) {
+      if (host !== 'jobs.smartrecruiters.com') return null;
+      const m = path.match(/^\/([^/]+)\/(\d{10,})(?:-|$)/);
+      if (!m) return null;
+      return { type: 'smartrecruiters', slug: m[1].toLowerCase(), id: m[2] };
+    },
     // SR list API omits descriptions — fetch the individual posting's jobAd sections.
     async fetchDescription(job, fetchJson, opts) {
       if (!job._slug || !job._id) return '';

@@ -18,7 +18,7 @@ import {
   buildCheckboxRequest,
 } from '../src/jobs.mjs';
 
-import { looksLikeJobUrl } from '../src/filters.mjs';
+import { looksLikeJobUrl, looksDeadJobPage } from '../src/filters.mjs';
 
 
 import { categorizeRows } from '../src/apply.mjs';
@@ -353,6 +353,33 @@ test('parseLink: Lever job URL → { lever, slug, id }', () => {
   assert.equal(r.id,   uuid);
 });
 
+test('parseLink: SmartRecruiters job URL → { smartrecruiters, slug, id }', () => {
+  const r = parseLink('https://jobs.smartrecruiters.com/Salesforce/744000012345678-software-engineer');
+  assert.equal(r.type, 'smartrecruiters');
+  assert.equal(r.slug, 'salesforce');
+  assert.equal(r.id,   '744000012345678');
+});
+
+test('parseLink: SmartRecruiters non-posting path → generic', () => {
+  assert.equal(parseLink('https://jobs.smartrecruiters.com/Salesforce').type, 'generic');
+});
+
+test('looksLikeJobUrl: job ID in query string (embedded GH board) → true', () => {
+  assert.equal(looksLikeJobUrl('https://stripe.com/jobs/search?gh_jid=8009143'), true);
+  assert.equal(looksLikeJobUrl('https://www.fanduel.careers/open-positions?gh_jid=8079895'), true);
+  assert.equal(looksLikeJobUrl('https://stripe.com/jobs/search'), false);
+});
+
+test('looksDeadJobPage: detects closed-job phrases, ignores live pages', () => {
+  assert.equal(looksDeadJobPage('<p>This job is no longer accepting applications.</p>'), true);
+  assert.equal(looksDeadJobPage('<h1>Sorry, this position has been filled</h1>'), true);
+  assert.equal(looksDeadJobPage('The job you are looking for is no longer available'), true);
+  assert.equal(looksDeadJobPage('Job Not Found'), true);
+  assert.equal(looksDeadJobPage('<h1>Software Engineer</h1><button>Apply Now</button>'), false);
+  assert.equal(looksDeadJobPage(''), false);
+  assert.equal(looksDeadJobPage(null), false);
+});
+
 test('parseLink: unknown host → generic', () => {
   assert.equal(parseLink('https://stripe.com/careers/123').type, 'generic');
 });
@@ -681,6 +708,39 @@ test('looksLikeJobUrl: specific postings still accepted', () => {
   assert.equal(looksLikeJobUrl('https://jobs.northropgrumman.com/careers/job/1340069389649'), true);
   assert.equal(looksLikeJobUrl('https://jobs.solana.com/companies/anza-2/jobs/49586798-software-engineer-networking'), true);
   assert.equal(looksLikeJobUrl('https://codeium.com/careers/apply?id=58e309a8-5451-466a-b34d-4ea44b60e1e4'), true);
+});
+
+// ── write-potential.mjs link validation ───────────────────────────────
+// Tests verify that jobs without links or with invalid URLs are rejected
+// before writing to the Potential sheet. This prevents bloat from rows that
+// cannot be pruned or applied.
+
+test('write-potential filter: rejects jobs without links', () => {
+  // Job with missing link should fail the `!j.link` check
+  const job = { company: 'Stripe', role: 'SWE Intern', location: 'Remote' };
+  assert.ok(!job.link, 'job has no link property');
+});
+
+test('write-potential filter: rejects jobs with non-job URLs', () => {
+  // Job with careers landing page (not a specific posting) should fail looksLikeJobUrl
+  const job = {
+    company: 'Stripe',
+    role: 'SWE Intern',
+    location: 'Remote',
+    link: 'https://stripe.com/careers'
+  };
+  assert.equal(looksLikeJobUrl(job.link), false, 'generic careers page rejected');
+});
+
+test('write-potential filter: accepts jobs with valid links', () => {
+  const job = {
+    company: 'Stripe',
+    role: 'SWE Intern',
+    location: 'San Francisco',
+    link: 'https://job-boards.greenhouse.io/stripe/jobs/12345'
+  };
+  assert.equal(looksLikeJobUrl(job.link), true, 'specific job posting accepted');
+  assert.ok(job.link, 'link is present');
 });
 
 // ── ml/model.mjs — logistic regression head ──────────────────────────

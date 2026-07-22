@@ -45,13 +45,14 @@ async function main() {
   const newJobs = [];
   for (const j of jobs) {
     if (!j.company || !j.role) continue;
-    if (j.link && !looksLikeJobUrl(j.link))   { console.log(`  ✗ not-a-job URL: [${j.company}] ${j.role} — ${j.link}`); continue; }
+    if (!j.link)                              { console.log(`  ✗ missing link: [${j.company}] ${j.role}`); continue; }
+    if (!looksLikeJobUrl(j.link))             { console.log(`  ✗ not-a-job URL: [${j.company}] ${j.role} — ${j.link}`); continue; }
     if (!titleOk(j.role))                     { console.log(`  ✗ title filter: [${j.company}] ${j.role}`); continue; }
     if (!isUS(j.location))                    { console.log(`  ✗ non-US: [${j.company}] ${j.role}`); continue; }
-    if (j.link && seenLinks.has(j.link))      { console.log(`  ~ dupe: [${j.company}] ${j.role}`); continue; }
+    if (seenLinks.has(j.link))                { console.log(`  ~ dupe: [${j.company}] ${j.role}`); continue; }
     const minYOE = extractMinYOE(j.role);
     if (minYOE !== null && minYOE > MAX_YOE)  { console.log(`  ✗ YOE>${MAX_YOE}: [${j.company}] ${j.role}`); continue; }
-    if (j.link) seenLinks.add(j.link);
+    seenLinks.add(j.link);
     newJobs.push({ ...j, yoe: yoeLabel(j.role) });
   }
 

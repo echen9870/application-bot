@@ -6,12 +6,15 @@
  * knowledge live in src/ats.mjs; HTTP plumbing in src/fetch.mjs.
  *
  *   - Greenhouse: individual job endpoint (404 = closed)
- *   - Ashby/Lever: fetch full board once, check if job ID still present (cached)
- *   - Generic: HEAD request + redirect URL check
+ *   - Ashby: fetch full board once, check if job ID still present (cached)
+ *   - SmartRecruiters: individual posting endpoint (404 or non-PUBLIC = closed)
+ *   - Generic: GET, then dead if redirected to a non-job page (landing page /
+ *     homepage / ?error=true) or if the body contains a closed-job phrase
  *
  * Usage:
- *   node src/prune.mjs             # check and remove dead rows
+ *   node src/prune.mjs             # check and remove dead rows (websearch rows only)
  *   node src/prune.mjs --dry-run   # preview without deleting
+ *   node src/prune.mjs --all       # also check scan-sourced rows
  */
 
 import { fileURLToPath } from 'url';
@@ -19,7 +22,7 @@ import { createSheetsClient, getSheetId, SPREADSHEET_ID } from './sheets-client.
 import { loadConfig } from './config.mjs';
 import { fetchJson, fetchResponse } from './fetch.mjs';
 import { parseLink, ATS } from './ats.mjs';
-import { looksLikeJobUrl } from './filters.mjs';
+import { looksLikeJobUrl, looksDeadJobPage } from './filters.mjs';
 
 const boardCache = new Map(); // cacheKey → Promise<Set<id> | null>
 
@@ -66,16 +69,38 @@ async function isAlive(parsed, { timeoutMs, retries }) {
       return res.status !== 404;
     }
 
+    if (parsed.type === 'smartrecruiters') {
+      // Public postings API: 404 = removed; non-PUBLIC status = closed.
+      const res = await fetchResponse(ATS.smartrecruiters.jobApi(parsed.slug, parsed.id), { timeoutMs, retries: 0 });
+      if (res.status === 404) return false;
+      if (!res.ok) return true;   // API hiccup → conservative
+      try {
+        const json = await res.json();
+        if (json.status && json.status !== 'PUBLIC') return false;
+      } catch { /* unparseable → conservative */ }
+      return true;
+    }
+
     if (parsed.type === 'ashby') {
       const ids = await getBoardIds('ashby', parsed.slug, { timeoutMs, retries });
       if (ids === null) return true;   // board fetch failed → don't falsely mark dead
       return ids.has(parsed.id);
     }
 
-    // Generic: follow redirects, check final URL for dead signals
+    // Generic: follow redirects, then regex the body for closed-job phrases.
+    // Custom portals return 200 for closed jobs, so status alone isn't enough —
+    // this catches them without falling back to browser/websearch verification.
     const res = await fetchResponse(parsed.url, { timeoutMs, retries });
-    if (!res.ok) return false;
+    // Only 404/410 prove the posting is gone. Other non-OK statuses (429 rate
+    // limit, 403 bot-block, 5xx) show up under concurrent checks against the
+    // same host — treat as alive rather than falsely pruning.
+    if (res.status === 404 || res.status === 410) return false;
+    if (!res.ok) return true;
     if (/[?&]error=true/i.test(res.url)) return false;
+    // Redirected away from the posting to a careers landing page / homepage → dead.
+    if (res.url && res.url !== parsed.url && !looksLikeJobUrl(res.url)) return false;
+    const body = await res.text();
+    if (looksDeadJobPage(body.slice(0, 300_000))) return false;
     return true;
   } catch {
     return true;   // network error → conservative, don't delete
@@ -84,6 +109,7 @@ async function isAlive(parsed, { timeoutMs, retries }) {
 
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
+  const all    = process.argv.includes('--all');
   const { scan } = loadConfig();
   const { concurrency: CONCURRENCY, fetch_timeout_ms: TIMEOUT, retries: RETRIES } = scan;
 
@@ -102,8 +128,9 @@ async function main() {
       role:    row[4] || '',
       source:  row[9] || '',
     }))
-    // Only prune websearch rows: scan rows are recent (≤recency_hours) and known-live at the time they were added.
-    .filter(r => r.link && r.source === 'websearch');
+    // Default: only prune websearch rows — scan rows are recent (≤recency_hours)
+    // and known-live at the time they were added. --all checks everything.
+    .filter(r => r.link && (all || r.source === 'websearch'));
 
   const totalRows  = rows.filter(r => (r[6] || '')).length;
   const scanSkipped = totalRows - toCheck.length;

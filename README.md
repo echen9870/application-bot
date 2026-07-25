@@ -206,7 +206,7 @@ For companies with no public ATS API (Eightfold, Phenom, BrassRing, custom porta
 /scanall                     # full pipeline: API scan + websearch + prune + Playwright verify
 ```
 
-A full `/scanall` transcript (10 parallel Haiku agents across 115 companies, prune, score) is in [`src/2026-07-25-sample-run-log.txt`](src/2026-07-25-sample-run-log.txt).
+A full `/scanall` transcript (10 parallel Haiku agents across 115 companies, prune, score) is in [`2026-07-25-sample-run-log.txt`](2026-07-25-sample-run-log.txt).
 
 **Important:** Web search results go stale quickly — jobs indexed weeks ago may already be closed.
 After `/websearch-jobs`, clean up dead links:

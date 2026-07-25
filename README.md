@@ -316,7 +316,9 @@ See `CLAUDE.md` for the full Empty ATS playbook.
 ```
 src/
   jobs.mjs              ← daily scanner (entry point)
-  apply.mjs             ← Potential → Applied/Ignored
+  apply.mjs             ← Potential → Applied/Ignored + record labels + retrain model
+  score.mjs             ← write Match Score (col K) + per-feature contributions (cols L–T), sort by score
+  train.mjs             ← retrain feedback model from apply/ignore labels (--bootstrap seeds from sheets)
   prune.mjs             ← remove dead links from Potential
   write-potential.mjs   ← stdin JSON → Potential (used by /websearch-jobs)
   check-liveness.mjs    ← health-check all API endpoints in portals.yml
@@ -327,8 +329,23 @@ src/
   ats.mjs               ← all 17 ATS adapters (boardApi, parse, parseLink, fetchAll)
   fetch.mjs             ← fetchJson/fetchResponse with timeout + retry/backoff
   potential-writer.mjs  ← appendToPotential, fetchSeenLinks, buildCheckboxRequest
+  ml/
+    scorer.mjs          ← job scoring: sigmoid over 9 named features (MiniLM embeddings)
+    features.mjs        ← the 9 named features + prior weights, extraction + explainScore
+    model.mjs           ← logistic-regression feedback model (train/predict/holdout-eval)
+    rubric.mjs          ← preference-rubric signals (loadRubric/embedRubric/rubricSignals)
+    parser.mjs          ← resume parser (PDF→pdf-parse→Gemini cleanup, or TXT/MD direct)
+    descriptions.mjs    ← job-description cache (data/job-descriptions.json)
+    training-data.mjs   ← labeled apply/ignore store (data/training-data.json)
 
-test/test-all.mjs       ← 95 tests covering filters, parsers, classifiers
+scripts/
+  eval-rubric.mjs       ← offline harness: resume vs rubric ranking on stored labels (no Sheets)
+
+test/
+  test-all.mjs          ← main test suite (95 tests: filters, parsers, classifiers)
+  test-ml.mjs           ← standalone ML pipeline test (no Sheets needed)
+
 portals.yml             ← 567 companies + scan config
+rubric.yml              ← hand-edited preference rubric (source of 7 of the 9 scoring features)
 .claude/skills/         ← /scan, /scanall, /apply, /websearch-jobs
 ```

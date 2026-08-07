@@ -97,7 +97,7 @@ const NON_JOB_PATH = /\/(blog|news|press|article|story|podcast|webinar|insights?
 
 // Job boards / aggregators — never the company's own application page, and their
 // copies of postings go stale fast (the classic "no longer accepting applications").
-const AGGREGATOR_HOST = /(^|\.)(linkedin\.com|levels\.fyi|vault\.com|themuse\.com|builtin\w*\.com|peerlist\.io|glassdoor\.com|indeed\.com|ziprecruiter\.com|wellfound\.com|simplyhired\.com|monster\.com|dice\.com|internset\.com|web3\.career)$/i;
+const AGGREGATOR_HOST = /(^|\.)(linkedin\.com|levels\.fyi|vault\.com|themuse\.com|builtin\w*\.com|peerlist\.io|glassdoor\.com|indeed\.com|ziprecruiter\.com|wellfound\.com|simplyhired\.com|monster\.com|dice\.com|internset\.com|web3\.career|tiktok\.com|instagram\.com|facebook\.com|twitter\.com|x\.com|youtube\.com|reddit\.com|threads\.net)$/i;
 
 // Path segments that appear on careers *landing* pages. A URL whose path is made up
 // entirely of these words (with no job ID) is a program/category page, not a posting.

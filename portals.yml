@@ -2070,9 +2070,10 @@ tracked_companies:
     scan_method: websearch
     enabled: true
   - name: TikTok
-    careers_url: https://careers.tiktok.com
+    careers_url: https://lifeattiktok.com
     scan_method: websearch
     notes: Short video / ByteDance
+    scan_query: "site:lifeattiktok.com (\"software engineer\" OR \"intern\") 2026"
     enabled: true
   - name: Tinder
     careers_url: https://jobs.lever.co/matchgroup

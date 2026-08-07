@@ -226,7 +226,9 @@ if (APPLY) {
       match => {
         if (match.includes('api:')) return match; // already has api
         applied++;
-        return match.trimEnd() + `\n    api: ${p.url}\n    scan_method: ${p.type}\n`;
+        // Drop the old scan_method (websearch) line so we don't leave a duplicate key
+        const cleaned = match.replace(/    scan_method: [^\n]*\n/, '');
+        return cleaned.trimEnd() + `\n    api: ${p.url}\n    scan_method: ${p.type}\n`;
       }
     );
     if (content === before) console.log(`  ⚠ Could not patch: ${p.name}`);

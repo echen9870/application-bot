@@ -737,9 +737,10 @@ tracked_companies:
     enabled: true
   - name: Coinbase
     careers_url: https://www.coinbase.com/careers
-    scan_method: websearch
     notes: GH endpoint stale - TODO find new slug
     enabled: true
+    api: https://boards-api.greenhouse.io/v1/boards/coinbase/jobs
+    scan_method: greenhouse
   - name: Comcast
     careers_url: https://comcast.wd5.myworkdayjobs.com/Comcast_Careers
     api: https://comcast.wd5.myworkdayjobs.com/Comcast_Careers
@@ -812,8 +813,9 @@ tracked_companies:
     enabled: true
   - name: Docugami
     careers_url: https://www.docugami.com/careers
-    scan_method: websearch
     enabled: true
+    api: https://boards-api.greenhouse.io/v1/boards/docugami/jobs
+    scan_method: greenhouse
   - name: Domino Data Lab
     careers_url: https://www.dominodatalab.com/careers
     api: https://boards-api.greenhouse.io/v1/boards/dominodatalab/jobs
@@ -1778,8 +1780,9 @@ tracked_companies:
     enabled: true
   - name: Qumulo
     careers_url: https://qumulo.com/careers/job-openings/
-    scan_method: websearch
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/qumulo
+    scan_method: ashby
   - name: Rakuten
     careers_url: https://rakuten.wd1.myworkdayjobs.com/RakutenRewards
     api: https://rakuten.wd1.myworkdayjobs.com/RakutenRewards
@@ -2452,8 +2455,9 @@ tracked_companies:
     enabled: true
   - name: Luma AI
     careers_url: https://lumalabs.ai/careers
-    scan_method: websearch
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/lumaai
+    scan_method: ashby
   - name: Character AI
     careers_url: https://jobs.ashbyhq.com/character
     api: https://api.ashbyhq.com/posting-api/job-board/character
@@ -2874,16 +2878,18 @@ tracked_companies:
     enabled: true
   - name: Stability AI
     careers_url: https://stability.ai/careers
-    scan_method: websearch
     scan_query: site:stability.ai/careers "software engineer" OR "engineer" 2026
     notes: Generative AI (Stable Diffusion). Custom portal.
     enabled: true
+    api: https://boards-api.greenhouse.io/v1/boards/stabilityai/jobs
+    scan_method: greenhouse
   - name: CoreWeave
     careers_url: https://coreweave.com/careers
-    scan_method: websearch
     scan_query: site:coreweave.com/careers "software engineer" OR "engineer" 2026
     notes: GPU cloud infrastructure. Backed by NVIDIA. 178 open positions.
     enabled: true
+    api: https://boards-api.greenhouse.io/v1/boards/coreweave/jobs
+    scan_method: greenhouse
   - name: Zed
     careers_url: https://zed.dev/jobs
     scan_method: websearch
@@ -2892,28 +2898,32 @@ tracked_companies:
     enabled: true
   - name: Solana Labs
     careers_url: https://jobs.solana.com/jobs
-    scan_method: websearch
     scan_query: site:jobs.solana.com "software engineer" OR "protocol engineer" 2026
     notes: Blockchain platform. Rust-heavy. Web3.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/solanalabs
+    scan_method: ashby
   - name: Injective Labs
     careers_url: https://web3.career/web3-companies/injectivelabs
-    scan_method: websearch
     scan_query: site:injectivelabs "software engineer" OR "engineer" 2026
     notes: DeFi blockchain platform. Protocol engineering roles.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/injective-labs
+    scan_method: ashby
   - name: Cognition AI
     careers_url: https://www.cognition.ai/careers
-    scan_method: websearch
     scan_query: site:cognition.ai "software engineer" OR "engineer" 2026
     notes: Autonomous agents (Devin). AI coding. Series C funded.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/cognition
+    scan_method: ashby
   - name: Lovable
     careers_url: https://lovable.dev/careers
-    scan_method: websearch
     scan_query: site:lovable.dev "engineer" 2026
     notes: App generator from natural language. Generative UI.
     enabled: true
+    api: https://boards-api.greenhouse.io/v1/boards/lovable/jobs
+    scan_method: greenhouse
   - name: Exa
     careers_url: https://exa.ai/careers
     scan_method: websearch
@@ -2928,10 +2938,11 @@ tracked_companies:
     enabled: true
   - name: LiteLLM
     careers_url: https://litellm.ai/careers
-    scan_method: websearch
     scan_query: site:litellm.ai "engineer" 2026
     notes: LLM gateway/proxy. Trusted by Adobe, Netflix, NASA.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/litellm
+    scan_method: ashby
   - name: Humane AI
     careers_url: https://www.humanetech.com/careers
     scan_method: websearch
@@ -2940,10 +2951,11 @@ tracked_companies:
     enabled: true
   - name: Polymarket
     careers_url: https://polymarket.com/careers
-    scan_method: websearch
     scan_query: site:polymarket.com "engineer" 2026
     notes: Prediction markets on Ethereum. Crypto/DeFi.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/polymarket
+    scan_method: ashby
   - name: Rainbow Wallet
     careers_url: https://rainbow.me/careers
     scan_method: websearch
@@ -2958,10 +2970,11 @@ tracked_companies:
     enabled: true
   - name: Magic Eden
     careers_url: https://magiceden.io/careers
-    scan_method: websearch
     scan_query: site:magiceden.io "engineer" 2026
     notes: NFT marketplace. Solana/multi-chain. Series B.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/magiceden
+    scan_method: ashby
   - name: Jupiter (Solana DEX)
     careers_url: https://jup.ag/careers
     scan_method: websearch
@@ -2982,10 +2995,11 @@ tracked_companies:
     enabled: true
   - name: Helius
     careers_url: https://helius.dev/careers
-    scan_method: websearch
     scan_query: site:helius.dev "engineer" 2026
     notes: Solana RPC infrastructure. Web3.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/helius
+    scan_method: ashby
   - name: Magic Labs
     careers_url: https://magic.link/careers
     scan_method: websearch
@@ -3000,16 +3014,18 @@ tracked_companies:
     enabled: true
   - name: Aleph Alpha
     careers_url: https://www.aleph-alpha.com/careers
-    scan_method: websearch
     scan_query: site:aleph-alpha.com "engineer" 2026
     notes: European LLM/AI research lab.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/alephalpha
+    scan_method: ashby
   - name: Midjourney
     careers_url: https://www.midjourney.com/careers
-    scan_method: websearch
     scan_query: site:midjourney.com "engineer" 2026
     notes: AI image generation. Competing with DALL-E.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/midjourney
+    scan_method: ashby
   - name: Assembly AI
     careers_url: https://www.assemblyai.com/careers
     api: https://api.ashbyhq.com/posting-api/job-board/assemblyai
@@ -3078,10 +3094,11 @@ tracked_companies:
     enabled: true
   - name: Twelve Labs
     careers_url: https://twelvelabs.io/careers
-    scan_method: websearch
     scan_query: site:twelvelabs.io "engineer" 2026
     notes: Video understanding AI. Series B.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/twelve-labs
+    scan_method: ashby
   - name: Jasper AI
     careers_url: https://www.jasper.ai/careers
     scan_method: websearch
@@ -3102,10 +3119,11 @@ tracked_companies:
     enabled: true
   - name: Opus Clip
     careers_url: https://opusclip.com/careers
-    scan_method: websearch
     scan_query: site:opusclip.com "engineer" 2026
     notes: AI video repurposing. Series A.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/opusclip
+    scan_method: ashby
   - name: Vimeo AI Studio
     careers_url: https://vimeo.com/careers
     scan_method: websearch
@@ -3114,10 +3132,11 @@ tracked_companies:
     enabled: true
   - name: Gather
     careers_url: https://www.gather.town/careers
-    scan_method: websearch
     scan_query: site:gather.town "engineer" 2026
     notes: Virtual spaces/metaverse. Series B.
     enabled: true
+    api: https://boards-api.greenhouse.io/v1/boards/gather/jobs
+    scan_method: greenhouse
   - name: Roblox Studio
     careers_url: https://corp.roblox.com/careers/
     scan_method: websearch
@@ -3138,16 +3157,18 @@ tracked_companies:
     enabled: true
   - name: Typeform
     careers_url: https://www.typeform.com/careers/
-    scan_method: websearch
     scan_query: site:typeform.com/careers "engineer" 2026
     notes: Forms and surveys. Series C.
     enabled: true
+    api: https://boards-api.greenhouse.io/v1/boards/typeform/jobs
+    scan_method: greenhouse
   - name: SurveyMonkey
     careers_url: https://www.surveymonkey.com/careers
-    scan_method: websearch
     scan_query: site:surveymonkey.com "engineer" 2026
     notes: Survey platform. Public company.
     enabled: true
+    api: https://api.ashbyhq.com/posting-api/job-board/surveymonkey
+    scan_method: ashby
   - name: 15Five
     careers_url: https://www.15five.com/careers
     api: https://api.ashbyhq.com/posting-api/job-board/15five

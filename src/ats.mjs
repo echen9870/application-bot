@@ -679,6 +679,47 @@ export const ATS = {
     },
   },
 
+  tiktok: {
+    // ByteDance's in-house ATS behind lifeattiktok.com. Public POST search endpoint;
+    // the `website-path: tiktok` header is required (400 without it). Descriptions are
+    // inline (description + requirement). No posted date — recency filter passes these.
+    boardApi: () => 'https://api.lifeattiktok.com/api/v1/public/supplier/search/job/posts',
+    async fetchAll(url, _fetchJson, opts) {
+      const all = [];
+      const limit = 1000;
+      for (let offset = 0; offset < 20_000; offset += limit) {
+        const json = await postJson(url, {
+          keyword: '', limit, offset,
+          job_category_id_list: [], location_code_list: [], subject_id_list: [], recruitment_id_list: [],
+        }, { ...opts, headers: { 'website-path': 'tiktok' } });
+        const batch = json?.data?.job_post_list || [];
+        all.push(...batch);
+        if (batch.length < limit) break;
+      }
+      return { jobs: all };
+    },
+    parse(json, company) {
+      return (json.jobs || []).map(j => {
+        // city_info is a chain: city → state → country; join en_names so isUS() can match.
+        const locParts = [];
+        for (let n = j.city_info; n; n = n.parent) locParts.push(n.en_name);
+        return {
+          company,
+          role:        j.title || '',
+          link:        `https://lifeattiktok.com/search/${j.id}`,
+          location:    [...new Set(locParts.filter(Boolean))].join(', '),
+          posted:      '',
+          description: cleanDescription([j.description, j.requirement].filter(Boolean).join('\n')),
+        };
+      });
+    },
+    parseLink(host, path) {
+      if (host !== 'lifeattiktok.com') return null;
+      const m = path.match(/^\/search\/(\d+)/);
+      return m ? { type: 'tiktok', id: m[1] } : null;
+    },
+  },
+
   smartrecruiters: {
     boardApi: slug => `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&status=PUBLIC`,
     jobApi:   (slug, id) => `https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`,
@@ -737,6 +778,7 @@ export function detectApi(company) {
   if (company.api?.includes('apply.workable.com'))      return { type: 'workable',    url: company.api };
   if (company.api?.includes('jobs.saic.com'))           return { type: 'saicjobs',    url: company.api };
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };
+  if (company.api?.includes('api.lifeattiktok.com')) return { type: 'tiktok',        url: company.api };
   if (company.api?.includes('myworkdayjobs.com'))  return { type: 'workday',         url: company.api };
   if (company.api?.includes('oraclecloud.com'))    return { type: 'oraclecloud',     url: company.api };
 

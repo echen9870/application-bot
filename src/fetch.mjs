@@ -63,13 +63,13 @@ export async function fetchText(url, { timeoutMs = 10_000, retries = 3 } = {}) {
 
 // POST + JSON helper for ATS APIs that don't accept GET (e.g. Workday).
 // Same retry semantics as fetchJson.
-export async function postJson(url, body, { timeoutMs = 10_000, retries = 3 } = {}) {
+export async function postJson(url, body, { timeoutMs = 10_000, retries = 3, headers = {} } = {}) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       const res = await fetchWithTimeout(url, timeoutMs, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', ...headers },
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

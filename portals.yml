@@ -598,8 +598,8 @@ tracked_companies:
     careers_url: https://jobs.bytedance.com
     api: https://api.smartrecruiters.com/v1/companies/Bytedance/postings?limit=100&status=PUBLIC
     scan_method: smartrecruiters
-    notes: TikTok parent company
-    enabled: true
+    notes: TikTok parent company — SR feed is stale (2 postings from 2018, non-US); TikTok entry covers lifeattiktok.com via API
+    enabled: false
   - name: C3 AI
     careers_url: https://job-boards.greenhouse.io/c3iot
     api: https://boards-api.greenhouse.io/v1/boards/c3iot/jobs
@@ -2071,9 +2071,9 @@ tracked_companies:
     enabled: true
   - name: TikTok
     careers_url: https://lifeattiktok.com
-    scan_method: websearch
-    notes: Short video / ByteDance
-    scan_query: "site:lifeattiktok.com (\"software engineer\" OR \"intern\") 2026"
+    api: https://api.lifeattiktok.com/api/v1/public/supplier/search/job/posts
+    scan_method: tiktok
+    notes: "Short video / ByteDance — in-house ATS, needs 'website-path: tiktok' header"
     enabled: true
   - name: Tinder
     careers_url: https://jobs.lever.co/matchgroup

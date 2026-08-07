@@ -20,6 +20,7 @@
  */
 
 import { fileURLToPath } from 'url';
+import { readFileSync, writeFileSync } from 'fs';
 import { createSheetsClient } from './sheets-client.mjs';
 import { loadConfig, loadEnabledCompanies } from './config.mjs';
 import { fetchJson } from './fetch.mjs';
@@ -48,6 +49,26 @@ function isRecent(posted, cutoff) {
 }
 
 // Bounded-concurrency worker pool over an array of async tasks.
+const EMPTY_ATS_LOG = new URL('../data/empty-ats.json', import.meta.url);
+
+// Persist which companies returned 0 jobs, with a consecutive-scan streak per company.
+// A company that returns jobs again (or is removed from portals.yml) drops off the log.
+function updateEmptyAtsLog(emptyKeys, scannedKeys, date) {
+  let log = {};
+  try { log = JSON.parse(readFileSync(EMPTY_ATS_LOG, 'utf8')); } catch { /* first run */ }
+  const emptySet = new Set(emptyKeys);
+  for (const key of scannedKeys) {
+    if (emptySet.has(key)) {
+      const prev = log[key];
+      log[key] = { firstSeen: prev?.firstSeen ?? date, lastSeen: date, scans: (prev?.scans ?? 0) + 1 };
+    } else {
+      delete log[key];
+    }
+  }
+  writeFileSync(EMPTY_ATS_LOG, JSON.stringify(log, null, 2) + '\n');
+  return log;
+}
+
 async function parallel(tasks, limit) {
   let i = 0;
   async function worker() { while (i < tasks.length) await tasks[i++](); }
@@ -147,9 +168,14 @@ async function main() {
   console.log(`Already seen      : ${dupes}`);
   console.log(`New jobs          : ${newJobs.length}`);
   if (errors.length) console.log(`\nErrors:\n${errors.join('\n')}`);
+  const log = updateEmptyAtsLog(empty, targets.map(c => `${c.name} (${c._api.type})`), date);
   if (empty.length) {
-    console.log(`\nEmpty ATS (HTTP 200 but 0 jobs — likely misconfigured, debug manually):`);
-    for (const e of empty.sort()) console.log(`  ◯ ${e}`);
+    console.log(`\nEmpty ATS (HTTP 200 but 0 jobs — link/config likely wrong, fix in portals.yml):`);
+    for (const e of empty.sort()) {
+      const n = log[e]?.scans ?? 1;
+      console.log(`  ◯ ${e}${n > 1 ? ` — empty ${n} scans in a row (since ${log[e].firstSeen})` : ''}`);
+    }
+    console.log(`  Tracked in data/empty-ats.json — repeat offenders are dead endpoints.`);
   }
 
   if (newJobs.length === 0) { console.log('\nNo new jobs found.'); return; }

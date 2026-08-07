@@ -679,6 +679,71 @@ export const ATS = {
     },
   },
 
+  uber: {
+    // Uber's in-house careers API. POST search; requires literal `x-csrf-token: x` header.
+    // limit accepts large values (300+), so one request covers all US postings.
+    boardApi: () => 'https://www.uber.com/api/loadSearchJobsResults?localeCode=en',
+    async fetchAll(url, _fetchJson, opts) {
+      const all = [];
+      const limit = 300;
+      for (let page = 0; page < 20; page++) {
+        const json = await postJson(url, {
+          params: { location: [{ country: 'USA' }] }, limit, page,
+        }, { ...opts, headers: { 'x-csrf-token': 'x' } });
+        const batch = json?.data?.results || [];
+        all.push(...batch);
+        if (batch.length < limit) break;
+      }
+      return { jobs: all };
+    },
+    parse(json, company) {
+      return (json.jobs || []).map(j => ({
+        company,
+        role:        j.title || '',
+        link:        `https://www.uber.com/global/en/careers/list/${j.id}/`,
+        location:    [j.location?.city, j.location?.region, j.location?.countryName].filter(Boolean).join(', '),
+        posted:      toDate(j.creationDate),
+        description: cleanDescription(j.description || ''),
+      }));
+    },
+    parseLink(host, path) {
+      if (!/(^|\.)uber\.com$/.test(host)) return null;
+      const m = path.match(/\/careers\/list\/(\d+)/);
+      return m ? { type: 'uber', id: m[1] } : null;
+    },
+  },
+
+  githubcareers: {
+    // GitHub's careers site (iCIMS Attract at github.careers). Plain GET, 10 jobs/page.
+    // No posted date in the payload — recency filter passes these through.
+    boardApi: () => 'https://www.github.careers/api/jobs',
+    async fetchAll(url, fetchJson, opts) {
+      const all = [];
+      for (let page = 1; page <= 30; page++) {
+        const json = await fetchJson(`${url}?page=${page}`, opts);
+        const batch = (json?.jobs || []).map(j => j.data).filter(Boolean);
+        all.push(...batch);
+        if (batch.length === 0 || all.length >= (json?.totalCount ?? Infinity)) break;
+      }
+      return { jobs: all };
+    },
+    parse(json, company) {
+      return (json.jobs || []).map(j => ({
+        company,
+        role:        j.title || '',
+        link:        `https://www.github.careers/careers-home/jobs/${j.slug}?lang=${j.language || 'en-us'}`,
+        location:    [j.location_name, j.country].filter(Boolean).join(', '),
+        posted:      '',
+        description: cleanDescription([j.description, j.qualifications, j.responsibilities].filter(Boolean).join('\n')),
+      }));
+    },
+    parseLink(host, path) {
+      if (host !== 'www.github.careers' && host !== 'github.careers') return null;
+      const m = path.match(/\/careers-home\/jobs\/(\d+)/);
+      return m ? { type: 'githubcareers', id: m[1] } : null;
+    },
+  },
+
   tiktok: {
     // ByteDance's in-house ATS behind lifeattiktok.com. Public POST search endpoint;
     // the `website-path: tiktok` header is required (400 without it). Descriptions are
@@ -779,6 +844,8 @@ export function detectApi(company) {
   if (company.api?.includes('jobs.saic.com'))           return { type: 'saicjobs',    url: company.api };
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };
   if (company.api?.includes('api.lifeattiktok.com')) return { type: 'tiktok',        url: company.api };
+  if (company.api?.includes('uber.com/api/loadSearchJobsResults')) return { type: 'uber', url: company.api };
+  if (company.api?.includes('github.careers'))     return { type: 'githubcareers',   url: company.api };
   if (company.api?.includes('myworkdayjobs.com'))  return { type: 'workday',         url: company.api };
   if (company.api?.includes('oraclecloud.com'))    return { type: 'oraclecloud',     url: company.api };
 

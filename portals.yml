@@ -1038,9 +1038,9 @@ tracked_companies:
     enabled: true
   - name: GitHub
     careers_url: https://github.careers
-    scan_query: site:github.careers "software engineer" 2026
-    scan_method: websearch
-    notes: Code hosting
+    api: https://www.github.careers/api/jobs
+    scan_method: githubcareers
+    notes: Code hosting — iCIMS Attract API, 10 jobs/page
     enabled: true
   - name: GlobalFoundries
     careers_url: https://globalfoundries.wd1.myworkdayjobs.com/External
@@ -2818,15 +2818,15 @@ tracked_companies:
     enabled: true
   - name: Uber
     careers_url: https://www.uber.com/us/en/careers/
-    scan_method: websearch
-    scan_query: site:uber.com/us/en/careers ("software engineer" OR "intern") 2026
-    notes: Proprietary API; SPA-only careers page.
+    api: https://www.uber.com/api/loadSearchJobsResults?localeCode=en
+    scan_method: uber
+    notes: "In-house API; POST with literal 'x-csrf-token: x' header"
     enabled: true
   - name: Doordash
     careers_url: https://careers.doordash.com
-    scan_method: websearch
-    scan_query: site:careers.doordash.com ("software engineer" OR "intern") 2026
-    notes: Custom careers portal.
+    api: https://boards-api.greenhouse.io/v1/boards/doordashusa/jobs
+    scan_method: greenhouse
+    notes: Greenhouse board slug doordashusa
     enabled: true
   - name: Booking
     careers_url: https://careers.booking.com

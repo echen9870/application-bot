@@ -10,13 +10,16 @@
  *   node src/probe-ats.mjs                     # probe all websearch companies
  *   node src/probe-ats.mjs --apply             # also patch portals.yml
  *   node src/probe-ats.mjs --company Stripe    # probe a specific company
+ *   node src/probe-ats.mjs --empty             # probe companies in data/empty-ats.json
+ *                                                (API returns 200 but 0 jobs — likely moved ATS)
  */
 
-import { readFileSync, writeFileSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, renameSync, existsSync } from 'fs';
 import { loadConfig, loadEnabledCompanies } from './config.mjs';
 
 const args = process.argv.slice(2);
 const APPLY = args.includes('--apply');
+const EMPTY = args.includes('--empty');
 const TARGET = (() => { const i = args.indexOf('--company'); return i >= 0 ? args[i + 1]?.toLowerCase() : null; })();
 
 const { scan } = loadConfig();
@@ -24,13 +27,22 @@ const TIMEOUT = scan.fetch_timeout_ms;
 const CONCURRENCY = scan.concurrency;
 const raw = readFileSync('portals.yml', 'utf-8');   // raw text for regex-patching with --apply
 
-// Select only websearch-only companies (no api field, or scan_method: websearch)
-let targets = loadEnabledCompanies().filter(c =>
-  !c.api || c.scan_method === 'websearch'
-);
+// Default: websearch-only companies (no api field, or scan_method: websearch).
+// --empty: companies whose configured API returns 0 jobs (data/empty-ats.json) —
+// their ATS endpoint is dead, so re-probe from scratch to find where they moved.
+let targets;
+if (EMPTY) {
+  const logPath = 'data/empty-ats.json';
+  if (!existsSync(logPath)) { console.error('No data/empty-ats.json — run a scan first.'); process.exit(1); }
+  const emptyNames = new Set(Object.keys(JSON.parse(readFileSync(logPath, 'utf-8')))
+    .map(k => k.replace(/ \([a-z]+\)$/, '').toLowerCase()));
+  targets = loadEnabledCompanies().filter(c => emptyNames.has(c.name.toLowerCase()));
+} else {
+  targets = loadEnabledCompanies().filter(c => !c.api || c.scan_method === 'websearch');
+}
 if (TARGET) targets = targets.filter(c => c.name.toLowerCase().includes(TARGET));
 
-console.log(`Probing ${targets.length} websearch-only companies for ATS APIs...\n`);
+console.log(`Probing ${targets.length} ${EMPTY ? 'empty-ATS' : 'websearch-only'} companies for ATS APIs...\n`);
 
 // ── Slug derivation ───────────────────────────────────────────────────────────
 
@@ -224,10 +236,12 @@ if (APPLY) {
     content = content.replace(
       new RegExp(`(  - name: ${esc}\\n(?:    (?!- name:)[^\\n]*\\n)*)`, 'g'),
       match => {
-        if (match.includes('api:')) return match; // already has api
+        if (match.includes('api:') && !EMPTY) return match; // already has api
         applied++;
-        // Drop the old scan_method (websearch) line so we don't leave a duplicate key
-        const cleaned = match.replace(/    scan_method: [^\n]*\n/, '');
+        // Drop old api/scan_method lines so we don't leave duplicate keys
+        const cleaned = match
+          .replace(/    api: [^\n]*\n/, '')
+          .replace(/    scan_method: [^\n]*\n/, '');
         return cleaned.trimEnd() + `\n    api: ${p.url}\n    scan_method: ${p.type}\n`;
       }
     );

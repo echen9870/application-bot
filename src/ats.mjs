@@ -70,6 +70,14 @@ function parseWorkdayUrl(url) {
   } catch { return null; }
 }
 
+// Single-token queries swept by the amazon adapter. Multi-word values are useless here
+// (base_query phrase-matches), and these ten cover disjoint slices of the US board:
+// engineer ~4.8k hits, developer ~640, 2026 ~820, 2027 ~72, intern ~49, graduate ~46.
+const AMAZON_QUERIES = [
+  'engineer', 'developer', 'scientist', '2026', '2027',
+  'intern', 'graduate', 'university', 'co-op', 'apprentice',
+];
+
 export const ATS = {
   greenhouse: {
     boardApi: slug => `https://boards-api.greenhouse.io/v1/boards/${slug}/jobs`,
@@ -557,18 +565,32 @@ export const ATS = {
   },
 
   amazon: {
-    // amazon.jobs has no per-board concept — single endpoint covers all US engineer postings.
-    // base_query=engineer narrows the 10k+ US jobs to ~4k SWE-adjacent; result_limit caps at 100,
-    // so fetchAll paginates 5 pages = 500 jobs (~30 days of postings) per scan.
+    // amazon.jobs has no per-board concept — one endpoint covers all US postings.
+    // base_query is a phrase match, not OR-of-terms ("new grad" and "graduate software"
+    // both return 0 hits), so no single query reaches the university/new-grad feed:
+    // paginating base_query=engineer 1500 deep surfaces zero grad postings, while
+    // base_query=2027 alone returns 72. The result sets barely overlap, so fetchAll
+    // sweeps each term separately and dedupes on icims id.
     boardApi: () => 'https://www.amazon.jobs/en/search.json?base_query=engineer&country=USA&result_limit=100&sort=recent',
     jobApi:   (_slug, id) => `https://www.amazon.jobs/en/jobs/${id}`,
     async fetchAll(url, fetchJson, opts) {
-      const all = [];
-      for (let page = 0; page < 5; page++) {
-        const json = await fetchJson(`${url}&offset=${page * 100}`, opts);
-        const jobs = json.jobs || [];
-        all.push(...jobs);
-        if (jobs.length < 100) break;
+      const seen = new Set();
+      const all  = [];
+      for (const term of AMAZON_QUERIES) {
+        for (let page = 0; page < 5; page++) {
+          const u = new URL(url);
+          u.searchParams.set('base_query', term);
+          u.searchParams.set('offset', String(page * 100));
+          const json = await fetchJson(u.toString(), opts);
+          const jobs = json.jobs || [];
+          for (const j of jobs) {
+            const key = j.id_icims || j.id || j.job_path;
+            if (key && seen.has(key)) continue;
+            if (key) seen.add(key);
+            all.push(j);
+          }
+          if (jobs.length < 100) break;
+        }
       }
       return { jobs: all };
     },

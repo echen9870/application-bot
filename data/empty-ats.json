@@ -1,122 +1,132 @@
 {
   "Clerk (ashby)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Mistral AI (lever)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Actalent (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "CGI (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "DriveTime (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Epic (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Ethic (greenhouse)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Forterra (lever)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Interclypse (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "John Deere (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "L3Harris (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Liberty Mutual (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Lockheed Martin (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "MicroStrategy (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "MITRE (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Moodys (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Nordstrom (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "NSA (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Paramount (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Pega (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "SAP (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Siemens (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Walmart (workday)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
   },
   "Deel (ashby)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-08-07",
-    "scans": 2
+    "lastSeen": "2026-08-18",
+    "scans": 15
+  },
+  "Capella Space (greenhouse)": {
+    "firstSeen": "2026-08-08",
+    "lastSeen": "2026-08-18",
+    "scans": 11
+  },
+  "Marshall Wace (greenhouse)": {
+    "firstSeen": "2026-08-12",
+    "lastSeen": "2026-08-18",
+    "scans": 7
   }
 }

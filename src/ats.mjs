@@ -10,7 +10,7 @@
  * Adding a new ATS only requires adding one entry here.
  */
 
-import { postJson, fetchText } from './fetch.mjs';
+import { postJson, fetchText, fetchWithTimeout } from './fetch.mjs';
 
 function toDate(val) {
   if (!val) return '';
@@ -785,6 +785,56 @@ export const ATS = {
     },
   },
 
+  metacareers: {
+    // Meta's careers site (metacareers.com). Relay GraphQL endpoint — needs an LSD token
+    // scraped from the jobsearch page, form-encoded POST with a persisted-query doc_id.
+    // The doc_id is stable for long stretches but rotates on Relay schema pushes; if the
+    // adapter starts returning errors/empty with HTTP 200, re-extract it from the
+    // CareersJobSearchResultsDataQuery_candidate_portalRelayOperation module in the
+    // page's JS bundles. No posted date or descriptions in the payload.
+    boardApi: () => 'https://www.metacareers.com/graphql',
+    async fetchAll(url, _fetchJson, opts) {
+      const html = await fetchText('https://www.metacareers.com/jobsearch/', opts);
+      const lsd = html.match(/"LSD",\[\],\{"token":"([^"]+)"/)?.[1];
+      if (!lsd) throw new Error('metacareers: LSD token not found on jobsearch page');
+      const variables = {
+        search_input: {
+          q: null, divisions: [], offices: [], roles: [], leadership_levels: [],
+          saved_jobs: [], saved_searches: [], sub_teams: [], teams: [],
+          is_leadership: false, is_remote_only: false, sort_by_new: true, results_per_page: null,
+        },
+        isLoggedIn: false, viewasUserID: null,
+      };
+      const body = new URLSearchParams({
+        lsd, doc_id: '27506805582236862', variables: JSON.stringify(variables),
+      });
+      const res = await fetchWithTimeout(url, opts?.timeoutMs ?? 30_000, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'x-fb-lsd': lsd },
+        body: body.toString(),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = JSON.parse((await res.text()).replace(/^for \(;;\);/, ''));
+      const result = json?.data?.job_search_with_featured_jobs;
+      if (!result) throw new Error('metacareers: unexpected GraphQL response shape (doc_id may have rotated)');
+      return { jobs: result.all_jobs || [] };
+    },
+    parse(json, company) {
+      return (json.jobs || []).map(j => ({
+        company,
+        role:     j.title || '',
+        link:     `https://www.metacareers.com/jobs/${j.id}/`,
+        location: (j.locations || []).join('; '),
+        posted:   '',
+      }));
+    },
+    parseLink(host, path) {
+      if (!/(^|\.)metacareers\.com$/.test(host)) return null;
+      const m = path.match(/^\/jobs\/(\d+)/);
+      return m ? { type: 'metacareers', id: m[1] } : null;
+    },
+  },
+
   smartrecruiters: {
     boardApi: slug => `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&status=PUBLIC`,
     jobApi:   (slug, id) => `https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`,
@@ -844,6 +894,7 @@ export function detectApi(company) {
   if (company.api?.includes('jobs.saic.com'))           return { type: 'saicjobs',    url: company.api };
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };
   if (company.api?.includes('api.lifeattiktok.com')) return { type: 'tiktok',        url: company.api };
+  if (company.api?.includes('metacareers.com/graphql')) return { type: 'metacareers', url: company.api };
   if (company.api?.includes('uber.com/api/loadSearchJobsResults')) return { type: 'uber', url: company.api };
   if (company.api?.includes('github.careers'))     return { type: 'githubcareers',   url: company.api };
   if (company.api?.includes('myworkdayjobs.com'))  return { type: 'workday',         url: company.api };

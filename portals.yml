@@ -88,8 +88,9 @@ tracked_companies:
     enabled: true
   - name: Meta
     careers_url: https://www.metacareers.com/jobs
-    scan_query: site:metacareers.com "software engineer" OR "intern" 2026
-    scan_method: websearch
+    api: https://www.metacareers.com/graphql
+    scan_method: metacareers
+    notes: "Relay GraphQL — LSD token scraped from jobsearch page; doc_id pinned in ats.mjs, rotates occasionally"
     enabled: true
   - name: Amazon
     careers_url: https://www.amazon.jobs
@@ -1933,6 +1934,12 @@ tracked_companies:
     careers_url: https://www.sentra.com/careers
     api: https://api.ashbyhq.com/posting-api/job-board/sentra
     scan_method: ashby
+    enabled: true
+  - name: Sentry
+    careers_url: https://sentry.io/careers/
+    api: https://api.ashbyhq.com/posting-api/job-board/sentry
+    scan_method: ashby
+    notes: Error monitoring / observability
     enabled: true
   - name: ServiceNow
     careers_url: https://jobs.smartrecruiters.com/ServiceNow

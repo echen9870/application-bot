@@ -1935,6 +1935,18 @@ tracked_companies:
     api: https://api.ashbyhq.com/posting-api/job-board/sentra
     scan_method: ashby
     enabled: true
+  - name: Simplify New Grad
+    careers_url: https://github.com/SimplifyJobs/New-Grad-Positions
+    api: https://raw.githubusercontent.com/SimplifyJobs/New-Grad-Positions/dev/.github/scripts/listings.json
+    scan_method: simplify
+    notes: Community-curated cross-company new-grad SWE feed; fans out to many companies
+    enabled: true
+  - name: Simplify Internships
+    careers_url: https://github.com/SimplifyJobs/Summer2026-Internships
+    api: https://raw.githubusercontent.com/SimplifyJobs/Summer2026-Internships/dev/.github/scripts/listings.json
+    scan_method: simplify
+    notes: Community-curated cross-company internship feed; fans out to many companies
+    enabled: true
   - name: Sentry
     careers_url: https://sentry.io/careers/
     api: https://api.ashbyhq.com/posting-api/job-board/sentry

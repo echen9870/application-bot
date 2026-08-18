@@ -835,6 +835,34 @@ export const ATS = {
     },
   },
 
+  simplify: {
+    // SimplifyJobs community feeds (New-Grad-Positions / Summer2026-Internships GitHub
+    // repos). One "company" entry in portals.yml fans out to every company in the feed —
+    // parse() sets each job's real company_name, which jobs.mjs preserves. Listings carry
+    // epoch date_posted, so the daily recency filter keeps volume manageable. URLs are
+    // direct ATS links; utm_* params are stripped so dedup matches scanner-sourced links.
+    boardApi: url => url,
+    parse(json, _company) {
+      const list = Array.isArray(json) ? json : [];
+      return list.filter(j => j.active && j.is_visible !== false).map(j => {
+        let link = j.url || '';
+        try {
+          const u = new URL(link);
+          for (const k of [...u.searchParams.keys()]) if (k.startsWith('utm_')) u.searchParams.delete(k);
+          link = u.toString().replace(/\?$/, '');
+        } catch { /* keep raw link */ }
+        return {
+          company:  j.company_name || 'Unknown',
+          role:     j.title || '',
+          link,
+          location: (j.locations || []).join('; '),
+          posted:   j.date_posted ? new Date(j.date_posted * 1000).toISOString().slice(0, 10) : '',
+        };
+      });
+    },
+    parseLink() { return null; },   // feed links point at foreign ATS hosts; global parseLink handles them
+  },
+
   smartrecruiters: {
     boardApi: slug => `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&status=PUBLIC`,
     jobApi:   (slug, id) => `https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`,
@@ -895,6 +923,7 @@ export function detectApi(company) {
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };
   if (company.api?.includes('api.lifeattiktok.com')) return { type: 'tiktok',        url: company.api };
   if (company.api?.includes('metacareers.com/graphql')) return { type: 'metacareers', url: company.api };
+  if (company.api?.includes('githubusercontent.com/SimplifyJobs')) return { type: 'simplify', url: company.api };
   if (company.api?.includes('uber.com/api/loadSearchJobsResults')) return { type: 'uber', url: company.api };
   if (company.api?.includes('github.careers'))     return { type: 'githubcareers',   url: company.api };
   if (company.api?.includes('myworkdayjobs.com'))  return { type: 'workday',         url: company.api };

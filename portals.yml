@@ -32,6 +32,21 @@ title_filter:
     - SRE
     - Distributed Systems
     - Systems Software Engineer
+    # Added 2026-08-18 after Simplify-feed audit — common entry-level phrasings the list missed
+    - Software Development Engineer
+    - Software Development Intern
+    - Full Stack Developer
+    - Full-Stack Developer
+    - Java Developer
+    - Python Developer
+    - .Net Developer
+    - Web Developer
+    - Frontend Engineer
+    - Front End Engineer
+    - Front-End Engineer
+    - Quantitative Developer
+    - Junior Developer
+    - Junior Software
   negative:
     # Seniority — the original list was missing these
     - Senior

@@ -100,7 +100,7 @@ tracked_companies:
     careers_url: https://jobs.careers.microsoft.com
     scan_query: site:jobs.careers.microsoft.com "software engineer" 2026
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Meta
     careers_url: https://www.metacareers.com/jobs
     api: https://www.metacareers.com/graphql
@@ -307,7 +307,7 @@ tracked_companies:
   - name: Acuity
     careers_url: https://www.acuity.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Adept
     careers_url: https://www.adept.com/careers
     scan_method: websearch
@@ -349,7 +349,7 @@ tracked_companies:
     careers_url: https://jobs.allstate.com
     scan_method: websearch
     notes: Insurance
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Altruist
     careers_url: https://job-boards.greenhouse.io/altruist
     api: https://boards-api.greenhouse.io/v1/boards/altruist/jobs
@@ -359,7 +359,7 @@ tracked_companies:
   - name: Ambarella
     careers_url: https://www.ambarella.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Ambrook
     careers_url: https://www.ambrook.com/careers
     api: https://api.ashbyhq.com/posting-api/job-board/ambrook
@@ -404,7 +404,7 @@ tracked_companies:
   - name: Applied Materials
     careers_url: https://www.appliedmaterials.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: AppLovin
     careers_url: https://job-boards.greenhouse.io/applovin
     api: https://boards-api.greenhouse.io/v1/boards/applovin/jobs
@@ -414,7 +414,7 @@ tracked_companies:
   - name: Aptiv
     careers_url: https://www.aptiv.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Aquatic Capital
     careers_url: https://job-boards.greenhouse.io/aquaticcapitalmanagement
     api: https://boards-api.greenhouse.io/v1/boards/aquaticcapitalmanagement/jobs
@@ -498,7 +498,7 @@ tracked_companies:
   - name: Bae Systems
     careers_url: https://www.baesystems.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Bain & Company
     careers_url: https://careers.bain.com/jobs
     api: https://careers.bain.com/jobs/SearchJobs/United%20States/feed/?folderRecordsPerPage=20
@@ -697,7 +697,7 @@ tracked_companies:
   - name: Circle
     careers_url: https://www.circle.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Cisco
     careers_url: https://cisco.wd5.myworkdayjobs.com/Cisco_Careers
     api: https://cisco.wd5.myworkdayjobs.com/Cisco_Careers
@@ -708,12 +708,12 @@ tracked_companies:
     careers_url: https://www.citadel.com/careers/open-opportunities/
     scan_method: websearch
     notes: Hedge fund
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Citadel Securities
     careers_url: https://www.citadelsecurities.com/careers/
     scan_method: websearch
     notes: Market maker
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Citi
     careers_url: https://citi.wd5.myworkdayjobs.com/2
     api: https://citi.wd5.myworkdayjobs.com/2
@@ -780,7 +780,7 @@ tracked_companies:
   - name: Copart
     careers_url: https://www.copart.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Corsair
     careers_url: https://www.corsair.com/careers
     scan_method: websearch
@@ -912,7 +912,7 @@ tracked_companies:
   - name: EquipmentShare
     careers_url: https://www.equipmentshare.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Ethereum Foundation
     careers_url: https://www.ethereumfoundation.com/careers
     api: https://api.ashbyhq.com/posting-api/job-board/ethereum-foundation
@@ -976,7 +976,7 @@ tracked_companies:
     careers_url: https://flexai.ai/careers
     scan_method: websearch
     notes: GPU cloud
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Flow Traders
     careers_url: https://www.flowtraders.com/careers
     api: https://boards-api.greenhouse.io/v1/boards/flowtraders/jobs
@@ -1087,7 +1087,7 @@ tracked_companies:
   - name: GSK
     careers_url: https://www.gsk.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Guidehouse
     careers_url: https://guidehouse.wd1.myworkdayjobs.com/External
     api: https://guidehouse.wd1.myworkdayjobs.com/External
@@ -1190,7 +1190,7 @@ tracked_companies:
     careers_url: https://careers.ice.com
     scan_method: websearch
     notes: NYSE parent company
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: InterSystems
     careers_url: https://intersystems.com/careers
     api: https://boards-api.greenhouse.io/v1/boards/intersystems/jobs
@@ -1348,7 +1348,7 @@ tracked_companies:
   - name: Lumen
     careers_url: https://jobs.lumen.com/global/en
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: M&T Bank
     careers_url: https://mtb.wd5.myworkdayjobs.com/MTB
     api: https://mtb.wd5.myworkdayjobs.com/MTB
@@ -1493,7 +1493,7 @@ tracked_companies:
   - name: Netsmart
     careers_url: https://www.netsmart.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Neuralink
     careers_url: https://neuralink.com/careers/
     api: https://boards-api.greenhouse.io/v1/boards/neuralink/jobs
@@ -1515,7 +1515,7 @@ tracked_companies:
     careers_url: https://jobs.nexteraenergy.com
     scan_method: websearch
     notes: Clean energy
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: NielsenIQ
     careers_url: https://niq.com/careers/
     api: https://api.smartrecruiters.com/v1/companies/Nielseniq/postings?limit=100&status=PUBLIC
@@ -1547,7 +1547,7 @@ tracked_companies:
     careers_url: https://northropgrumman.com/careers
     scan_method: websearch
     notes: Aerospace/defense
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Northwestern Mutual
     careers_url: https://northwesternmutual.com/careers
     api: https://api.smartrecruiters.com/v1/companies/NorthwesternMutual/postings?limit=100&status=PUBLIC
@@ -1783,7 +1783,7 @@ tracked_companies:
     careers_url: https://careers.qualcomm.com
     scan_method: websearch
     notes: Mobile chips
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Qualtrics
     careers_url: https://job-boards.greenhouse.io/qualtrics
     api: https://boards-api.greenhouse.io/v1/boards/qualtrics/jobs
@@ -1918,7 +1918,7 @@ tracked_companies:
     careers_url: https://samsung.com/us/careers
     scan_method: websearch
     notes: Consumer electronics
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: SAP
     careers_url: https://jobs.sap.com
     api: https://api.smartrecruiters.com/v1/companies/Sap/postings?limit=100&status=PUBLIC
@@ -1939,7 +1939,7 @@ tracked_companies:
   - name: Seagate Technology
     careers_url: https://www.seagatetechnology.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: SeatGeek
     careers_url: https://www.seatgeek.com/careers
     api: https://boards-api.greenhouse.io/v1/boards/seatgeek/jobs
@@ -1977,7 +1977,7 @@ tracked_companies:
   - name: SharkNinja
     careers_url: https://www.sharkninja.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: ShieldAI
     careers_url: https://shieldai.com/careers
     api: https://api.lever.co/v0/postings/shieldai
@@ -2090,7 +2090,7 @@ tracked_companies:
     careers_url: https://www.tesla.com/careers/search
     scan_method: websearch
     notes: Workday (Cloudflare-protected, no public API). Check manually at tesla.com/careers/search
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: The Allen Institute for AI
     careers_url: https://job-boards.greenhouse.io/thealleninstitute
     api: https://boards-api.greenhouse.io/v1/boards/thealleninstitute/jobs
@@ -2213,7 +2213,7 @@ tracked_companies:
     careers_url: https://careers.vanguard.com
     scan_method: websearch
     notes: Index fund investing
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Vanta
     careers_url: https://jobs.ashbyhq.com/vanta
     api: https://api.ashbyhq.com/posting-api/job-board/vanta
@@ -2223,7 +2223,7 @@ tracked_companies:
   - name: VectorShift
     careers_url: https://www.vectorshift.com/careers
     scan_method: websearch
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Vectra
     careers_url: https://job-boards.greenhouse.io/vectranetworks
     api: https://boards-api.greenhouse.io/v1/boards/vectranetworks/jobs
@@ -2285,7 +2285,7 @@ tracked_companies:
     careers_url: https://careers.wbd.com
     scan_method: websearch
     notes: Media and entertainment
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Washington Post
     careers_url: https://washpost.wd5.myworkdayjobs.com/washingtonpostcareers
     api: https://washpost.wd5.myworkdayjobs.com/washingtonpostcareers
@@ -2891,7 +2891,7 @@ tracked_companies:
     scan_method: websearch
     scan_query: site:canva.com/careers ("software engineer" OR "engineer" OR "intern") 2026
     notes: Design platform (Australia).
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Loom
     careers_url: https://www.loom.com/careers
     scan_method: websearch
@@ -3089,7 +3089,7 @@ tracked_companies:
     scan_method: websearch
     scan_query: site:clear.ml "engineer" 2026
     notes: ML operations platform. MLOps.
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: DVC
     careers_url: https://dvc.org/careers
     scan_method: websearch
@@ -3176,7 +3176,7 @@ tracked_companies:
     scan_method: websearch
     scan_query: site:roblox.com/careers "engineer" 2026
     notes: Metaverse platform. Public company.
-    enabled: true
+    enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Decentraland
     careers_url: https://decentraland.org/careers
     scan_method: websearch

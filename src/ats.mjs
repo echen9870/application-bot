@@ -861,6 +861,23 @@ export const ATS = {
       });
     },
     parseLink() { return null; },   // feed links point at foreign ATS hosts; global parseLink handles them
+    // Feed has no descriptions. Links are direct ATS URLs, so detect the ATS via the
+    // global parseLink and fetch the posting through that ATS's public API. Covers
+    // Greenhouse / SmartRecruiters / Lever; other hosts (Workday, custom) return ''.
+    async fetchDescription(job, fetchJson, opts) {
+      const p = parseLink(job.link);
+      if (!p || !p.slug || !p.id) return '';
+      try {
+        if (p.type === 'greenhouse' || p.type === 'smartrecruiters') {
+          return await ATS[p.type].fetchDescription({ _slug: p.slug, _id: p.id }, fetchJson, opts);
+        }
+        if (p.type === 'lever') {
+          const json = await fetchJson(ATS.lever.jobApi(p.slug, p.id), opts);
+          return cleanDescription(json.descriptionPlain || json.description || '');
+        }
+      } catch { /* fall through */ }
+      return '';
+    },
   },
 
   smartrecruiters: {

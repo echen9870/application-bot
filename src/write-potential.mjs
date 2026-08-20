@@ -43,10 +43,12 @@ async function main() {
   const seenLinks = await fetchSeenLinks(sheets);
 
   const newJobs = [];
+  const aggregatorDomains = ['simplify.jobs'];
   for (const j of jobs) {
     if (!j.company || !j.role) continue;
     if (!j.link)                              { console.log(`  ✗ missing link: [${j.company}] ${j.role}`); continue; }
     if (!looksLikeJobUrl(j.link))             { console.log(`  ✗ not-a-job URL: [${j.company}] ${j.role} — ${j.link}`); continue; }
+    if (aggregatorDomains.some(d => j.link.includes(d))) { console.log(`  ✗ aggregator: [${j.company}] ${j.role}`); continue; }
     if (!titleOk(j.role))                     { console.log(`  ✗ title filter: [${j.company}] ${j.role}`); continue; }
     if (!isUS(j.location))                    { console.log(`  ✗ non-US: [${j.company}] ${j.role}`); continue; }
     if (seenLinks.has(j.link))                { console.log(`  ~ dupe: [${j.company}] ${j.role}`); continue; }

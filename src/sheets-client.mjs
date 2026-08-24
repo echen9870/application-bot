@@ -8,13 +8,23 @@ import { config } from 'dotenv';
 
 config(); // load .env
 
-export const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID || '1yt7LzUNz_wG-HEiRmhmHk826EGeskgBOrk7ABGNV5lY';
+// No fallback default on purpose. A hardcoded ID means a missing or misnamed
+// .env silently reads and writes someone else's spreadsheet instead of failing.
+// Validated in createSheetsClient() rather than at import, so importing this
+// module (and running the test suite) stays possible without a .env.
+export const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
 
 // Red highlight colors (FFFFC7CE background, FF9C0006 text)
 export const RED_BG   = { red: 1.0, green: 0.7804, blue: 0.8078 };
 export const RED_TEXT = { red: 0.6118, green: 0, blue: 0.0235 };
 
 export function createSheetsClient() {
+  if (!SPREADSHEET_ID) {
+    throw new Error(
+      'GOOGLE_SPREADSHEET_ID is not set. Copy .env.example to .env and set it to ' +
+      'your own spreadsheet ID (the long string in your sheet\'s URL).'
+    );
+  }
   const envPath = process.env.GOOGLE_SERVICE_ACCOUNT_PATH;
   const paths = [envPath, 'service-account.json', '/tmp/app/service-account.json'].filter(Boolean);
   const saPath = paths.find(p => existsSync(p));

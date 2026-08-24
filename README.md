@@ -29,30 +29,42 @@ Every time you run `/apply`, the pipeline learns from your decisions and improve
 
 ### How it works
 
-1. **Resume embedding** — Your resume is converted to a 384-dimensional vector using [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), a lightweight pre-trained transformer. The embedding captures semantic meaning without any fine-tuning.
+1. **Job embedding** — Each job (title + company + full description when available) is embedded into a 384-dimensional vector using [all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2), a lightweight transformer that runs locally with zero API cost (~25 MB, cached after first use).
 
-2. **Job embedding** — Each job description (title + responsibilities + requirements) is embedded the same way, creating a comparable 384-dim vector.
+2. **9 named features** — Every job is scored through a fixed set of interpretable features extracted from its embedding and text:
 
-3. **Base score (cosine similarity)** — The Match Score starts as cosine similarity between your resume and the job description, ranging 0–1. This measures "does this JD resemble my background?"
+   | Feature | What it measures |
+   |---|---|
+   | `domain_match` | Max weighted cosine between the job and your rubric's preferred domains |
+   | `skill_overlap` | Fraction of `preferred_skills` keywords found in the JD |
+   | `language_overlap` | Fraction of `programming_languages` keywords found in the JD |
+   | `penalty_overlap` | Fraction of `penalty_keywords` found in the JD — penalty signal |
+   | `anti_margin` | Best anti-preference cosine minus best domain cosine — fires only when a JD resembles an anti more than any preferred domain |
+   | `yoe_gap` | max(0, demanded YOE − rubric yoe.max), clamped at 5; unknown and under-max both score 0 |
+   | `company_prior` | Smoothed apply rate at this company from past decisions |
+   | `history_similarity` | Mean cosine to the top-3 nearest jobs you previously applied to |
+   | `title_match` | Max cosine between the job title and your `preferred_titles` list |
 
-4. **Feedback model** — When you `/apply`:
-   - Each job you checked is labeled 1 (applied), unchecked is 0 (ignored)
-   - A logistic regression head (384 weights + 1 bias) trains on description-bearing jobs only
-   - It learns "will Eric apply to this?" rather than just "does this match the resume"
-   - Training happens in-process: fast (<1s), no external API calls
-   - Class imbalance is handled by upweighting the rare positive class
+3. **Scoring formula** — Match Score = `sigmoid(bias + Σ weightᵢ · featureᵢ)`. Weights come from `data/model.json` when a trained model exists; otherwise the hand-tuned prior (`DEFAULT_MODEL` in `src/ml/features.mjs`) serves as the cold-start scorer. Either way, `score.mjs` writes a full per-feature breakdown to Potential columns L–T so every score is explainable.
 
-5. **Blended score** — Final Match Score = `(1−α)·cosine + α·modelProb`, where:
-   - α = min(0.7, nLabels / 200) — the model's influence grows with feedback but cosine always keeps ≥30% weight as an anchor
-   - Currently α ≈ 0.7 with 36 positives + 355 negatives labeled (description-bearing only)
+4. **Feedback model** — When you run `/apply`:
+   - Each job you checked → label 1 (applied), unchecked → label 0 (ignored)
+   - Features are recomputed for every description-bearing label with a leave-one-out guard on `company_prior` and `history_similarity` so an example's own label can't leak into its own features
+   - A logistic regression trains over those 9-dim feature vectors (gradient descent, L2 regularization, minority class upweighted by nNeg/nPos) warm-starting from the hand-tuned prior
+   - Training requires ≥ 10 description-bearing examples of each class; otherwise the prior is kept
+   - Training happens in-process: no external API calls
+
+5. **Explainability** — Because the model operates over 9 named features rather than an opaque embedding vector, every score decomposes cleanly. `node src/score.mjs --dry-run --explain 5` prints which features drove each job's score up or down.
 
 ### Performance
 
-On a stratified 80/20 holdout (validation set never seen during training):
-- **Precision: 21.6%** — of jobs the model flags "apply," ~1 in 5 you actually applied to
-- **Recall: 65.3%** — of jobs you applied to, the model flags ~2 in 3
+Current precision/recall is printed at the end of every training run:
 
-This improves as you provide more feedback (currently 36 positive examples). The holdout metrics are reproducible (seeded shuffle); each run reports current skill.
+```
+node src/train.mjs
+```
+
+The holdout is a stratified 80/20 split (seeded shuffle, reproducible across runs). Only description-bearing labels are used — title-only entries ("Software Engineer at X") embed near-identically across wildly different roles and would teach the model title phrasing rather than your actual preferences.
 
 ### Evaluation metrics — what they mean and why these ones
 
@@ -78,7 +90,7 @@ A change must not trade these off blindly — several experiments improved mean 
 
 ### Key insight
 
-The model trains **only on description-bearing labels** — entries where the job description was available. Title-only entries ("Software Engineer at X") embed nearly-identically for wildly different jobs and teach the model title phrasing rather than your preferences. Filtering to descriptions raised precision from 14% to 21% at launch (2026-07-10).
+The model trains **only on description-bearing labels** — entries where the job description was available. Title-only entries ("Software Engineer at X") embed nearly-identically for wildly different jobs and teach the model title phrasing rather than your actual preferences. Descriptions are fetched automatically during `npm run scan` and cached in `data/job-descriptions.json`.
 
 ### Rubric mode
 
@@ -193,6 +205,8 @@ For companies with no public ATS API (Eightfold, Phenom, BrassRing, custom porta
 
 /scanall                     # full pipeline: API scan + websearch + prune + Playwright verify
 ```
+
+A full `/scanall` transcript (10 parallel Haiku agents across 115 companies, prune, score) is in [`2026-07-25-sample-run-log.txt`](2026-07-25-sample-run-log.txt).
 
 **Important:** Web search results go stale quickly — jobs indexed weeks ago may already be closed.
 After `/websearch-jobs`, clean up dead links:
@@ -316,7 +330,9 @@ See `CLAUDE.md` for the full Empty ATS playbook.
 ```
 src/
   jobs.mjs              ← daily scanner (entry point)
-  apply.mjs             ← Potential → Applied/Ignored
+  apply.mjs             ← Potential → Applied/Ignored + record labels + retrain model
+  score.mjs             ← write Match Score (col K) + per-feature contributions (cols L–T), sort by score
+  train.mjs             ← retrain feedback model from apply/ignore labels (--bootstrap seeds from sheets)
   prune.mjs             ← remove dead links from Potential
   write-potential.mjs   ← stdin JSON → Potential (used by /websearch-jobs)
   check-liveness.mjs    ← health-check all API endpoints in portals.yml
@@ -327,8 +343,23 @@ src/
   ats.mjs               ← all 17 ATS adapters (boardApi, parse, parseLink, fetchAll)
   fetch.mjs             ← fetchJson/fetchResponse with timeout + retry/backoff
   potential-writer.mjs  ← appendToPotential, fetchSeenLinks, buildCheckboxRequest
+  ml/
+    scorer.mjs          ← job scoring: sigmoid over 9 named features (MiniLM embeddings)
+    features.mjs        ← the 9 named features + prior weights, extraction + explainScore
+    model.mjs           ← logistic-regression feedback model (train/predict/holdout-eval)
+    rubric.mjs          ← preference-rubric signals (loadRubric/embedRubric/rubricSignals)
+    parser.mjs          ← resume parser (PDF→pdf-parse→Gemini cleanup, or TXT/MD direct)
+    descriptions.mjs    ← job-description cache (data/job-descriptions.json)
+    training-data.mjs   ← labeled apply/ignore store (data/training-data.json)
 
-test/test-all.mjs       ← 95 tests covering filters, parsers, classifiers
+scripts/
+  eval-rubric.mjs       ← offline harness: resume vs rubric ranking on stored labels (no Sheets)
+
+test/
+  test-all.mjs          ← main test suite (95 tests: filters, parsers, classifiers)
+  test-ml.mjs           ← standalone ML pipeline test (no Sheets needed)
+
 portals.yml             ← 567 companies + scan config
+rubric.yml              ← hand-edited preference rubric (source of 7 of the 9 scoring features)
 .claude/skills/         ← /scan, /scanall, /apply, /websearch-jobs
 ```

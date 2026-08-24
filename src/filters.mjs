@@ -19,6 +19,28 @@ const NON_US_COUNTRY = [
   'romania','hungary','turkey','south korea','china','taiwan','hong kong','new zealand',
   'south africa','europe','emea','apac','latam','apj','estonia','latvia','lithuania',
   'ukraine','russia','italy','greece',
+  // LatAm / APAC / EMEA delivery hubs that were missing — without these, a
+  // posting like "San Jose, Costa Rica" fell through to the US city list and
+  // matched "san jose".
+  'costa rica','dominican republic','colombia','chile','peru','panama','uruguay',
+  'ecuador','guatemala','philippines','malaysia','thailand','vietnam','indonesia',
+  'egypt','nigeria','kenya','morocco','pakistan','bangladesh','sri lanka',
+  'saudi arabia','qatar','bahrain','kuwait','jordan','luxembourg','iceland',
+  'slovenia','slovakia','bulgaria','croatia','serbia','cyprus','malta',
+];
+
+// Full state names. Workday and several ATSes spell the state out and omit the
+// country ("O'Fallon, Missouri"), which the two-letter `, XX` check never sees.
+export const US_STATE_NAMES = [
+  'alabama','alaska','arizona','arkansas','california','colorado','connecticut',
+  'delaware','florida','georgia','hawaii','idaho','illinois','indiana','iowa',
+  'kansas','kentucky','louisiana','maine','maryland','massachusetts','michigan',
+  'minnesota','mississippi','missouri','montana','nebraska','nevada',
+  'new hampshire','new jersey','new mexico','new york','north carolina',
+  'north dakota','ohio','oklahoma','oregon','pennsylvania','rhode island',
+  'south carolina','south dakota','tennessee','texas','utah','vermont',
+  'virginia','washington','west virginia','wisconsin','wyoming',
+  'district of columbia',
 ];
 
 export const NON_US_COUNTRY_CODES = new Set([
@@ -61,21 +83,34 @@ export function yoeLabel(title) {
   return min === 0 ? 'New Grad' : `${min}+ YOE`;
 }
 
+const US_CITIES = ['new york','san francisco','seattle','boston','chicago',
+  'austin','denver','los angeles','atlanta','miami','washington','houston',
+  'philadelphia','phoenix','portland','minneapolis','detroit','nashville',
+  'raleigh','salt lake','san jose','san diego','pittsburgh','cincinnati'];
+
+// Word-bounded so substrings don't produce false rejects: without \b, 'india'
+// matches "Indianapolis"/"Indiana" and 'uk' matches "Milwaukee", silently
+// dropping US jobs as non-US.
+const NON_US_COUNTRY_RE = new RegExp(`\\b(${NON_US_COUNTRY.join('|')})\\b`);
+const US_STATE_NAMES_RE = new RegExp(`\\b(${US_STATE_NAMES.join('|')})\\b`);
+
 export function isUS(location) {
   if (!location || !location.trim()) return true;
   const lc = location.toLowerCase().trim();
-  if (NON_US_COUNTRY.some(c => lc.includes(c))) return false;
-  if (NON_US_COUNTRY_CODES.has(lc)) return false;
+
+  // Unambiguous US signals win over the country blocklist, so a US city that
+  // shares a name with a foreign one ("Vancouver, Washington") resolves right.
   if (lc.includes('united states') || /\bus\b/.test(lc)) return true;
+  if (US_STATE_NAMES_RE.test(lc)) return true;
+
+  if (NON_US_COUNTRY_RE.test(lc)) return false;
+  if (NON_US_COUNTRY_CODES.has(lc)) return false;
+
+  // Bare two-letter codes are a weak signal — they collide with common words
+  // ("...BC, or NS Only" reads 'or' as Oregon), so they rank below the country
+  // check rather than above it.
+  if ([...lc.matchAll(/,\s*([a-z]{2})\b/g)].some(m => US_STATES.has(m[1]))) return true;
   if (lc.includes('remote')) return true;
-  if (/,\s*([a-z]{2})\b/.test(lc)) {
-    const matches = [...lc.matchAll(/,\s*([a-z]{2})\b/g)];
-    if (matches.some(m => US_STATES.has(m[1]))) return true;
-  }
-  const US_CITIES = ['new york','san francisco','seattle','boston','chicago',
-    'austin','denver','los angeles','atlanta','miami','washington','houston',
-    'philadelphia','phoenix','portland','minneapolis','detroit','nashville',
-    'raleigh','salt lake','san jose','san diego','pittsburgh','cincinnati'];
   if (US_CITIES.some(c => lc.includes(c))) return true;
   return false;
 }

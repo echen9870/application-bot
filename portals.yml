@@ -1372,7 +1372,13 @@ tracked_companies:
     careers_url: https://mastercard.wd1.myworkdayjobs.com/CorporateCareers
     api: https://mastercard.wd1.myworkdayjobs.com/CorporateCareers
     scan_method: workday
-    notes: Payments network
+    notes: Payments network — experienced-hire board. Early-career reqs live on the separate Campus site below.
+    enabled: true
+  - name: Mastercard Campus
+    careers_url: https://mastercard.wd1.myworkdayjobs.com/Campus
+    api: https://mastercard.wd1.myworkdayjobs.com/Campus
+    scan_method: workday
+    notes: Second Workday site — new grad / intern ("Launch Program", "Summer" reqs). Not listed on CorporateCareers; careers.mastercard.com is a Phenom front-end over both.
     enabled: true
   - name: MasterControl
     careers_url: https://job-boards.greenhouse.io/mastercontrol

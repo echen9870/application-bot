@@ -163,6 +163,47 @@ test('isUS: regional tags excluded', () => {
   assert.equal(isUS('APAC Region'), false);
 });
 
+test('isUS: country names match on word boundaries, not substrings', () => {
+  // 'india' must not match "Indianapolis"/"Indiana", 'uk' not "Milwaukee".
+  assert.equal(isUS('Indianapolis, Indiana'), true);
+  assert.equal(isUS('Indianapolis, IN'), true);
+  assert.equal(isUS('Bloomington, Indiana'), true);
+  assert.equal(isUS('Milwaukee, Wisconsin'), true);
+  assert.equal(isUS('Milwaukee, WI'), true);
+  // ...while the actual countries still resolve as non-US.
+  assert.equal(isUS('Bangalore, India'), false);
+  assert.equal(isUS('London, UK'), false);
+});
+
+test('isUS: full state names are recognized without a country', () => {
+  assert.equal(isUS('OFallon, Missouri'), true);
+  assert.equal(isUS('Arlington, Virginia'), true);
+  assert.equal(isUS('Columbus, Ohio'), true);
+  assert.equal(isUS('Bala Cynwyd, Pennsylvania'), true);
+  // Workday slug form: hyphens flattened to spaces, no comma.
+  assert.equal(isUS('OFallon Missouri'), true);
+});
+
+test('isUS: explicit US state outranks a same-named foreign city', () => {
+  assert.equal(isUS('Vancouver, Washington'), true);
+  assert.equal(isUS('Vancouver, Canada'), false);
+});
+
+test('isUS: a two-letter code colliding with a word does not override a country', () => {
+  // "…BC, or NS Only" must not read the conjunction 'or' as Oregon.
+  assert.equal(isUS('Canada - Remote (ON, AB, BC, or NS Only)'), false);
+  // The same weak signal still works when nothing contradicts it.
+  assert.equal(isUS('Portland, OR'), true);
+});
+
+test('isUS: LatAm/APAC hubs are not mistaken for US cities', () => {
+  // "san jose" is in the US city list; the country must win.
+  assert.equal(isUS('San Jose, Costa Rica'), false);
+  assert.equal(isUS('San Jose, CA'), true);
+  assert.equal(isUS('Santo Domingo, Dominican Republic'), false);
+  assert.equal(isUS('Manila, Philippines'), false);
+});
+
 test('isUS: bare non-US ISO country codes excluded', () => {
   assert.equal(isUS('HU'), false);
   assert.equal(isUS('RO'), false);
@@ -481,6 +522,32 @@ test('parseJobs workday: builds correct link from externalPath and converts post
   assert.equal(out[0].location, 'San Francisco, CA');
   assert.equal(out[0].posted, new Date().toISOString().slice(0, 10));
   assert.equal(out[1].posted, new Date(Date.now() - 5 * 86_400_000).toISOString().slice(0, 10));
+});
+
+test('parseJobs workday: "N Locations" falls back to the externalPath slug', () => {
+  const json = {
+    _info: { host: 'mastercard.wd1.myworkdayjobs.com', tenant: 'mastercard', site: 'Campus' },
+    jobPostings: [
+      // Multi-location postings carry no country signal in locationsText.
+      { title: 'SWE Launch', externalPath: '/job/OFallon-Missouri/SWE_R-288578-1', locationsText: '6 Locations', postedOn: 'Posted Today' },
+      { title: 'EU Lead',    externalPath: '/job/Paris-France/Lead_R-1',           locationsText: '4 Locations', postedOn: 'Posted Today' },
+      // Single-location postings must pass through untouched.
+      { title: 'Analyst',    externalPath: '/job/Purchase-New-York/An_R-2',        locationsText: 'Purchase, NY', postedOn: 'Posted Today' },
+    ],
+  };
+  const out = ATS.workday.parse(json, 'Mastercard Campus');
+  assert.equal(out[0].location, 'OFallon Missouri');
+  assert.equal(isUS(out[0].location), true);
+  // A detail-endpoint result, when one was fetched, wins over the slug.
+  const resolved = ATS.workday.parse({
+    _info: json._info,
+    jobPostings: [{ ...json.jobPostings[0], _resolvedLocation: "O'Fallon, Missouri; Purchase, New York, United States of America" }],
+  }, 'Mastercard Campus');
+  assert.equal(resolved[0].location, "O'Fallon, Missouri; Purchase, New York, United States of America");
+  // The fallback still discriminates — a foreign slug stays non-US.
+  assert.equal(out[1].location, 'Paris France');
+  assert.equal(isUS(out[1].location), false);
+  assert.equal(out[2].location, 'Purchase, NY');
 });
 
 test('detectApi: career-schwab.icims.com api → schwabicims', () => {

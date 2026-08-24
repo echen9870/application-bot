@@ -50,6 +50,47 @@ function workdayPostedToDate(s) {
   return '';   // unknown format — let recency filter treat as old
 }
 
+// Workday collapses a multi-location posting's locationsText to a bare count
+// ("6 Locations"), which carries no country signal and gets dropped as non-US.
+// The primary location survives in externalPath (/job/OFallon-Missouri/...), so
+// fall back to that slug. It discriminates correctly — a Paris-France slug still
+// reads as non-US.
+function isWorkdayMultiLocation(j) {
+  return /^\d+\s+locations?$/i.test((j.locationsText || '').trim());
+}
+
+function workdayLocation(j) {
+  if (j._resolvedLocation) return j._resolvedLocation;
+  const text = j.locationsText || '';
+  if (!isWorkdayMultiLocation(j)) return text;
+  const slug = (j.externalPath || '').split('/job/')[1]?.split('/')[0];
+  return slug ? slug.replace(/-/g, ' ') : text;
+}
+
+// The job-detail endpoint spells out every location plus an explicit country,
+// which the listing response omits. Only multi-location postings need it, so
+// this stays a small number of extra requests; anything that fails silently
+// keeps the externalPath-slug fallback above.
+const WORKDAY_MAX_DETAIL_FETCHES = 30;
+
+async function resolveWorkdayMultiLocations(postings, info, fetchJson, opts) {
+  if (!fetchJson || !info) return;
+  const multi = postings.filter(isWorkdayMultiLocation).slice(0, WORKDAY_MAX_DETAIL_FETCHES);
+  for (const j of multi) {
+    try {
+      // externalPath already begins with "/job/", so the base takes no extra segment.
+      const d = await fetchJson(`https://${info.host}/wday/cxs/${info.tenant}/${info.site}${j.externalPath}`, opts);
+      const pi = d?.jobPostingInfo || {};
+      const locs = [pi.location, ...(pi.additionalLocations || [])].filter(Boolean);
+      if (!locs.length) continue;
+      const joined  = locs.join('; ');
+      const country = pi.country?.descriptor;
+      // Some tenants already spell the country into each location entry.
+      j._resolvedLocation = country && !joined.includes(country) ? `${joined}, ${country}` : joined;
+    } catch { /* keep the slug fallback */ }
+  }
+}
+
 // Parse a Workday board URL → { host, tenant, site }.
 // Accepts the public board URL (https://capitalone.wd12.myworkdayjobs.com/Capital_One)
 // or the API URL (https://capitalone.wd12.myworkdayjobs.com/wday/cxs/capitalone/Capital_One/jobs).
@@ -664,7 +705,7 @@ export const ATS = {
     // Both are normalized here. The "boardApi" return is passed through; fetchAll does the POST.
     boardApi: url => url,
     jobApi:   (info, path) => `https://${info.host}/wday/cxs/${info.tenant}/${info.site}/job${path}`,
-    async fetchAll(url, _fetchJson, opts) {
+    async fetchAll(url, fetchJson, opts) {
       const info = parseWorkdayUrl(url);
       if (!info) return { jobPostings: [], _info: null };
       const endpoint = `https://${info.host}/wday/cxs/${info.tenant}/${info.site}/jobs`;
@@ -679,6 +720,7 @@ export const ATS = {
         all.push(...jobs);
         if (jobs.length < 20) break;
       }
+      await resolveWorkdayMultiLocations(all, info, fetchJson, opts);
       return { jobPostings: all, _info: info };
     },
     parse(json, company) {
@@ -687,7 +729,7 @@ export const ATS = {
         company,
         role:     j.title || '',
         link:     info ? `https://${info.host}/${info.site}${j.externalPath || ''}` : '',
-        location: j.locationsText || '',
+        location: workdayLocation(j),
         posted:   workdayPostedToDate(j.postedOn),
       }));
     },

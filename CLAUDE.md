@@ -8,12 +8,9 @@
 
 ## Session Start Checklist (run silently)
 
-1. Verify `service-account.json` exists — if missing, copy from Windows Downloads:
-   ```bash
-   cp /mnt/c/Users/echen/Downloads/application-bot-494504-ecc22924b5cc.json service-account.json
-   ```
-2. Verify `.env` has `GOOGLE_SPREADSHEET_ID` set (ID: `1yt7LzUNz_wG-HEiRmhmHk826EGeskgBOrk7ABGNV5lY`)
-3. `service-account.json` is gitignored — NEVER commit it
+1. Verify `service-account.json` exists at the path in `GOOGLE_SERVICE_ACCOUNT_PATH` — if missing, restore it from wherever you keep your key backup. It is never in this repo.
+2. Verify `.env` exists and has `GOOGLE_SPREADSHEET_ID` set. If `.env` is missing, `cp .env.example .env` and fill it in.
+3. `.env` and `service-account.json` are gitignored — NEVER commit them, and never paste their values into docs, commit messages, or chat.
 
 ---
 
@@ -78,8 +75,8 @@ This file covers what's needed every session. For deeper detail, load the releva
 
 ## Google Sheets Architecture
 
-**Spreadsheet ID:** `1yt7LzUNz_wG-HEiRmhmHk826EGeskgBOrk7ABGNV5lY`
-**Service account:** `application-bot@application-bot-494504.iam.gserviceaccount.com`
+**Spreadsheet ID:** read from `GOOGLE_SPREADSHEET_ID` in `.env` (never hardcode it here)
+**Service account:** read from the JSON key at `GOOGLE_SERVICE_ACCOUNT_PATH` in `.env`
 
 ### Sheet tabs — columns and 0-based array indices
 
@@ -192,9 +189,9 @@ npm test    # runs test/test-all.mjs — pure Node.js (node:test + node:assert),
 
 ## Security
 
-- `service-account.json` — gitignored. Key ID `ecc22924b5cc`. Project `application-bot-494504`. Rotate at GCP Console if compromised.
+- `service-account.json` — gitignored. Rotate at the GCP Console if compromised. Key ID and project are in the file itself; don't copy them into docs.
 - Old key `2b632b48` was exposed in git history — scrubbed via `git filter-repo` on 2026-05-02, history force-pushed. Anyone with old clones should re-clone.
-- `.env` — gitignored. Required vars: `GOOGLE_SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_PATH`.
+- `.env` — gitignored. See `.env.example` for the required vars and how to obtain each: `ANTHROPIC_API_KEY`, `GOOGLE_SPREADSHEET_ID`, `GOOGLE_SERVICE_ACCOUNT_PATH`.
 
 ---
 

@@ -230,15 +230,29 @@ After `/websearch-jobs`, clean up dead links:
 ```bash
 npm install
 
-# Copy service-account.json from Windows Downloads (gitignored)
-cp /mnt/c/Users/echen/Downloads/application-bot-494504-*.json service-account.json
+# Create your own .env from the template, then fill in your values
+cp .env.example .env
 
-# Set spreadsheet ID in .env
-echo 'GOOGLE_SPREADSHEET_ID=1yt7LzUNz_wG-HEiRmhmHk826EGeskgBOrk7ABGNV5lY' > .env
+# Drop your Google service-account JSON key here (gitignored)
+cp /path/to/your-service-account-key.json service-account.json
 
 # Run first scan
 npm run scan
 ```
+
+You supply three things of your own — none of them live in this repo:
+
+| What | Where it goes | How to get it |
+|------|---------------|---------------|
+| Google Sheet | `GOOGLE_SPREADSHEET_ID` in `.env` | Create a sheet with `Potential`, `Applied`, and `Ignored` tabs; the ID is the long string in its URL |
+| Service account key | `service-account.json` | Google Cloud Console → new service account → enable the Sheets API → download the JSON key |
+| Anthropic API key | `ANTHROPIC_API_KEY` in `.env` | [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+
+Then share your spreadsheet with the service account's email
+(`…@….iam.gserviceaccount.com`) as an **Editor** — otherwise the scripts
+authenticate fine but can't see the sheet.
+
+Both `.env` and `service-account.json` are gitignored. Keep them that way.
 
 ---
 

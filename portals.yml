@@ -11,7 +11,6 @@ title_filter:
     - Backend Engineer
     - Full Stack Engineer
     - Full-Stack Engineer
-    - Systems Engineer
     - Platform Engineer
     - Infrastructure Engineer
     - Application Engineer
@@ -31,6 +30,11 @@ title_filter:
     - Site Reliability
     - SRE
     - Distributed Systems
+    # Bare "Systems Engineer" was removed 2026-09-01 — 635 labeled rows, only
+    # 0.6% applied (vs. 2.7% baseline), and it was the single biggest source of
+    # non-software titles (finance/sales/quality/nuclear/campus-recruiting
+    # "systems engineer" reqs). Software-flavored systems roles still match via
+    # this more specific phrase, or via "Distributed Systems"/"Platform Engineer".
     - Systems Software Engineer
     # Added 2026-08-18 after Simplify-feed audit — common entry-level phrasings the list missed
     - Software Development Engineer
@@ -47,6 +51,17 @@ title_filter:
     - Quantitative Developer
     - Junior Developer
     - Junior Software
+    # Added 2026-09-01 after a live-board audit — these matched neither list
+    # and were silently dropped, several in the rubric's own top-weighted
+    # domains (kernel/compiler/storage/database/systems programming).
+    - Forward Deployed Engineer
+    - Linux Engineer
+    - Kernel Engineer
+    - Compiler Engineer
+    - Storage Engineer
+    - Database Engineer
+    - Rust Engineer
+    - Fullstack Engineer
   negative:
     # Seniority — the original list was missing these
     - Senior
@@ -96,6 +111,12 @@ tracked_companies:
     api: https://www.google.com/about/careers/applications/jobs/results?q=software+engineer&location=United+States
     scan_method: googlecareers
     enabled: true
+  - name: Google (Early Career)
+    careers_url: https://www.google.com/about/careers/applications/jobs/results?target_level=EARLY
+    api: https://www.google.com/about/careers/applications/jobs/results?e=72477625&target_level=EARLY&location=United+States
+    scan_method: googlecareers
+    enabled: true
+    notes: "Early career level filter (target_level=EARLY) directly catches new grad / entry-level roles"
   - name: Microsoft
     careers_url: https://jobs.careers.microsoft.com
     scan_query: site:jobs.careers.microsoft.com "software engineer" 2026
@@ -758,10 +779,12 @@ tracked_companies:
     api: https://boards-api.greenhouse.io/v1/boards/coinbase/jobs
     scan_method: greenhouse
   - name: Comcast
-    careers_url: https://comcast.wd5.myworkdayjobs.com/Comcast_Careers
-    api: https://comcast.wd5.myworkdayjobs.com/Comcast_Careers
-    scan_method: workday
-    notes: Telecom/media
+    careers_url: https://jobs.comcast.com/search-jobs
+    scan_query: site:jobs.comcast.com "software engineer" 2026
+    scan_method: websearch
+    notes: Telecom/media. Left Workday 2026 — the cxs endpoint 410s and the board
+      redirects to a Workday outage page. New portal is Radancy (server-rendered
+      HTML at /search-jobs); needs an HTML adapter to rescan.
     enabled: true
   - name: CommonWealth Fusion Systems
     careers_url: https://jobs.lever.co/cfsenergy
@@ -920,7 +943,7 @@ tracked_companies:
     enabled: true
   - name: Ethic
     careers_url: https://www.ethic.com/careers
-    api: https://boards-api.greenhouse.io/v1/boards/ethicinvesting/jobs
+    api: https://boards-api.greenhouse.io/v1/boards/ethic/jobs
     scan_method: greenhouse
     enabled: true
   - name: EUNA Solutions
@@ -2282,10 +2305,11 @@ tracked_companies:
     notes: Autonomous trucking
     enabled: true
   - name: Walmart
-    careers_url: https://walmart.wd5.myworkdayjobs.com/WalmartExternal
-    api: https://walmart.wd5.myworkdayjobs.com/WalmartExternal
-    scan_method: workday
-    notes: Retail / tech
+    careers_url: https://careers.walmart.com/us/en/home
+    scan_query: site:careers.walmart.com "software engineer" 2026
+    scan_method: websearch
+    notes: Retail / tech. Left Workday 2026 — the wd5 tenant now 500s. New portal
+      is a Next.js app with no public JSON API; needs an HTML adapter to rescan.
     enabled: true
   - name: Warner Bros
     careers_url: https://careers.wbd.com

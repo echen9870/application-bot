@@ -12,9 +12,9 @@
  *     homepage / ?error=true) or if the body contains a closed-job phrase
  *
  * Usage:
- *   node src/prune.mjs             # check and remove dead rows (websearch rows only)
- *   node src/prune.mjs --dry-run   # preview without deleting
- *   node src/prune.mjs --all       # also check scan-sourced rows
+ *   node src/prune.mjs                  # check and remove dead rows (all sources)
+ *   node src/prune.mjs --dry-run        # preview without deleting
+ *   node src/prune.mjs --websearch-only # skip scan-sourced rows (faster, old default)
  */
 
 import { fileURLToPath } from 'url';
@@ -109,7 +109,11 @@ async function isAlive(parsed, { timeoutMs, retries }) {
 
 async function main() {
   const dryRun = process.argv.includes('--dry-run');
-  const all    = process.argv.includes('--all');
+  // Default: check every row. Rows sit in Potential from scan time until the
+  // user runs `apply` — sometimes days — so a scan-sourced row being live
+  // when written doesn't mean it's still live now. --websearch-only restores
+  // the old cheap/fast path for a quick pass.
+  const websearchOnly = process.argv.includes('--websearch-only');
   const { scan } = loadConfig();
   const { concurrency: CONCURRENCY, fetch_timeout_ms: TIMEOUT, retries: RETRIES } = scan;
 
@@ -128,13 +132,11 @@ async function main() {
       role:    row[4] || '',
       source:  row[9] || '',
     }))
-    // Default: only prune websearch rows — scan rows are recent (≤recency_hours)
-    // and known-live at the time they were added. --all checks everything.
-    .filter(r => r.link && (all || r.source === 'websearch'));
+    .filter(r => r.link && (!websearchOnly || r.source === 'websearch'));
 
   const totalRows  = rows.filter(r => (r[6] || '')).length;
   const scanSkipped = totalRows - toCheck.length;
-  console.log(`Checking ${toCheck.length} websearch link(s) from Potential${scanSkipped > 0 ? ` (skipping ${scanSkipped} scan-sourced row(s))` : ''}...`);
+  console.log(`Checking ${toCheck.length} link(s) from Potential${scanSkipped > 0 ? ` (skipping ${scanSkipped} scan-sourced row(s), --websearch-only)` : ''}...`);
 
   const deadRows = [];
   let checked = 0;

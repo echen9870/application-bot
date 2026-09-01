@@ -135,7 +135,7 @@ node src/write-potential.mjs --dry-run   # reads stdin, previews without writing
 
 Removes dead job links from Potential using ATS APIs — no browser needed, runs in ~30s. Reads `TIMEOUT` / `CONCURRENCY` / `RETRIES` from `portals.yml scan_config`.
 
-**Scope: only checks rows where `Source = websearch` (column J).** Scan-sourced rows are recent (≤ `recency_hours`) and were known-live at the time of write; prune skips them entirely.
+**Scope: checks every row by default.** Rows sit in Potential from scan time until `apply` runs — sometimes days — so a scan-sourced row being live when written doesn't guarantee it's still live now. Pass `--websearch-only` to skip `Source = scan` rows (column J) and restore the old cheap/fast pass.
 
 **URL detection → liveness check (via `src/ats.mjs:parseLink`):**
 - `job-boards.greenhouse.io` or `boards.greenhouse.io` path `/board/jobs/{id}` → individual endpoint `boards-api.greenhouse.io/v1/boards/{board}/jobs/{id}` — 404 = dead

@@ -51,6 +51,16 @@ export const NON_US_COUNTRY_CODES = new Set([
 
 export function extractMinYOE(title) {
   if (/new\s*grad|early\s*career|intern|entry[\s-]level|junior|university\s*grad|\b202[5-9]\b/i.test(title)) return 0;
+  // Level markers that never spell out "N years" but read as senior in practice:
+  // Engineer III+ (344 labeled rows, 0.9% applied vs. 2.7% baseline), "Mid"/
+  // "Journeyman"/"Experienced" (72 rows, 0% applied), and the Senior/Principal/
+  // Distinguished tiers of the "Member of Technical Staff" ladder (SMTS/PMTS/
+  // DMTS). "Engineer II" is left alone — its apply rate matches baseline — and
+  // so are bare "MTS"/"LMTS": that tier is ambiguous, and the real entry-level
+  // MTS title spells out "Member of Technical Staff" in full (see buildTitleFilter).
+  if (/\b(iii|iv|v)\b/i.test(title)
+      || /\bmid(?:-level)?\b|\bjourneyman\b|\bexperienced\b/i.test(title)
+      || /\b[spd]mts\b/i.test(title)) return 4;
   const m = title.match(/\((\d+)[-–]\d*\s*(?:YOE|yrs?|years?)\)/i)
          || title.match(/(\d+)[-–]\d+\s*(?:YOE|yrs?|years?)/i)
          || title.match(/(\d+)\+\s*(?:YOE|yrs?|years?)/i);
@@ -106,21 +116,63 @@ export function isUS(location) {
   if (NON_US_COUNTRY_RE.test(lc)) return false;
   if (NON_US_COUNTRY_CODES.has(lc)) return false;
 
+  // SmartRecruiters formats location as "City, Region, countryCode", and several
+  // country codes are also US state codes — IN is both India and Indiana, so
+  // "Bengaluru, KA, in" read as US below. Only trust a trailing code as a country
+  // when a third segment precedes it: in the two-part "San Jose, CA" form the
+  // trailing code is a US state, and reading that as Canada would drop California.
+  const segments = lc.split(',').map(s => s.trim()).filter(Boolean);
+  if (segments.length >= 3 && NON_US_COUNTRY_CODES.has(segments.at(-1))) return false;
+
   // Bare two-letter codes are a weak signal — they collide with common words
   // ("...BC, or NS Only" reads 'or' as Oregon), so they rank below the country
   // check rather than above it.
   if ([...lc.matchAll(/,\s*([a-z]{2})\b/g)].some(m => US_STATES.has(m[1]))) return true;
+  // "Remote, ie" is an Ireland-remote role, not a US one. Only reject when the
+  // trailing code is unambiguously foreign — "Remote, CA" stays US, since CA
+  // reads as California far more often than Canada on the boards we scan.
+  if (segments.length === 2 && segments[0] === 'remote'
+      && NON_US_COUNTRY_CODES.has(segments[1]) && !US_STATES.has(segments[1])) return false;
   if (lc.includes('remote')) return true;
   if (US_CITIES.some(c => lc.includes(c))) return true;
   return false;
 }
 
+// Perplexity's real entry-level title is the literal phrase "Member of
+// Technical Staff" — the word "Staff" there names the job track, not a
+// seniority tier, so the "Staff" negative keyword must not reject it.
+const MEMBER_OF_TECHNICAL_STAFF_RE = /\bmember of technical staff\b/i;
+
+// A keyword is safe to wrap in \b...\b when it's plain alnum/space/hyphen with
+// no leading/trailing padding. Several entries (`'Sr.'`, `'Sr '`, `'VP '`,
+// `'SAP '`, `.NET`) were hand-padded with their own boundary spaces or lead
+// with punctuation \b can't anchor against — those keep the historical literal
+// substring match instead of being re-wrapped.
+const WORD_SAFE_KEYWORD = /^[a-z][a-z0-9 '-]*[a-z0-9]$/;
+
+function keywordMatcher(kw) {
+  if (WORD_SAFE_KEYWORD.test(kw)) {
+    const re = new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`);
+    return lc => re.test(lc);
+  }
+  return lc => lc.includes(kw);
+}
+
 export function buildTitleFilter(tf) {
-  const pos = (tf?.positive || []).map(k => k.toLowerCase());
-  const neg = (tf?.negative || []).map(k => k.toLowerCase());
+  const pos = (tf?.positive || []).map(k => k.toLowerCase()).map(k => ({ kw: k, test: keywordMatcher(k) }));
+  const neg = (tf?.negative || []).map(k => k.toLowerCase()).map(k => ({ kw: k, test: keywordMatcher(k) }));
   return t => {
     const lc = t.toLowerCase();
-    return (pos.length === 0 || pos.some(k => lc.includes(k))) && !neg.some(k => lc.includes(k));
+    if (pos.length > 0 && !pos.some(({ test }) => test(lc))) return false;
+    for (const { kw, test } of neg) {
+      // Without word boundaries "lead" also matched inside "Leadership Track"
+      // and "staff" matched the real job-track name above — both are handled
+      // now, but "staff" still needs the explicit MTS exemption since the word
+      // genuinely appears, just not as a seniority signal.
+      if (kw === 'staff' && MEMBER_OF_TECHNICAL_STAFF_RE.test(lc)) continue;
+      if (test(lc)) return false;
+    }
+    return true;
   };
 }
 

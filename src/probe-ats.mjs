@@ -31,12 +31,14 @@ const raw = readFileSync('portals.yml', 'utf-8');   // raw text for regex-patchi
 // --empty: companies whose configured API returns 0 jobs (data/empty-ats.json) —
 // their ATS endpoint is dead, so re-probe from scratch to find where they moved.
 let targets;
+const emptyStreaks = new Map();   // lowercased company name → consecutive empty scans
 if (EMPTY) {
   const logPath = 'data/empty-ats.json';
   if (!existsSync(logPath)) { console.error('No data/empty-ats.json — run a scan first.'); process.exit(1); }
-  const emptyNames = new Set(Object.keys(JSON.parse(readFileSync(logPath, 'utf-8')))
-    .map(k => k.replace(/ \([a-z]+\)$/, '').toLowerCase()));
-  targets = loadEnabledCompanies().filter(c => emptyNames.has(c.name.toLowerCase()));
+  for (const [key, val] of Object.entries(JSON.parse(readFileSync(logPath, 'utf-8')))) {
+    emptyStreaks.set(key.replace(/ \([a-z]+\)$/, '').toLowerCase(), val?.scans ?? 0);
+  }
+  targets = loadEnabledCompanies().filter(c => emptyStreaks.has(c.name.toLowerCase()));
 } else {
   targets = loadEnabledCompanies().filter(c => !c.api || c.scan_method === 'websearch');
 }
@@ -109,6 +111,15 @@ function namesMatch(boardName, companyName) {
   return longer.includes(shorter);
 }
 
+// Raw response (status + body), for diagnoseEmpty — which needs to tell an HTTP
+// error apart from an HTML error page, both of which fetchJson flattens to null.
+function fetchWithTimeoutRaw(url) {
+  return fetch(url, {
+    signal: AbortSignal.timeout(TIMEOUT),
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  });
+}
+
 async function fetchJson(url) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT);
@@ -160,6 +171,76 @@ async function tryUrl(url, type, slug, companyName) {
   return url;
 }
 
+// ── Empty-board diagnosis ─────────────────────────────────────────────────────
+// A board returning 0 jobs means one of three very different things, and the
+// scan log can't tell them apart — which is why 28 entries sat unreviewed for
+// 42 scans. Classify them so only the actionable ones demand attention:
+//
+//   BROKEN    — endpoint errors or returns non-JSON. The config is wrong; fix it.
+//   GONE      — the ATS has no such account. The company moved; re-home it.
+//   ABANDONED — real account, but empty every scan for weeks. Not a freeze: the
+//               company has moved hiring elsewhere and left the account up.
+//   DORMANT   — real account, recently empty. A plausible hiring freeze; wait.
+//
+// The streak is what separates ABANDONED from DORMANT — a board with no opening
+// for this many consecutive scans is not between reqs, it is not being used.
+const ABANDONED_STREAK = 14;
+
+async function diagnoseEmpty(company, streak = 0) {
+  const type = company.scan_method;
+  const url = company.api;
+  if (!url) return { state: 'BROKEN', why: 'no api configured' };
+
+  let res, text;
+  try {
+    res = await fetchWithTimeoutRaw(url);
+    text = await res.text();
+  } catch (e) {
+    return { state: 'BROKEN', why: `request failed (${e.message})` };
+  }
+  if (!res.ok) return { state: 'BROKEN', why: `HTTP ${res.status}` };
+  try { JSON.parse(text); } catch {
+    return { state: 'BROKEN', why: 'returned HTML, not JSON (redirect or error page)' };
+  }
+
+  if (type === 'smartrecruiters') {
+    // A live SR account redirects jobs.smartrecruiters.com/{slug} to
+    // careers.smartrecruiters.com/{slug}; an unknown slug bounces to the bare
+    // root. The v1/companies/{slug} metadata endpoint 404s for every slug, real
+    // or not, so it cannot be used for this check.
+    const slug = url.match(/companies\/([^/]+)\//)?.[1];
+    if (!slug) return { state: 'BROKEN', why: 'no slug in api url' };
+    try {
+      const r = await fetch(`https://jobs.smartrecruiters.com/${slug}`, {
+        redirect: 'follow', signal: AbortSignal.timeout(TIMEOUT),
+      });
+      return new URL(r.url).pathname.replace(/\/$/, '') === ''
+        ? { state: 'GONE', why: `no SmartRecruiters account for slug "${slug}"` }
+        : idle(streak, `account "${slug}" is live but has 0 public postings`);
+    } catch (e) {
+      return { state: 'BROKEN', why: `slug check failed (${e.message})` };
+    }
+  }
+
+  if (type === 'greenhouse') {
+    const slug = url.match(/boards\/([^/]+)\//)?.[1];
+    const meta = slug && await fetchJson(`https://boards-api.greenhouse.io/v1/boards/${slug}`);
+    return meta?.name
+      ? idle(streak, `board "${meta.name}" is live but has 0 openings`)
+      : { state: 'GONE', why: `no Greenhouse board for slug "${slug}"` };
+  }
+
+  // Ashby / Lever / others: a parseable 200 means the board exists and is empty.
+  return idle(streak, 'board responds normally with 0 openings');
+}
+
+// Split a confirmed-live-but-empty board on how long it has been that way.
+function idle(streak, why) {
+  return streak >= ABANDONED_STREAK
+    ? { state: 'ABANDONED', why: `${why} — empty ${streak} scans in a row` }
+    : { state: 'DORMANT', why };
+}
+
 async function probeCompany(company) {
   const slugs = slugsFrom(company);
   const candidates = [];
@@ -202,7 +283,33 @@ async function worker() {
 
 await Promise.all(Array.from({ length: Math.min(CONCURRENCY, targets.length) }, worker));
 
-console.log(`\n${'─'.repeat(60)}`);
+// In --empty mode, classify why each board is empty before reporting APIs —
+// DORMANT companies need no action at all, so they shouldn't read as failures.
+if (EMPTY) {
+  const diagnoses = await Promise.all(
+    targets.map(async c => ({
+      company: c,
+      ...(await diagnoseEmpty(c, emptyStreaks.get(c.name.toLowerCase()) ?? 0)),
+    }))
+  );
+  console.log(`\n${'─'.repeat(60)}`);
+  console.log('Empty-board diagnosis:\n');
+  for (const state of ['BROKEN', 'GONE', 'ABANDONED', 'DORMANT']) {
+    const group = diagnoses.filter(d => d.state === state);
+    if (!group.length) continue;
+    const action = { BROKEN:   'fix the config in portals.yml',
+                     GONE:     're-home to the company\'s current ATS',
+                     ABANDONED:'re-home — the account is live but unused',
+                     DORMANT:  'no action — recently empty, likely a hiring freeze' }[state];
+    console.log(`  ${state} (${group.length}) — ${action}`);
+    for (const d of group.sort((a, b) => a.company.name.localeCompare(b.company.name))) {
+      console.log(`    ${d.company.name}: ${d.why}`);
+    }
+    console.log('');
+  }
+}
+
+console.log(`${'─'.repeat(60)}`);
 console.log(`Found APIs for ${found.length}/${targets.length} companies.`);
 
 if (found.length === 0) {

@@ -37,6 +37,17 @@ Or automate: `node src/probe-ats.mjs --company "Name"`; add `--apply` to patch p
 
 A company's endpoint can return HTTP 200 with 0 jobs — not a network failure, just a misconfigured platform (e.g. configured as SmartRecruiters but actually Workday). `src/jobs.mjs` prints an "Empty ATS" section at the end of every scan listing offenders.
 
+**Start with `node src/probe-ats.mjs --empty`**, which classifies every empty board so you only chase the actionable ones:
+
+| State | Meaning | Action |
+|-------|---------|--------|
+| `BROKEN` | Endpoint errors or returns HTML instead of JSON | Fix the config — usually the ATS was decommissioned |
+| `GONE` | The ATS has no such account | Re-home to the company's current ATS |
+| `ABANDONED` | Real account, but empty every scan for 14+ consecutive scans | Re-home — the account is live but unused |
+| `DORMANT` | Real account, recently empty | Nothing — it's a hiring freeze, it'll come back |
+
+The streak (`data/empty-ats.json`) is what separates `ABANDONED` from `DORMANT`; a board with no opening for two weeks of scans is not between reqs. Note that SmartRecruiters returns `200 {"totalFound":0}` for a nonexistent slug and `404`s the `/v1/companies/{slug}` metadata endpoint for *every* slug, real or not — the only reliable liveness check is that `jobs.smartrecruiters.com/{slug}` redirects to `careers.smartrecruiters.com/{slug}` rather than to the bare root.
+
 **Fix:**
 1. Visit the company's careers page, identify the real ATS from the URL/network requests.
 2. `node src/probe-ats.mjs --company "Company Name"` to auto-probe (add `--apply` to patch `portals.yml` automatically).

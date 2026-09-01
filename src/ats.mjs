@@ -12,6 +12,13 @@
 
 import { postJson, fetchText, fetchWithTimeout } from './fetch.mjs';
 
+// SmartRecruiters paging. 100 is the API's hard per-response cap. The 2,000
+// ceiling bounds a scan at 20 requests per company — enough for every tech board
+// we track, while not spending 250 requests walking Dominos' 24k retail postings
+// (which the title filter discards anyway).
+const SR_PAGE_SIZE = 100;
+const SR_MAX_POSTINGS = 2000;
+
 function toDate(val) {
   if (!val) return '';
   const d = new Date(val);
@@ -129,7 +136,11 @@ export const ATS = {
         role:     j.title || '',
         link:     j.absolute_url || '',
         location: j.location?.name || '',
-        posted:   toDate(j.updated_at),
+        // first_published is the true post date; updated_at bumps on any edit
+        // (comp band tweak, location add) and was admitting years-old postings
+        // through the recency filter. Fall back to updated_at only if a board
+        // omits first_published (not observed, but keep the scan alive if so).
+        posted:   toDate(j.first_published || j.updated_at),
         _slug:    slug,           // for fetchDescription
         _id:      String(j.id || ''),
       }));
@@ -947,6 +958,24 @@ export const ATS = {
   smartrecruiters: {
     boardApi: slug => `https://api.smartrecruiters.com/v1/companies/${slug}/postings?limit=100&status=PUBLIC`,
     jobApi:   (slug, id) => `https://api.smartrecruiters.com/v1/companies/${slug}/postings/${id}`,
+    // The postings API caps a single response at 100. Without paging we saw only
+    // the first 100 of e.g. Dominos' 24,659 or ServiceNow's 568 postings, so most
+    // boards were silently truncated. `totalFound` tells us when to stop.
+    async fetchAll(url, fetchJson, opts) {
+      const all = [];
+      const base = url.replace(/[?&]offset=\d+/, '');
+      const sep = base.includes('?') ? '&' : '?';
+      for (let offset = 0; offset < SR_MAX_POSTINGS; offset += SR_PAGE_SIZE) {
+        let json;
+        try { json = await fetchJson(`${base}${sep}offset=${offset}`, opts); } catch { break; }
+        const page = json.content || [];
+        all.push(...page);
+        // Short page means the board is exhausted; totalFound bounds the rest.
+        if (page.length < SR_PAGE_SIZE) break;
+        if (json.totalFound && all.length >= json.totalFound) break;
+      }
+      return { content: all };
+    },
     parse(json, company) {
       return (json.content || []).map(j => {
         const loc = j.location;

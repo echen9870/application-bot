@@ -55,6 +55,23 @@ test('extractMinYOE: no YOE signal in title → null', () => {
   assert.equal(extractMinYOE(''), null);
 });
 
+// Roman-numeral and jargon level markers never spell out "N years", so they
+// used to read as null (no signal) and pass the max_yoe=3 filter unpenalized.
+// Labeled history: Engineer III+ is 344 rows at 0.9% applied vs. 2.7% baseline;
+// "Mid" is 72 rows at 0%. Engineer II matches baseline and stays unpenalized.
+test('extractMinYOE: level markers without explicit "years" read as senior', () => {
+  assert.equal(extractMinYOE('Software Engineer III'), 4);
+  assert.equal(extractMinYOE('Software Engineer IV'), 4);
+  assert.equal(extractMinYOE('Full-Stack Developer, Mid'), 4);
+  assert.equal(extractMinYOE('Journeyman Full Stack Developer'), 4);
+  assert.equal(extractMinYOE('Principal Member of Technical Staff (PMTS)'), 4);
+  assert.equal(extractMinYOE('Software Engineering SMTS'), 4);
+  assert.equal(extractMinYOE('Software Engineer II'), null);
+  assert.equal(extractMinYOE('Software Engineer II - Technical Leadership Track'), null);
+  assert.equal(extractMinYOE('Software Engineering MTS'), null);
+  assert.equal(extractMinYOE('Software Engineering LMTS'), null);
+});
+
 // ── YOE description filter ───────────────────────────────────────────
 
 test('extractMinYOEFromDesc: common "X+ years of experience" patterns', () => {
@@ -127,6 +144,27 @@ test('buildTitleFilter: no config passes everything', () => {
   assert.equal(f(''), true);
 });
 
+// Substring matching rejected "Leadership Track" for containing "lead", and
+// "iOS" for containing "ios" inside e.g. "BIOS" — word boundaries fix both
+// while still catching the real seniority/mobile-stack signal.
+test('buildTitleFilter: word-boundary matching avoids substring false positives', () => {
+  const f = buildTitleFilter({ positive: ['engineer'], negative: ['lead', 'ios'] });
+  assert.equal(f('Software Engineer II - Technical Leadership Track'), true);
+  assert.equal(f('Lead Software Engineer'), false);
+  assert.equal(f('BIOS Firmware Engineer'), true);
+  assert.equal(f('iOS Engineer'), false);
+});
+
+// Perplexity's real entry-level title is "Member of Technical Staff" — the
+// word "Staff" names the job track there, not a seniority tier, so it must
+// not be rejected by the "Staff" negative keyword the way "Staff Engineer" is.
+test('buildTitleFilter: "Member of Technical Staff" is exempt from the "staff" negative', () => {
+  const f = buildTitleFilter({ positive: ['engineer'], negative: ['senior', 'staff'] });
+  assert.equal(f('Member of Technical Staff (Backend Engineer, Search)'), true);
+  assert.equal(f('Staff Software Engineer'), false);
+  assert.equal(f('Senior Member of Technical Staff (Engineer)'), false);
+});
+
 // ── Location (US) filter ─────────────────────────────────────────────
 
 test('isUS: clear US signals', () => {
@@ -136,6 +174,26 @@ test('isUS: clear US signals', () => {
   assert.equal(isUS('United States'), true);
   assert.equal(isUS('Remote, US'), true);
   assert.equal(isUS('Austin, Texas'), true);
+});
+
+// SmartRecruiters emits "City, Region, countryCode". Several country codes are
+// also US state codes (IN = India / Indiana), which let Bengaluru roles through.
+test('isUS: trailing country code beats the state-code collision', () => {
+  assert.equal(isUS('Bengaluru, KA, in'), false);
+  assert.equal(isUS('Chennai, TN, in'), false);
+  assert.equal(isUS('Toronto, ON, ca'), false);
+  assert.equal(isUS('London, England, gb'), false);
+  // Two-segment "City, XX" is the US convention — CA must stay California.
+  assert.equal(isUS('San Jose, CA'), true);
+  assert.equal(isUS('Santa Clara, CA, us'), true);
+  assert.equal(isUS('Mountain View, CALIFORNIA, us'), true);
+});
+
+test('isUS: remote with an unambiguously foreign code is not US', () => {
+  assert.equal(isUS('Remote, ie'), false);
+  assert.equal(isUS('Remote, gb'), false);
+  // CA is ambiguous; it reads as California on the boards we scan.
+  assert.equal(isUS('Remote, CA'), true);
 });
 
 test('isUS: remote without country defaults to US', () => {
@@ -450,6 +508,23 @@ test('parseJobs greenhouse: maps fields correctly + carries _slug/_id', () => {
   assert.equal(out[0]._id,     '12345');
 });
 
+// updated_at bumps on any edit (comp band tweak, location add) to an old
+// posting, which admitted years-old jobs through the 48h recency filter.
+// first_published is the true post date and must win when both are present.
+test('parseJobs greenhouse: posted date prefers first_published over updated_at', () => {
+  const json = {
+    jobs: [
+      { id: 1, title: 'Backend Engineer', absolute_url: 'https://x.com/1',
+        first_published: '2024-06-14T00:00:00Z', updated_at: '2026-09-01T00:00:00Z' },
+      { id: 2, title: 'Frontend Engineer', absolute_url: 'https://x.com/2',
+        updated_at: '2026-09-01T00:00:00Z' },   // no first_published → falls back
+    ],
+  };
+  const out = parseJobs('greenhouse', json, 'Stripe', 'https://boards-api.greenhouse.io/v1/boards/stripe/jobs');
+  assert.equal(out[0].posted, '2024-06-14');
+  assert.equal(out[1].posted, '2026-09-01');
+});
+
 test('parseJobs ashby: maps fields and lowercases descriptionPlain', () => {
   const json = {
     jobs: [
@@ -478,6 +553,41 @@ test('parseJobs lever: extracts inline description (lowercased, from board listi
   ];
   const out = parseJobs('lever', json, 'OpenAI');
   assert.equal(out[0].description, 'we need python and 5 years');
+});
+
+// The postings API caps a response at 100; without paging, boards like
+// ServiceNow (568 postings) were silently truncated to their first 100.
+test('ATS.smartrecruiters.fetchAll: pages until the board is exhausted', async () => {
+  const requested = [];
+  const total = 250;
+  const fakeFetch = async url => {
+    const offset = Number(new URL(url).searchParams.get('offset'));
+    requested.push(offset);
+    const content = Array.from(
+      { length: Math.max(0, Math.min(100, total - offset)) },
+      (_, i) => ({ name: 'SWE', id: `job${offset + i}`, company: { identifier: 'Acme' } }),
+    );
+    return { content, totalFound: total };
+  };
+  const json = await ATS.smartrecruiters.fetchAll(
+    ATS.smartrecruiters.boardApi('Acme'), fakeFetch, {});
+  assert.deepEqual(requested, [0, 100, 200]);
+  assert.equal(json.content.length, total);
+  // Pages are concatenated in order, not overwritten by the last one.
+  assert.equal(json.content[0].id, 'job0');
+  assert.equal(json.content.at(-1).id, 'job249');
+});
+
+test('ATS.smartrecruiters.fetchAll: a short first page stops after one request', async () => {
+  let calls = 0;
+  const fakeFetch = async () => {
+    calls++;
+    return { content: [{ name: 'SWE', id: 'x', company: { identifier: 'Acme' } }], totalFound: 1 };
+  };
+  const json = await ATS.smartrecruiters.fetchAll(
+    ATS.smartrecruiters.boardApi('Acme'), fakeFetch, {});
+  assert.equal(calls, 1);
+  assert.equal(json.content.length, 1);
 });
 
 test('parseJobs smartrecruiters: city/region/country join + countryCode fallback', () => {

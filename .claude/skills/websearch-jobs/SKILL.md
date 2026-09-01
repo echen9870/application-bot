@@ -29,27 +29,22 @@ If `{{companies}}` was provided, filter the list to only those companies (case-i
 
 If no args, search **all companies** in the list.
 
-## Step 2 — Spawn parallel Haiku subagents for websearch batches
+## Step 2 — Web search for each company
 
-**Do NOT search companies manually.** Instead, organize companies into batches of 10 and **spawn Haiku subagents in parallel** to search each batch.
+For each company in the list (sequentially, in this agent):
 
-Each subagent will:
-1. Run WebSearch for each company (one query per company for complete coverage)
-2. Extract: company, title, location, URL, posted date (YYYY-MM-DD or empty)
-3. Write results to Potential via `write-potential.mjs`
-4. Report jobs found and written
+1. **Run WebSearch** (one query per company for complete coverage)
+2. **Extract**: company, title, location, URL, posted date (YYYY-MM-DD or empty)
+3. **Write results** to Potential via `write-potential.mjs`
+4. Track jobs found and written
 
 > **Do NOT OR-batch `site:` domains into a single query.** WebSearch returns a fixed ~10 results per query regardless of how many `site:` filters you combine. One query per company is required for complete coverage.
 
-**For each company, use:**
+**For each company query, use:**
 - If `scan_query` is set in the config, use that query exactly
 - Otherwise use: `site:[careers_url domain] ("software engineer" OR "backend engineer" OR "new grad" OR "intern") 2026`
 
-**Do NOT pre-filter results in-context.** Dump every result with a usable URL. `write-potential.mjs` rejects blog posts, podcasts, non-job URLs, wrong-country jobs, senior roles, and dupes algorithmically.
-
-## Step 3 — Await parallel agent completion
-
-Wait for all Haiku subagents (websearch batches) to complete. Each agent writes results directly to Potential via `write-potential.mjs`, which handles:
+**Do NOT pre-filter results in-context.** Dump every result with a usable URL. `write-potential.mjs` handles:
 - Deduplication
 - Title filter (removes senior/staff roles)
 - YOE filter (removes 3+ YOE roles)
@@ -57,9 +52,7 @@ Wait for all Haiku subagents (websearch batches) to complete. Each agent writes 
 - URL heuristic (`looksLikeJobUrl`) that drops `/blog/`, `/news/`, `/podcast/`, etc.
 - Tags all rows with `Source = websearch` for later pruning
 
-Subagents run autonomously in background. You will be notified when all complete.
-
-## Step 4 — Prune dead links
+## Step 3 — Prune dead links
 
 ```bash
 node src/prune.mjs
@@ -71,7 +64,7 @@ Prune checks all `Source = websearch` rows (skips API scan rows). For each webse
 
 Removes dead rows automatically. Expect ~30–50% of websearch results to be live.
 
-## Step 5 — Score and sort
+## Step 4 — Score and sort
 
 ```bash
 node src/score.mjs
@@ -79,11 +72,10 @@ node src/score.mjs
 
 Score all Potential jobs (API scan + websearch survivors) with the named-feature model (sigmoid over 9 features: rubric-derived + label history; trained weights or hand-tuned prior). Writes Match Score to column K, per-feature contributions to columns L–T, and sorts sheet best-first.
 
-## Step 6 — Report
+## Step 5 — Report
 
 Summarize:
-- Parallel batches spawned and agents completed
-- Total companies searched across all batches
+- Total companies searched
 - Total jobs found and written to Potential (after write-potential.mjs filters)
 - Prune results: dead links removed, live links remaining
 - Scoring mode and top ranked matches (from score.mjs)

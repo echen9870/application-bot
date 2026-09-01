@@ -22,42 +22,23 @@ These rows are written to Potential with `Source = scan`. They are recent (≤ `
 
 Note how many new jobs were written and how many were filtered.
 
-## Step 2 — Spawn parallel Haiku subagents for websearch-only companies
+## Step 2 — Web search for websearch-only companies
 
-Get the list of companies with `scan_method: websearch`:
+**Delegate to subagent (token-efficient):**
 
 ```bash
-node --input-type=module << 'EOF'
-import { readFileSync } from 'fs';
-import yaml from 'js-yaml';
-const config = yaml.load(readFileSync('portals.yml', 'utf-8'));
-const cos = config.tracked_companies || [];
-const list = cos.filter(c => c.enabled !== false && c.scan_method === 'websearch')
-  .map(c => ({ name: c.name, url: c.careers_url, query: c.scan_query }));
-console.log(JSON.stringify(list, null, 2));
-EOF
+/websearch-jobs
 ```
 
-**Organize companies into batches of 10-12 and spawn Haiku subagents in parallel** (6+ agents for ~120 companies). Each agent will:
+This runs a dedicated agent to search all websearch-only companies in portals.yml:
+- 79 companies searched, one query each (no OR-batching for complete coverage)
+- WebSearch results extracted: company, role, location, link, posted date
+- Written to Potential via `write-potential.mjs` (auto-applies dedup, title/location/YOE filters, URL heuristic)
+- All rows tagged `Source = websearch` for later pruning
 
-1. Run WebSearch for each company (one query per company for complete coverage)
-2. Extract: `company`, `role`, `location`, `link`, `posted` (YYYY-MM-DD or empty)
-3. Write results to Potential via `write-potential.mjs`
-4. Report: jobs found, jobs written after filters
+**Why subagent?** WebSearch across 79 companies generates ~150k tokens of intermediate output — keeping it isolated in a subagent is more efficient than cluttering the main session context.
 
-For each company, use:
-- If `scan_query` is set, use that query exactly
-- Otherwise: `site:[careers_url domain] ("software engineer" OR "backend engineer" OR "new grad" OR "intern") 2026`
-
-> **Do NOT OR-batch `site:` domains into one query.** One query per company is required for complete coverage.
-
-**Do NOT pre-filter in-context.** Dump every result with a usable URL. `write-potential.mjs` handles dedup, title filter, YOE filter, US-only filter, and URL heuristic (`looksLikeJobUrl`) automatically — tags all rows with `Source = websearch`.
-
-## Step 3 — Await parallel agent completion
-
-Wait for all Haiku subagents (6+ batches) to complete. Each agent writes results directly to Potential via `write-potential.mjs`. You will be notified automatically when all batches finish.
-
-## Step 4 — Prune dead websearch links
+## Step 3 — Prune dead websearch links
 
 ```bash
 node src/prune.mjs
@@ -69,7 +50,7 @@ Prune restricts itself to `Source = websearch` rows. Scan rows are skipped (they
 
 Removes dead rows automatically. Expect ~30–50% of websearch results to be live.
 
-## Step 5 — Score all jobs (unified pass)
+## Step 4 — Score all jobs (unified pass)
 
 ```bash
 node src/score.mjs
@@ -79,11 +60,11 @@ Score **all Potential jobs** (API scan + websearch survivors together) with the 
 
 **This ensures every job is ranked uniformly regardless of source, and no jobs are left unscored.**
 
-## Step 6 — Report
+## Step 5 — Report
 
 Summarize:
 - **API scan**: companies scanned, new scan-sourced jobs written, filters hit
-- **Websearch**: parallel batches spawned, companies searched, jobs found and written after `write-potential.mjs` filters
+- **Websearch**: companies searched, jobs found and written after `write-potential.mjs` filters
 - **Prune**: websearch rows checked, dead rows removed, live links remaining
 - **Scoring**: mode (trained weights vs prior cold start), score range, top 20 ranked matches by Match Score
 - **Total new live jobs in Potential** (split by Source: API scan vs websearch)

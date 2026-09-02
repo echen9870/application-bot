@@ -300,9 +300,9 @@ tracked_companies:
     enabled: true
   - name: Hugging Face
     careers_url: https://apply.workable.com/huggingface/
-    scan_method: websearch
-    scan_query: site:apply.workable.com/huggingface "Engineer"
-    notes: ML hub. Remote-first. Workable widget API blocks scrapers (403) — kept on websearch.
+    api: https://apply.workable.com/api/v1/widget/accounts/huggingface
+    scan_method: workable
+    notes: ML hub. Remote-first. The widget API 403s without a User-Agent header; the workable adapter in ats.mjs sets one.
     enabled: true
   - name: 2K Games
     careers_url: https://jobs.2k.com
@@ -330,8 +330,11 @@ tracked_companies:
     scan_method: websearch
     enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Adept
-    careers_url: https://www.adept.com/careers
+    careers_url: https://www.adept.ai/careers
     scan_method: websearch
+    scan_query: site:adept.ai "engineer" 2026
+    notes: Adept AI (agents/foundation models). Was pointed at adept.com, which is Omron's
+      industrial robotics arm — a different company. No public ATS API found; adept.ai 403s scrapers.
     enabled: true
   - name: Adobe
     careers_url: https://adobe.wd5.myworkdayjobs.com/external_experienced
@@ -351,8 +354,10 @@ tracked_companies:
     notes: BNPL fintech
     enabled: true
   - name: Air Products
-    careers_url: https://www.airproducts.com/careers
-    scan_method: websearch
+    careers_url: https://airproducts.wd5.myworkdayjobs.com/AP0001
+    api: https://airproducts.wd5.myworkdayjobs.com/AP0001
+    scan_method: workday
+    notes: Workday site slug is "AP0001", not a company-name variant — found via web search.
     enabled: true
   - name: Airbnb
     careers_url: https://job-boards.greenhouse.io/airbnb
@@ -779,12 +784,11 @@ tracked_companies:
     api: https://boards-api.greenhouse.io/v1/boards/coinbase/jobs
     scan_method: greenhouse
   - name: Comcast
-    careers_url: https://jobs.comcast.com/search-jobs
-    scan_query: site:jobs.comcast.com "software engineer" 2026
-    scan_method: websearch
-    notes: Telecom/media. Left Workday 2026 — the cxs endpoint 410s and the board
-      redirects to a Workday outage page. New portal is Radancy (server-rendered
-      HTML at /search-jobs); needs an HTML adapter to rescan.
+    careers_url: https://comcast.wd115.myworkdayjobs.com/Comcast_Careers
+    api: https://comcast.wd115.myworkdayjobs.com/Comcast_Careers
+    scan_method: workday
+    notes: Telecom/media. Was moved to websearch in 2026 when the cxs endpoint 410'd;
+      as of 2026-09-02 the Workday tenant is live again (685 postings), so it is back on API.
     enabled: true
   - name: CommonWealth Fusion Systems
     careers_url: https://jobs.lever.co/cfsenergy
@@ -805,8 +809,9 @@ tracked_companies:
     scan_method: websearch
     enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Corsair
-    careers_url: https://www.corsair.com/careers
-    scan_method: websearch
+    careers_url: https://edix.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/CX_1
+    api: https://edix.fa.us2.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions?onlyData=true&expand=requisitionList.secondaryLocations,flexFieldsFacet.values&finder=findReqs;siteNumber=CX_1,facetsList=LOCATIONS%3BCATEGORIES,limit=200,sortBy=POSTING_DATES_DESC
+    scan_method: oraclecloud
     enabled: true
   - name: Costco
     careers_url: https://www.costco.com/careers
@@ -1062,8 +1067,15 @@ tracked_companies:
     notes: Defense
     enabled: true
   - name: Genesis Therapeutics
-    careers_url: https://www.genesistherapeutics.ai/careers
-    scan_method: websearch
+    careers_url: https://jobs.ashbyhq.com/genesis-molecular-ai
+    api: https://api.ashbyhq.com/posting-api/job-board/genesis-molecular-ai
+    scan_method: ashby
+    enabled: true
+  - name: Genesis AI
+    careers_url: https://jobs.ashbyhq.com/genesis
+    api: https://api.ashbyhq.com/posting-api/job-board/genesis
+    scan_method: ashby
+    notes: Robotics foundation models. Distinct company from Genesis Therapeutics above — the Ashby "genesis" slug is this one.
     enabled: true
   - name: Gesture
     careers_url: https://www.gesture.com/careers
@@ -1383,8 +1395,9 @@ tracked_companies:
     scan_method: websearch
     enabled: true
   - name: MarketAxess
-    careers_url: https://www.marketaxess.com/careers
-    scan_method: websearch
+    careers_url: https://job-boards.greenhouse.io/marketaxesscorporation
+    api: https://boards-api.greenhouse.io/v1/boards/marketaxesscorporation/jobs
+    scan_method: greenhouse
     enabled: true
   - name: Marshall Wace
     careers_url: https://www.marshallwace.com/careers
@@ -1414,8 +1427,9 @@ tracked_companies:
     scan_method: websearch
     enabled: true
   - name: Matroid
-    careers_url: https://matroid.com/careers
-    scan_method: websearch
+    careers_url: https://matroid.breezy.hr
+    api: https://matroid.breezy.hr/json
+    scan_method: breezy
     notes: Video AI
     enabled: true
   - name: McDonalds
@@ -1753,8 +1767,9 @@ tracked_companies:
     notes: Sony PlayStation. Workday endpoint is in maintenance; SIE Global jobs live on Greenhouse.
     enabled: true
   - name: PluralSight
-    careers_url: https://www.pluralsight.com/careers
-    scan_method: websearch
+    careers_url: https://pluralsight.wd1.myworkdayjobs.com/Careers
+    api: https://pluralsight.wd1.myworkdayjobs.com/Careers
+    scan_method: workday
     enabled: true
   - name: PMG
     careers_url: https://www.pmg.com/careers
@@ -2064,8 +2079,9 @@ tracked_companies:
     notes: Social media management
     enabled: true
   - name: SPS Commerce
-    careers_url: https://www.spscommerce.com/careers
-    scan_method: websearch
+    careers_url: https://spscommerce.wd108.myworkdayjobs.com/SPS
+    api: https://spscommerce.wd108.myworkdayjobs.com/SPS
+    scan_method: workday
     enabled: true
   - name: Stack AI
     careers_url: https://jobs.ashbyhq.com/stack-ai
@@ -2132,8 +2148,9 @@ tracked_companies:
     notes: Programmatic advertising
     enabled: true
   - name: Thrivent
-    careers_url: https://www.thrivent.com/careers
-    scan_method: websearch
+    careers_url: https://thrivent.wd5.myworkdayjobs.com/External
+    api: https://thrivent.wd5.myworkdayjobs.com/External
+    scan_method: workday
     enabled: true
   - name: TikTok
     careers_url: https://lifeattiktok.com
@@ -2173,8 +2190,9 @@ tracked_companies:
     scan_method: workday
     enabled: true
   - name: TruStage
-    careers_url: https://www.trustage.com/careers
-    scan_method: websearch
+    careers_url: https://trustage.wd1.myworkdayjobs.com/TruStage
+    api: https://trustage.wd1.myworkdayjobs.com/TruStage
+    scan_method: workday
     enabled: true
   - name: Truveta
     careers_url: https://job-boards.greenhouse.io/truveta
@@ -2288,10 +2306,11 @@ tracked_companies:
     notes: Market maker
     enabled: true
   - name: Visa
-    careers_url: https://jobs.smartrecruiters.com/Visa
-    api: https://api.smartrecruiters.com/v1/companies/Visa/postings?limit=100&status=PUBLIC
-    scan_method: smartrecruiters
-    notes: Payments network
+    careers_url: https://visa.wd5.myworkdayjobs.com/Visa
+    api: https://visa.wd5.myworkdayjobs.com/Visa
+    scan_method: workday
+    notes: Payments network. Moved off SmartRecruiters — the old board still resolves and
+      reports companyIdentifier "Visa" but serves 0 postings.
     enabled: true
   - name: Voleon
     careers_url: https://www.voleon.com/careers
@@ -2369,8 +2388,9 @@ tracked_companies:
     notes: Alphabet drone delivery
     enabled: true
   - name: Wisk
-    careers_url: https://www.wisk.aero/careers
-    scan_method: websearch
+    careers_url: https://wisk.wd108.myworkdayjobs.com/Wisk_Careers
+    api: https://wisk.wd108.myworkdayjobs.com/Wisk_Careers
+    scan_method: workday
     enabled: true
   - name: Wispr AI
     careers_url: https://jobs.ashbyhq.com/wispr-flow
@@ -2516,6 +2536,7 @@ tracked_companies:
     careers_url: https://jobs.ashbyhq.com/pika
     api: https://api.ashbyhq.com/posting-api/job-board/pika
     scan_method: ashby
+    notes: AI video generation. Competing with Runway.
     enabled: true
   - name: Luma AI
     careers_url: https://lumalabs.ai/careers
@@ -2548,9 +2569,11 @@ tracked_companies:
     scan_method: greenhouse
     enabled: true
   - name: Weights & Biases
-    careers_url: https://wandb.ai/site/careers
+    careers_url: https://coreweave.com/careers/weights-biases
     scan_method: websearch
-    enabled: true
+    notes: Redundant — acquired by CoreWeave; W&B roles now post to the CoreWeave
+      Greenhouse board, already scanned above.
+    enabled: false
   - name: Rime
     careers_url: https://jobs.ashbyhq.com/rime
     api: https://api.ashbyhq.com/posting-api/job-board/rime
@@ -2911,10 +2934,10 @@ tracked_companies:
     notes: Neobank (UK).
     enabled: true
   - name: Wise
-    careers_url: https://wise.jobs
-    scan_method: websearch
-    scan_query: site:wise.jobs ("software engineer" OR "engineer") 2026
-    notes: Cross-border payments (formerly TransferWise).
+    careers_url: https://jobs.smartrecruiters.com/Wise
+    api: https://api.smartrecruiters.com/v1/companies/Wise/postings
+    scan_method: smartrecruiters
+    notes: Cross-border payments (formerly TransferWise). Note the Greenhouse "wise" board is an unrelated insurance company — do not use it.
     enabled: true
   - name: Canva
     careers_url: https://www.canva.com/careers/jobs/
@@ -2926,8 +2949,9 @@ tracked_companies:
     careers_url: https://www.loom.com/careers
     scan_method: websearch
     scan_query: site:loom.com/careers ("software engineer" OR "engineer") 2026
-    notes: Async video. Acquired by Atlassian — most jobs may be on Atlassian board.
-    enabled: true
+    notes: Redundant — loom.com/careers now redirects to the Atlassian all-jobs board,
+      already scanned above via scan_method atlassian.
+    enabled: false
   - name: Qdrant
     careers_url: https://qdrant.tech/careers
     scan_method: websearch
@@ -2955,9 +2979,9 @@ tracked_companies:
     api: https://boards-api.greenhouse.io/v1/boards/coreweave/jobs
     scan_method: greenhouse
   - name: Zed
-    careers_url: https://zed.dev/jobs
-    scan_method: websearch
-    scan_query: site:zed.dev "software engineer" OR "engineer" 2026
+    careers_url: https://jobs.ashbyhq.com/zed
+    api: https://api.ashbyhq.com/posting-api/job-board/zed
+    scan_method: ashby
     notes: Code editor by Zed Industries. High-performance Rust.
     enabled: true
   - name: Solana Labs
@@ -2989,9 +3013,9 @@ tracked_companies:
     api: https://boards-api.greenhouse.io/v1/boards/lovable/jobs
     scan_method: greenhouse
   - name: Exa
-    careers_url: https://exa.ai/careers
-    scan_method: websearch
-    scan_query: site:exa.ai "engineer" 2026
+    careers_url: https://jobs.ashbyhq.com/exa
+    api: https://api.ashbyhq.com/posting-api/job-board/exa
+    scan_method: ashby
     notes: Semantic search engine (became unicorn May 2026). Series C $250M.
     enabled: true
   - name: Nexthop AI
@@ -3046,9 +3070,9 @@ tracked_companies:
     notes: Solana DEX aggregator. DeFi.
     enabled: true
   - name: Phantom Wallet
-    careers_url: https://phantom.app/careers
-    scan_method: websearch
-    scan_query: site:phantom.app "engineer" 2026
+    careers_url: https://jobs.ashbyhq.com/phantom
+    api: https://api.ashbyhq.com/posting-api/job-board/phantom
+    scan_method: ashby
     notes: Multi-chain crypto wallet. Series C.
     enabled: true
   - name: Alchemy
@@ -3096,12 +3120,6 @@ tracked_companies:
     scan_method: ashby
     notes: Speech-to-text AI. Series B.
     enabled: true
-  - name: Pika Labs
-    careers_url: https://pika.art/careers
-    scan_method: websearch
-    scan_query: site:pika.art "engineer" 2026
-    notes: AI video generation. Competing with Runway.
-    enabled: true
   - name: Modelz
     careers_url: https://modelz.ai/careers
     scan_method: websearch
@@ -3130,8 +3148,9 @@ tracked_companies:
     careers_url: https://github.com/careers
     scan_method: websearch
     scan_query: site:github.com/careers "engineer" 2026
-    notes: AI coding assistant. Part of GitHub.
-    enabled: true
+    notes: AI coding assistant. Redundant — Copilot roles post to the main GitHub board,
+      already scanned above via scan_method githubcareers.
+    enabled: false
   - name: Tabnine
     careers_url: https://www.tabnine.com/careers
     scan_method: websearch
@@ -3142,8 +3161,9 @@ tracked_companies:
     careers_url: https://codeium.com/careers
     scan_method: websearch
     scan_query: site:codeium.com "engineer" 2026
-    notes: Free AI coding assistant. Series B.
-    enabled: true
+    notes: Redundant — codeium.com now redirects to Cognition's Ashby board (Windsurf/Devin),
+      already scanned above as "Cognition AI" on the same endpoint.
+    enabled: false
   - name: Snorkel AI
     careers_url: https://snorkel.ai/careers
     api: https://api.ashbyhq.com/posting-api/job-board/snorkel
@@ -3151,10 +3171,11 @@ tracked_companies:
     notes: Data programming. ML infrastructure. Series B.
     enabled: true
   - name: Landing AI
-    careers_url: https://www.landing.ai/careers
-    scan_method: websearch
-    scan_query: site:landing.ai "engineer" 2026
-    notes: Computer vision AI. Founded by Andrew Ng. Series unknown.
+    careers_url: https://jobs.lever.co/AIFund
+    api: https://api.lever.co/v0/postings/AIFund?mode=json
+    scan_method: lever
+    notes: Computer vision AI. Founded by Andrew Ng. Hiring runs through the shared AI Fund
+      Lever board, so postings cover other AI Fund portfolio companies too.
     enabled: true
   - name: Twelve Labs
     careers_url: https://twelvelabs.io/careers
@@ -3249,5 +3270,5 @@ tracked_companies:
     careers_url: https://stripe.com/climate/careers
     scan_method: websearch
     scan_query: site:stripe.com/climate "engineer" 2026
-    notes: Stripe's climate tech division.
-    enabled: true
+    notes: Stripe's climate tech division. Redundant — these roles are on the main Stripe Greenhouse board already scanned above.
+    enabled: false

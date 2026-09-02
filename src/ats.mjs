@@ -239,6 +239,29 @@ export const ATS = {
     },
   },
 
+  breezy: {
+    // Breezy HR exposes every published posting as a flat JSON array at
+    // https://{slug}.breezy.hr/json — no pagination, no auth.
+    // Job URL: https://{slug}.breezy.hr/p/{friendly_id}
+    boardApi: slug => `https://${slug}.breezy.hr/json`,
+    parse(json, company) {
+      return (Array.isArray(json) ? json : []).map(j => ({
+        company,
+        role:     j.name || '',
+        link:     j.url || '',
+        // location.name is already "City, ST"; fall back to the country for remote roles.
+        location: j.location?.name || j.location?.country?.name || '',
+        posted:   toDate(j.published_date),
+      }));
+    },
+    parseLink(host, path) {
+      const h = host.match(/^([a-z0-9-]+)\.breezy\.hr$/i);
+      if (!h) return null;
+      const m = path.match(/^\/p\/([a-z0-9-]+)/i);
+      return m ? { type: 'breezy', slug: h[1], id: m[1] } : null;
+    },
+  },
+
   saicjobs: {
     // SAIC uses Jobvite/Talemetry at jobs.saic.com with a public JSON search API.
     // URL pattern: /search/jobs?format=json&per_page=50&page=N
@@ -1029,6 +1052,7 @@ export function detectApi(company) {
   if (company.api?.includes('career-schwab.icims.com')) return { type: 'schwabicims', url: company.api };
   if (company.api?.includes('.icims.com'))              return { type: 'icims',       url: company.api };
   if (company.api?.includes('apply.workable.com'))      return { type: 'workable',    url: company.api };
+  if (company.api?.includes('.breezy.hr'))              return { type: 'breezy',      url: company.api };
   if (company.api?.includes('jobs.saic.com'))           return { type: 'saicjobs',    url: company.api };
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };
   if (company.api?.includes('api.lifeattiktok.com')) return { type: 'tiktok',        url: company.api };

@@ -240,10 +240,11 @@ tracked_companies:
     scan_method: greenhouse
     enabled: true
   - name: Retool
-    careers_url: https://retool.com/careers
-    scan_method: websearch
-    scan_query: site:retool.com/careers "software engineer" OR "engineer" 2026
-    notes: Internal tools builder. Lever ATS backend.
+    careers_url: https://jobs.gem.com/retool
+    api: https://jobs.gem.com/retool
+    scan_method: gem
+    notes: Internal tools builder. Gem-hosted board; Gem exposes no post date, so these
+      always pass the recency filter.
     enabled: true
   - name: Linear
     careers_url: https://jobs.ashbyhq.com/linear
@@ -820,9 +821,10 @@ tracked_companies:
     enabled: true
   - name: Credit Karma
     careers_url: https://jobs.intuit.com/search-jobs/Credit%20Karma/27595/1
-    scan_query: site:jobs.intuit.com "Credit Karma" "software engineer" OR "backend engineer" 2026
-    scan_method: websearch
-    notes: Personal finance
+    api: https://jobs.intuit.com/search-jobs/results?ActiveFacetID=0&RecordsPerPage=100&Distance=50&RadiusUnitType=0&Keywords=Credit%20Karma&Location=&ShowRadius=False&IsPagination=False&SearchResultsModuleName=Search+Results&SearchFiltersModuleName=Search+Filters&SortCriteria=0&SortDirection=0&SearchType=5
+    scan_method: radancy
+    notes: Personal finance, part of Intuit. Radancy board filtered by the "Credit Karma"
+      keyword. No post date exposed, so these always pass the recency filter.
     enabled: true
   - name: Cvent
     careers_url: https://careers.cvent.com
@@ -953,8 +955,10 @@ tracked_companies:
     scan_method: greenhouse
     enabled: true
   - name: EUNA Solutions
-    careers_url: https://www.eunasolutions.com/careers
-    scan_method: websearch
+    careers_url: https://euna.bamboohr.com/careers
+    api: https://euna.bamboohr.com/careers/list
+    scan_method: bamboohr
+    notes: BambooHR exposes no post date, so these always pass the recency filter.
     enabled: true
   - name: Exiger
     careers_url: https://job-boards.greenhouse.io/exiger
@@ -1467,8 +1471,9 @@ tracked_companies:
     scan_method: smartrecruiters
     enabled: true
   - name: Millenium Management
-    careers_url: https://mlp.com/careers
-    scan_method: websearch
+    careers_url: https://career.mlp.com/careers
+    api: https://mlp.eightfold.ai/api/apply/v2/jobs?domain=mlp.com&sort_by=relevance
+    scan_method: eightfold
     notes: Hedge fund
     enabled: true
   - name: Minitab
@@ -2166,8 +2171,10 @@ tracked_companies:
     notes: Dating app
     enabled: true
   - name: Tive
-    careers_url: https://www.tive.com/careers
-    scan_method: websearch
+    careers_url: https://ats.rippling.com/tive-careers/jobs
+    api: https://api.rippling.com/platform/api/ats/v1/board/tive-careers/jobs
+    scan_method: rippling
+    notes: Rippling exposes no post date, so these always pass the recency filter.
     enabled: true
   - name: Tower Research Capital
     careers_url: https://www.towerresearchcapital.com/careers
@@ -3200,9 +3207,9 @@ tracked_companies:
     notes: Content generation. Competing with Jasper.
     enabled: true
   - name: D-ID
-    careers_url: https://www.d-id.com/careers
-    scan_method: websearch
-    scan_query: site:d-id.com "engineer" 2026
+    careers_url: https://apply.workable.com/d-id/
+    api: https://apply.workable.com/api/v1/widget/accounts/d-id
+    scan_method: workable
     notes: AI video generation (avatars). Series B.
     enabled: true
   - name: Opus Clip

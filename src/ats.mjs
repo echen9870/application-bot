@@ -315,6 +315,221 @@ export const ATS = {
     },
   },
 
+  rippling: {
+    // Rippling ATS public board API — a flat JSON array, no auth or paging:
+    //   https://api.rippling.com/platform/api/ats/v1/board/{slug}/jobs
+    // Job URL: https://ats.rippling.com/{slug}/jobs/{uuid} (given as `url`).
+    // No post date is exposed on either the list or the per-job endpoint, so `posted`
+    // is left empty — jobs.mjs treats empty as passing the recency filter.
+    boardApi: slug => `https://api.rippling.com/platform/api/ats/v1/board/${slug}/jobs`,
+    parse(json, company) {
+      return (Array.isArray(json) ? json : []).map(j => ({
+        company,
+        role:     j.name || '',
+        link:     j.url || '',
+        location: j.workLocation?.label || '',
+        posted:   '',
+      }));
+    },
+    parseLink(host, path) {
+      if (host !== 'ats.rippling.com') return null;
+      const m = path.match(/^\/([^/]+)\/jobs\/([0-9a-f-]{36})/i);
+      return m ? { type: 'rippling', slug: m[1], id: m[2] } : null;
+    },
+  },
+
+  radancy: {
+    // Radancy / TalentBrew career sites (jobs.{company}.com) expose their search as
+    // JSON-wrapped HTML at /search-jobs/results?<query>. The api: URL in portals.yml is
+    // that full results URL, so per-company filters (Keywords, category facets) are
+    // expressed there rather than in code.
+    // Job URL: {origin}{href} from each result anchor.
+    // Listings carry no post date, so `posted` is left empty (passes recency).
+    // Locations are often the literal "Multiple Locations", which will not pass isUS().
+    boardApi: url => url,
+    async fetchAll(url, _fetchJson, opts) {
+      const origin = (() => { try { return new URL(url).origin; } catch { return ''; } })();
+      if (!origin) return { _items: [], _origin: '' };
+      const items = [];
+      const PER = 100;
+      const base = url.replace(/[?&]CurrentPage=\d+/i, '');
+      const sep = base.includes('?') ? '&' : '?';
+      // 5 pages = 500 jobs.
+      for (let page = 1; page <= 5; page++) {
+        let html;
+        try {
+          const r = await fetch(`${base}${sep}CurrentPage=${page}`, {
+            headers: { 'User-Agent': 'Mozilla/5.0', 'X-Requested-With': 'XMLHttpRequest' },
+            signal: AbortSignal.timeout(opts?.timeoutMs || 10_000),
+          });
+          if (!r.ok) break;
+          html = (await r.json())?.results || '';
+        } catch { break; }
+        const found = [...html.matchAll(
+          /<a href="([^"]+)"[\s\S]{0,400}?<h2[^>]*>([\s\S]*?)<\/h2>[\s\S]{0,300}?<span class="job-location">([^<]*)</g
+        )];
+        items.push(...found.map(m => ({ href: m[1], title: m[2], loc: m[3] })));
+        if (found.length < PER) break;
+      }
+      return { _items: items, _origin: origin };
+    },
+    parse(json, company) {
+      const { _items: items = [], _origin: origin = '' } = json || {};
+      const unescape = s => String(s || '')
+        .replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"')
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+        .replace(/<[^>]+>/g, '').trim();
+      return items.map(i => ({
+        company,
+        role:     unescape(i.title),
+        link:     i.href.startsWith('http') ? i.href : `${origin}${i.href}`,
+        location: unescape(i.loc),
+        posted:   '',
+      }));
+    },
+    parseLink(host, path) {
+      // /job/{city}/{title-slug}/{orgId}/{jobId}
+      const m = path.match(/^\/job\/[^/]+\/[^/]+\/(\d+)\/(\d+)/);
+      return m ? { type: 'radancy', host, orgId: m[1], id: m[2] } : null;
+    },
+  },
+
+  gem: {
+    // Gem-hosted boards (jobs.gem.com/{slug}) render client-side from a GraphQL API at
+    // https://jobs.gem.com/api/public/graphql. The JobBoardList query below is the one
+    // the board's own bundle sends; `boardId` is the vanity slug from the URL.
+    // The api: URL in portals.yml is the board page, e.g. https://jobs.gem.com/retool
+    // Job URL: https://jobs.gem.com/{slug}/{postingId}
+    // The schema exposes no post date, so `posted` is left empty (passes recency).
+    boardApi: slug => `https://jobs.gem.com/${slug}`,
+    async fetchAll(url, _fetchJson, opts) {
+      const slug = (url.match(/jobs\.gem\.com\/([^/?#]+)/) || [])[1] || '';
+      if (!slug) return { _postings: [], _slug: '' };
+      const query = `query JobBoardList($boardId: String!) {
+        oatsExternalJobPostings(boardId: $boardId) {
+          jobPostings { id extId title locations { name city isoCountry isRemote } }
+        }
+      }`;
+      try {
+        const r = await fetch('https://jobs.gem.com/api/public/graphql', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'User-Agent': 'Mozilla/5.0' },
+          body: JSON.stringify({ query, variables: { boardId: slug } }),
+          signal: AbortSignal.timeout(opts?.timeoutMs || 10_000),
+        });
+        if (!r.ok) return { _postings: [], _slug: slug };
+        const j = await r.json();
+        return { _postings: j?.data?.oatsExternalJobPostings?.jobPostings || [], _slug: slug };
+      } catch { return { _postings: [], _slug: slug }; }
+    },
+    parse(json, company) {
+      const { _postings: postings = [], _slug: slug = '' } = json || {};
+      return postings.map(j => {
+        const locs = j.locations || [];
+        const loc = locs[0] || {};
+        return {
+          company,
+          role:     j.title || '',
+          link:     `https://jobs.gem.com/${slug}/${j.id}`,
+          location: loc.isRemote ? 'Remote'
+                  : [loc.name || loc.city, loc.isoCountry].filter(Boolean).join(', '),
+          posted:   '',
+        };
+      });
+    },
+    parseLink(host, path) {
+      if (host !== 'jobs.gem.com') return null;
+      // Posting ids are base64 and can carry "=" padding.
+      const m = path.match(/^\/([^/]+)\/([A-Za-z0-9_=-]{8,})/);
+      return m ? { type: 'gem', slug: m[1], id: m[2] } : null;
+    },
+  },
+
+  bamboohr: {
+    // BambooHR hosted boards expose the full opening list as JSON at
+    //   https://{slug}.bamboohr.com/careers/list
+    // Job URL: https://{slug}.bamboohr.com/careers/{id}
+    // No post date is exposed, so `posted` is left empty (passes the recency filter).
+    boardApi: slug => `https://${slug}.bamboohr.com/careers/list`,
+    async fetchAll(url, _fetchJson, opts) {
+      // BambooHR 403s requests without a browser User-Agent.
+      try {
+        const r = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(opts?.timeoutMs || 10_000),
+        });
+        if (!r.ok) return { result: [], _slug: '' };
+        const j = await r.json();
+        return { result: j.result || [], _slug: (url.match(/https:\/\/([^.]+)\.bamboohr\.com/) || [])[1] || '' };
+      } catch { return { result: [], _slug: '' }; }
+    },
+    parse(json, company) {
+      const { result = [], _slug: slug = '' } = json || {};
+      return result.map(j => {
+        const l = j.location || {};
+        const a = j.atsLocation || {};
+        const city = l.city || a.city || '';
+        const region = l.state || a.state || a.province || '';
+        const country = a.country || '';
+        return {
+          company,
+          role:     j.jobOpeningName || '',
+          link:     `https://${slug}.bamboohr.com/careers/${j.id}`,
+          location: j.isRemote ? 'Remote' : [city, region, country].filter(Boolean).join(', '),
+          posted:   '',
+        };
+      });
+    },
+    parseLink(host, path) {
+      const h = host.match(/^([a-z0-9-]+)\.bamboohr\.com$/i);
+      if (!h) return null;
+      const m = path.match(/^\/careers\/(\d+)/);
+      return m ? { type: 'bamboohr', slug: h[1], id: m[1] } : null;
+    },
+  },
+
+  eightfold: {
+    // Eightfold AI career sites expose a public search API:
+    //   https://{tenant}.eightfold.ai/api/apply/v2/jobs?domain={domain}&start=N&num=M
+    // `domain` is the customer's own domain and must match what the tenant is
+    // registered under, so the full URL (with domain) is what goes in portals.yml.
+    // Job URL: https://{tenant}.eightfold.ai/careers/job/{id}
+    boardApi: url => url,
+    async fetchAll(url, fetchJson, opts) {
+      const all = [];
+      const base = url.replace(/[?&]start=\d+/, '');
+      const sep = base.includes('?') ? '&' : '?';
+      // The API returns 10 per call and ignores a larger `num`, so page by `start`.
+      const SIZE = 10;
+      // 25 pages = 250 jobs, above the couple hundred these boards carry.
+      for (let page = 0; page < 25; page++) {
+        let json;
+        try { json = await fetchJson(`${base}${sep}start=${page * SIZE}&num=${SIZE}`, opts); } catch { break; }
+        const positions = json?.positions || [];
+        all.push(...positions);
+        if (positions.length < SIZE || all.length >= (json?.count ?? 0)) break;
+      }
+      return { _positions: all, _tenant: (url.match(/https:\/\/([^.]+)\.eightfold\.ai/) || [])[1] || '' };
+    },
+    parse(json, company) {
+      const { _positions: positions = [], _tenant: tenant = '' } = json || {};
+      return positions.map(j => ({
+        company,
+        role:     j.name || j.posting_name || '',
+        link:     `https://${tenant}.eightfold.ai/careers/job/${j.id}`,
+        // Already "City, State, Country"; multi-location roles list the rest in `locations`.
+        location: j.location || (j.locations || [])[0] || '',
+        posted:   j.t_create ? toDate(new Date(j.t_create * 1000).toISOString()) : '',
+      }));
+    },
+    parseLink(host, path) {
+      const h = host.match(/^([a-z0-9-]+)\.eightfold\.ai$/i);
+      if (!h) return null;
+      const m = path.match(/^\/careers\/job\/(\d+)/);
+      return m ? { type: 'eightfold', tenant: h[1], id: m[1] } : null;
+    },
+  },
+
   phenom: {
     // Phenom People career sites (careers.{company}.com) expose a JSON data API at
     // /widgets. Posting a body with ddoKey "refineSearch" returns the job list with
@@ -1198,6 +1413,11 @@ export function detectApi(company) {
   if (company.api?.includes('apply.workable.com'))      return { type: 'workable',    url: company.api };
   if (company.api?.includes('.breezy.hr'))              return { type: 'breezy',      url: company.api };
   if (company.api?.includes('jobs.deel.com'))           return { type: 'deel',        url: company.api };
+  if (company.api?.includes('api.rippling.com'))        return { type: 'rippling',    url: company.api };
+  if (company.api?.includes('.bamboohr.com'))           return { type: 'bamboohr',    url: company.api };
+  if (company.api?.includes('jobs.gem.com'))            return { type: 'gem',         url: company.api };
+  if (company.api?.includes('/search-jobs/results'))    return { type: 'radancy',     url: company.api };
+  if (company.api?.includes('.eightfold.ai'))           return { type: 'eightfold',   url: company.api };
   if (/\/widgets$/.test(company.api || ''))             return { type: 'phenom',      url: company.api };
   if (company.api?.includes('jobs.saic.com'))           return { type: 'saicjobs',    url: company.api };
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };

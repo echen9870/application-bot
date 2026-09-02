@@ -322,7 +322,8 @@ tracked_companies:
     enabled: true
   - name: Activision Blizzard
     careers_url: https://careers.activisionblizzard.com
-    scan_method: websearch
+    api: https://careers.activisionblizzard.com/widgets
+    scan_method: phenom
     notes: Gaming
     enabled: true
   - name: Acuity
@@ -2243,7 +2244,8 @@ tracked_companies:
     enabled: true
   - name: United Airlines
     careers_url: https://careers.united.com
-    scan_method: websearch
+    api: https://careers.united.com/widgets
+    scan_method: phenom
     notes: Airline
     enabled: true
   - name: Universal Music Group

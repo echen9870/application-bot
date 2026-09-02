@@ -315,6 +315,97 @@ export const ATS = {
     },
   },
 
+  phenom: {
+    // Phenom People career sites (careers.{company}.com) expose a JSON data API at
+    // /widgets. Posting a body with ddoKey "refineSearch" returns the job list with
+    // full location and posted date. The api: URL in portals.yml is that endpoint:
+    //   https://careers.united.com/widgets
+    //
+    // The request needs per-site values (pageId, locale, country, baseUrl) that live in
+    // a `var phApp = {...}` blob on the careers page, so fetchAll reads that first
+    // rather than hardcoding them — pageId differs per site (page13 vs page19) and
+    // changes when a site is rebuilt.
+    //
+    // Job URL: {baseUrl}job/{jobId}/{title-slug}
+    boardApi: url => url,
+    async fetchAll(url, _fetchJson, opts) {
+      const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)';
+      const timeoutMs = opts?.timeoutMs || 10_000;
+      let host;
+      try { host = new URL(url).host; } catch { return { _jobs: [], _base: '' }; }
+
+      // Read phApp config off whichever landing path the site serves it from.
+      let cfg = null;
+      for (const p of ['/us/en', '/', '/en']) {
+        try {
+          const r = await fetch(`https://${host}${p}`, {
+            headers: { 'User-Agent': UA }, redirect: 'follow', signal: AbortSignal.timeout(timeoutMs),
+          });
+          if (!r.ok) continue;
+          const html = await r.text();
+          const i = html.indexOf('var phApp');
+          if (i < 0) continue;
+          const tail = html.slice(i, i + 8000);
+          const objStr = tail.slice(tail.indexOf('{'));
+          let depth = 0, end = 0;
+          for (let k = 0; k < objStr.length; k++) {
+            if (objStr[k] === '{') depth++;
+            else if (objStr[k] === '}' && --depth === 0) { end = k + 1; break; }
+          }
+          try { cfg = JSON.parse(objStr.slice(0, end)); } catch { /* try next path */ }
+          if (cfg) break;
+        } catch { /* try next path */ }
+      }
+      if (!cfg) return { _jobs: [], _base: '' };
+
+      const base = cfg.baseUrl || `https://${host}/`;
+      const all = [];
+      const SIZE = 50;
+      // 4 pages = 200 jobs, newest-first; these boards run in the low hundreds.
+      for (let page = 0; page < 4; page++) {
+        const body = {
+          lang: cfg.locale || 'en_us', deviceType: 'desktop', country: cfg.country || 'us',
+          pageName: 'search-results', ddoKey: 'refineSearch', sortBy: '', subsearch: '',
+          from: page * SIZE, jobs: true, counts: true,
+          all_fields: ['category', 'country', 'state', 'city'], size: SIZE, clearAll: false,
+          jdsource: 'facets', isSliderEnable: false, pageId: cfg.pageId || 'page1',
+          siteType: cfg.siteType || 'external', keywords: '', global: true,
+        };
+        let json;
+        try {
+          const r = await fetch(cfg.widgetApiEndpoint || `https://${host}/widgets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'User-Agent': UA, 'Referer': base },
+            body: JSON.stringify(body),
+            signal: AbortSignal.timeout(timeoutMs),
+          });
+          if (!r.ok) break;
+          json = await r.json();
+        } catch { break; }
+        const jobs = json?.refineSearch?.data?.jobs || [];
+        all.push(...jobs);
+        if (jobs.length < SIZE || all.length >= (json?.refineSearch?.totalHits ?? 0)) break;
+      }
+      return { _jobs: all, _base: base };
+    },
+    parse(json, company) {
+      const { _jobs: jobs = [], _base: base = '' } = json || {};
+      return jobs.map(j => ({
+        company,
+        role:     j.title || '',
+        // Title slug: the site accepts any slug, but match its own dash-joined form.
+        link:     `${base}job/${j.jobId}/${String(j.title || '').replace(/[^a-zA-Z0-9]+/g, '-').replace(/^-|-$/g, '')}`,
+        // `location` is already "City, State, Country" — what isUS() wants.
+        location: j.location || j.cityStateCountry || j.cityState || '',
+        posted:   toDate(j.postedDate || j.dateCreated),
+      }));
+    },
+    parseLink(host, path) {
+      const m = path.match(/^(?:\/[a-z]{2}\/[a-z]{2})?\/job\/([A-Za-z0-9-]+)\//);
+      return m ? { type: 'phenom', host, id: m[1] } : null;
+    },
+  },
+
   saicjobs: {
     // SAIC uses Jobvite/Talemetry at jobs.saic.com with a public JSON search API.
     // URL pattern: /search/jobs?format=json&per_page=50&page=N
@@ -1107,6 +1198,7 @@ export function detectApi(company) {
   if (company.api?.includes('apply.workable.com'))      return { type: 'workable',    url: company.api };
   if (company.api?.includes('.breezy.hr'))              return { type: 'breezy',      url: company.api };
   if (company.api?.includes('jobs.deel.com'))           return { type: 'deel',        url: company.api };
+  if (/\/widgets$/.test(company.api || ''))             return { type: 'phenom',      url: company.api };
   if (company.api?.includes('jobs.saic.com'))           return { type: 'saicjobs',    url: company.api };
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };
   if (company.api?.includes('api.lifeattiktok.com')) return { type: 'tiktok',        url: company.api };

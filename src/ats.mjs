@@ -262,6 +262,59 @@ export const ATS = {
     },
   },
 
+  deel: {
+    // Deel's hosted job boards (jobs.deel.com/{slug}) are a Next.js app with no public
+    // JSON API — every endpoint under /api 404s. The full posting list is server-rendered
+    // into the RSC payload, though, as self.__next_f.push([1,"...json..."]) chunks, so we
+    // reassemble those chunks and pull the posting records out of the result.
+    // Job URL: https://jobs.deel.com/{slug}/job-details/{postingId}/overview
+    //
+    // This parses a private payload shape rather than a supported API, so it is more
+    // brittle than the other adapters here — a Deel frontend rewrite will break it. It
+    // fails soft (returns []) so a break shows up as an "Empty ATS" line, not a scan error.
+    boardApi: slug => `https://jobs.deel.com/${slug}`,
+    async fetchAll(url, _fetchJson, opts) {
+      try {
+        const r = await fetch(url, {
+          headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'text/html' },
+          signal: AbortSignal.timeout(opts?.timeoutMs || 10_000),
+        });
+        if (!r.ok) return { _rsc: '', _slug: '' };
+        const html = await r.text();
+        // Each push carries a JS string literal; concatenating them rebuilds the payload.
+        const chunks = [...html.matchAll(/self\.__next_f\.push\(\[1,"((?:[^"\\]|\\.)*)"\]\)/g)];
+        let rsc = chunks.map(m => m[1]).join('');
+        try { rsc = JSON.parse(`"${rsc}"`); } catch { rsc = rsc.replace(/\\"/g, '"'); }
+        return { _rsc: rsc, _slug: (url.match(/jobs\.deel\.com\/([^/?#]+)/) || [])[1] || '' };
+      } catch { return { _rsc: '', _slug: '' }; }
+    },
+    parse(json, company) {
+      const { _rsc: rsc = '', _slug: slug = '' } = json || {};
+      if (!rsc) return [];
+      // Posting records start with {"id":"<uuid>","jobId":"<uuid>","title":"..."; slice each
+      // record at the next record boundary so location/date lookups stay inside one posting.
+      const starts = [...rsc.matchAll(/\{"id":"([0-9a-f-]{36})","jobId":"[0-9a-f-]{36}","title":"((?:[^"\\]|\\.)*)"/g)];
+      return starts.map((m, i) => {
+        const seg = rsc.slice(m.index, starts[i + 1]?.index ?? m.index + 4000);
+        const loc = seg.match(/"jobLocations":\[\{[^\]]*?"location":\{[^}]*?"name":"((?:[^"\\]|\\.)*)"/);
+        const created = seg.match(/"createdAt":"([\dT:.\-]+Z)"/);
+        return {
+          company,
+          role:     m[2].replace(/\\(.)/g, '$1').trim(),
+          link:     `https://jobs.deel.com/${slug}/job-details/${m[1]}/overview`,
+          // Remote-only postings carry no jobLocations entry.
+          location: loc ? loc[1].replace(/\\(.)/g, '$1') : 'Remote',
+          posted:   created ? toDate(created[1]) : '',
+        };
+      });
+    },
+    parseLink(host, path) {
+      if (host !== 'jobs.deel.com') return null;
+      const m = path.match(/^\/([^/]+)\/job-details\/([0-9a-f-]{36})/i);
+      return m ? { type: 'deel', slug: m[1], id: m[2] } : null;
+    },
+  },
+
   saicjobs: {
     // SAIC uses Jobvite/Talemetry at jobs.saic.com with a public JSON search API.
     // URL pattern: /search/jobs?format=json&per_page=50&page=N
@@ -1053,6 +1106,7 @@ export function detectApi(company) {
   if (company.api?.includes('.icims.com'))              return { type: 'icims',       url: company.api };
   if (company.api?.includes('apply.workable.com'))      return { type: 'workable',    url: company.api };
   if (company.api?.includes('.breezy.hr'))              return { type: 'breezy',      url: company.api };
+  if (company.api?.includes('jobs.deel.com'))           return { type: 'deel',        url: company.api };
   if (company.api?.includes('jobs.saic.com'))           return { type: 'saicjobs',    url: company.api };
   if (company.api?.includes('careers.bain.com'))        return { type: 'bainrss',     url: company.api };
   if (company.api?.includes('api.lifeattiktok.com')) return { type: 'tiktok',        url: company.api };

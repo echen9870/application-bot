@@ -2922,10 +2922,11 @@ tracked_companies:
     notes: Booking.com / Booking Holdings.
     enabled: true
   - name: Klarna
-    careers_url: https://www.klarna.com/careers/
-    scan_method: websearch
-    scan_query: site:klarna.com/careers ("software engineer" OR "engineer") 2026
-    notes: BNPL fintech (Sweden).
+    careers_url: https://jobs.deel.com/klarna
+    api: https://jobs.deel.com/klarna
+    scan_method: deel
+    notes: BNPL fintech (Sweden). Deel-hosted board — scraped from the server-rendered
+      payload since Deel exposes no public JSON API.
     enabled: true
   - name: Revolut
     careers_url: https://www.revolut.com/careers/

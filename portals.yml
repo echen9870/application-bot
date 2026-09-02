@@ -1708,10 +1708,6 @@ tracked_companies:
     scan_method: workday
     notes: Engineering/defense
     enabled: true
-  - name: Patterned Learning AI
-    careers_url: https://www.patternedlearningai.com/careers
-    scan_method: websearch
-    enabled: true
   - name: Peak6
     careers_url: https://peak6.com/careers/
     scan_method: websearch

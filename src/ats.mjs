@@ -79,23 +79,34 @@ function workdayLocation(j) {
 // this stays a small number of extra requests; anything that fails silently
 // keeps the externalPath-slug fallback above.
 const WORKDAY_MAX_DETAIL_FETCHES = 30;
+// Parallel per-job detail lookups within a single Workday board. Kept modest so a
+// board with many multi-location postings does not monopolise the scan's connections.
+const WORKDAY_DETAIL_CONCURRENCY = 3;
 
 async function resolveWorkdayMultiLocations(postings, info, fetchJson, opts) {
   if (!fetchJson || !info) return;
   const multi = postings.filter(isWorkdayMultiLocation).slice(0, WORKDAY_MAX_DETAIL_FETCHES);
-  for (const j of multi) {
-    try {
-      // externalPath already begins with "/job/", so the base takes no extra segment.
-      const d = await fetchJson(`https://${info.host}/wday/cxs/${info.tenant}/${info.site}${j.externalPath}`, opts);
-      const pi = d?.jobPostingInfo || {};
-      const locs = [pi.location, ...(pi.additionalLocations || [])].filter(Boolean);
-      if (!locs.length) continue;
-      const joined  = locs.join('; ');
-      const country = pi.country?.descriptor;
-      // Some tenants already spell the country into each location entry.
-      j._resolvedLocation = country && !joined.includes(country) ? `${joined}, ${country}` : joined;
-    } catch { /* keep the slug fallback */ }
+  // These detail lookups used to run one at a time, which made a board with many
+  // multi-location postings the slowest thing in the scan (30 serial round trips).
+  // They are independent, so run them with bounded concurrency instead.
+  let i = 0;
+  async function worker() {
+    while (i < multi.length) {
+      const j = multi[i++];
+      try {
+        // externalPath already begins with "/job/", so the base takes no extra segment.
+        const d = await fetchJson(`https://${info.host}/wday/cxs/${info.tenant}/${info.site}${j.externalPath}`, opts);
+        const pi = d?.jobPostingInfo || {};
+        const locs = [pi.location, ...(pi.additionalLocations || [])].filter(Boolean);
+        if (!locs.length) continue;
+        const joined  = locs.join('; ');
+        const country = pi.country?.descriptor;
+        // Some tenants already spell the country into each location entry.
+        j._resolvedLocation = country && !joined.includes(country) ? `${joined}, ${country}` : joined;
+      } catch { /* keep the slug fallback */ }
+    }
   }
+  await Promise.all(Array.from({ length: Math.min(WORKDAY_DETAIL_CONCURRENCY, multi.length) }, worker));
 }
 
 // Parse a Workday board URL → { host, tenant, site }.
@@ -1102,8 +1113,14 @@ export const ATS = {
       const info = parseWorkdayUrl(url);
       if (!info) return { jobPostings: [], _info: null };
       const endpoint = `https://${info.host}/wday/cxs/${info.tenant}/${info.site}/jobs`;
+      // Workday caps limit at 20 (50 returns an empty page). 5 pages = 100 jobs,
+      // recent-first. Page 0 reports `total`, so the remaining pages are known up
+      // front and fetched together rather than one after another.
+      // Workday caps limit at 20 (50 returns an empty page). 5 pages = 100 jobs,
+      // recent-first. Pages are fetched one at a time on purpose: firing them
+      // concurrently makes the tenant throttle and hand back empty pages, which
+      // silently loses jobs and marks healthy boards as dead in the empty-ATS log.
       const all = [];
-      // Workday caps limit at ~20. 5 pages = 100 jobs, recent-first.
       for (let page = 0; page < 5; page++) {
         let json;
         try {

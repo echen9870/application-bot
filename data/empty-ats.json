@@ -1,103 +1,103 @@
 {
   "Mistral AI (lever)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Actalent (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "CGI (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "DriveTime (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Epic (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Forterra (lever)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Interclypse (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "John Deere (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "L3Harris (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Liberty Mutual (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Lockheed Martin (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "MicroStrategy (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "MITRE (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Moodys (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Nordstrom (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "NSA (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Paramount (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Pega (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "SAP (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Siemens (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Walmart (workday)": {
     "firstSeen": "2026-08-07",
@@ -106,18 +106,18 @@
   },
   "Deel (ashby)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-02",
-    "scans": 55
+    "lastSeen": "2026-09-03",
+    "scans": 77
   },
   "Marshall Wace (greenhouse)": {
     "firstSeen": "2026-08-12",
-    "lastSeen": "2026-09-02",
-    "scans": 47
+    "lastSeen": "2026-09-03",
+    "scans": 69
   },
   "Foursquare (ashby)": {
     "firstSeen": "2026-08-19",
-    "lastSeen": "2026-09-02",
-    "scans": 36
+    "lastSeen": "2026-09-03",
+    "scans": 58
   },
   "Visa (smartrecruiters)": {
     "firstSeen": "2026-08-21",
@@ -126,17 +126,12 @@
   },
   "Blockhouse (ashby)": {
     "firstSeen": "2026-08-29",
-    "lastSeen": "2026-09-02",
-    "scans": 17
-  },
-  "PIP Labs (lever)": {
-    "firstSeen": "2026-09-02",
-    "lastSeen": "2026-09-02",
-    "scans": 12
+    "lastSeen": "2026-09-03",
+    "scans": 39
   },
   "Aleph Alpha (ashby)": {
     "firstSeen": "2026-09-02",
-    "lastSeen": "2026-09-02",
-    "scans": 11
+    "lastSeen": "2026-09-03",
+    "scans": 33
   }
 }

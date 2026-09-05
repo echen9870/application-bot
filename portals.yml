@@ -887,8 +887,9 @@ tracked_companies:
     enabled: true
   - name: DriveTime
     careers_url: https://www.drivetime.com/careers
-    api: https://api.smartrecruiters.com/v1/companies/Drivetime/postings?limit=100&status=PUBLIC
-    scan_method: smartrecruiters
+    api: https://drivetime.wd1.myworkdayjobs.com/DriveTime
+    scan_method: workday
+    notes: Re-homed 2026-09-05 — SmartRecruiters account live but empty 83 scans; now on Workday.
     enabled: true
   - name: DriveWealth
     careers_url: https://www.drivewealth.com/careers
@@ -1362,9 +1363,9 @@ tracked_companies:
     enabled: true
   - name: Liberty Mutual
     careers_url: https://jobs.libertymutualgroup.com
-    api: https://api.smartrecruiters.com/v1/companies/LibertyMutual/postings?limit=100&status=PUBLIC
-    scan_method: smartrecruiters
-    notes: Insurance
+    api: https://careers-libertymutual.icims.com/jobs/search?ss=1&searchKeyword=&searchLocation=&in_iframe=1
+    scan_method: icims
+    notes: Insurance. Re-homed 2026-09-05 — SmartRecruiters empty 83 scans; now on iCIMS.
     enabled: true
   - name: Lockheed Martin
     careers_url: https://lockheedmartinjobs.com
@@ -1484,9 +1485,9 @@ tracked_companies:
     enabled: true
   - name: MITRE
     careers_url: https://careers.mitre.org
-    api: https://api.smartrecruiters.com/v1/companies/Mitre/postings?limit=100&status=PUBLIC
-    scan_method: smartrecruiters
-    notes: FFRDC research org
+    api: https://careers.mitre.org/widgets
+    scan_method: phenom
+    notes: FFRDC research org. Re-homed 2026-09-05 — SmartRecruiters empty 83 scans; now on Phenom.
     enabled: true
   - name: MLB
     careers_url: https://www.mlb.com/careers

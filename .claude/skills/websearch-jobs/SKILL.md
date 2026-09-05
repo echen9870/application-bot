@@ -31,7 +31,9 @@ If no args, search **all companies** in the list.
 
 ## Step 2 — Web search for each company
 
-For each company in the list (sequentially, in this agent):
+**Run every query in the foreground, in the session that invoked this skill. Do NOT spawn a subagent, background agent, or parallel agents to do the searching** — a delegated agent reports back only a summary, hiding which results it kept or dropped and reporting estimated counts instead of what `write-potential.mjs` actually wrote.
+
+For each company in the list, sequentially, in this session:
 
 1. **Run WebSearch** (one query per company for complete coverage)
 2. **Extract**: company, title, location, URL, posted date (YYYY-MM-DD or empty)

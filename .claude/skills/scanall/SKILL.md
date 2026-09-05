@@ -24,19 +24,21 @@ Note how many new jobs were written and how many were filtered.
 
 ## Step 2 — Web search for websearch-only companies
 
-**Delegate to subagent (token-efficient):**
+**Run in the foreground, in this session. Do NOT delegate to a subagent or background agent.**
+
+Invoke the websearch skill directly and run every query yourself:
 
 ```bash
 /websearch-jobs
 ```
 
-This runs a dedicated agent to search all websearch-only companies in portals.yml:
-- 79 companies searched, one query each (no OR-batching for complete coverage)
-- WebSearch results extracted: company, role, location, link, posted date
-- Written to Potential via `write-potential.mjs` (auto-applies dedup, title/location/YOE filters, URL heuristic)
+This searches all websearch-only companies in portals.yml:
+- One WebSearch query per company (no OR-batching — WebSearch returns a fixed ~10 results per query regardless of how many `site:` filters you combine, so batching silently loses coverage)
+- Extract from each result: company, role, location, link, posted date
+- Write to Potential via `write-potential.mjs` (auto-applies dedup, title/location/YOE filters, URL heuristic)
 - All rows tagged `Source = websearch` for later pruning
 
-**Why subagent?** WebSearch across 79 companies generates ~150k tokens of intermediate output — keeping it isolated in a subagent is more efficient than cluttering the main session context.
+**Why foreground?** The search results need to stay in the main session. A subagent reports back only a summary, so its per-result judgment — which URLs it kept, which it dropped, and why — is not visible or reviewable, and the counts it reports are estimates rather than what `write-potential.mjs` actually wrote. Running the queries here keeps the raw results and the writer's real output in context where they can be checked. The token cost is the accepted tradeoff.
 
 ## Step 3 — Prune dead websearch links
 

@@ -203,10 +203,16 @@ For companies with no public ATS API (Eightfold, Phenom, BrassRing, custom porta
 /websearch-jobs              # search all websearch-only companies via Google
 /websearch-jobs Microsoft    # search a specific company
 
-/scanall                     # full pipeline: API scan + websearch + prune + Playwright verify
+/scanall                     # full pipeline: API scan + websearch + prune + score
 ```
 
-A full `/scanall` transcript (10 parallel Haiku agents across 115 companies, prune, score) is in [`2026-07-25-sample-run-log.txt`](2026-07-25-sample-run-log.txt).
+**Websearch always runs in the foreground, in the main session.** Do not delegate it to a
+subagent or background agent, and do not fan it out across parallel agents. A subagent only
+reports a summary back, so its per-result decisions — which URLs it kept, which it dropped,
+and why — are invisible and unreviewable, and the counts it reports are its own estimates
+rather than what `write-potential.mjs` actually wrote. Running the queries in-session keeps
+the raw results and the writer's real output in context where they can be checked. This
+costs more tokens than delegating, and that is the accepted tradeoff.
 
 **Important:** Web search results go stale quickly — jobs indexed weeks ago may already be closed.
 After `/websearch-jobs`, clean up dead links:

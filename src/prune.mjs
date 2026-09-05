@@ -87,6 +87,23 @@ async function isAlive(parsed, { timeoutMs, retries }) {
       return ids.has(parsed.id);
     }
 
+    // Company-hosted Greenhouse embed: the API is authoritative, so prefer it
+    // over scraping HTML. The slug is guessed from the hostname, so a 404 on the
+    // job is only meaningful once the board itself is confirmed to exist —
+    // otherwise a bad guess would look identical to a closed job.
+    if (parsed.ghJid && parsed.ghSlugGuess) {
+      try {
+        const jobRes = await fetchResponse(
+          ATS.greenhouse.jobApi(parsed.ghSlugGuess, parsed.ghJid), { timeoutMs, retries: 0 });
+        if (jobRes.ok) return true;
+        if (jobRes.status === 404) {
+          const boardRes = await fetchResponse(
+            ATS.greenhouse.boardApi(parsed.ghSlugGuess), { timeoutMs, retries: 0 });
+          if (boardRes.ok) return false;   // board is real, job is gone → closed
+        }
+      } catch { /* fall through to the generic HTTP check below */ }
+    }
+
     // Generic: follow redirects, then regex the body for closed-job phrases.
     // Custom portals return 200 for closed jobs, so status alone isn't enough —
     // this catches them without falling back to browser/websearch verification.

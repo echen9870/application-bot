@@ -219,7 +219,11 @@ const DEAD_PAGE_PHRASE = new RegExp([
   'no longer (?:available|active|open|accepting)',
   'position (?:has been |is )?(?:filled|closed)',
   'job (?:posting |opening )?(?:has |is )?(?:been )?(?:closed|filled|expired|removed)',
-  'this (?:job|role|position|posting|listing) (?:has|was|is no longer)',
+  // NOTE: bare `has`/`was` here used to match ordinary live-page prose
+  // ("this role was first posted", "this role has a competitive salary"),
+  // which silently pruned live postings. Every branch must name an
+  // explicit dead outcome.
+  'this (?:job|role|position|posting|listing) (?:is no longer|has (?:been )?(?:filled|closed|removed|cancell?ed|expired)|was (?:filled|closed|removed|cancell?ed))',
   'posting (?:has expired|is no longer)',
   'job you (?:are looking for|requested) (?:is no longer|could not be found|was not found)',
   'job not found',

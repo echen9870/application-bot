@@ -463,6 +463,51 @@ test('parseLink: SmartRecruiters non-posting path → generic', () => {
   assert.equal(parseLink('https://jobs.smartrecruiters.com/Salesforce').type, 'generic');
 });
 
+// Regression (2026-09-05): a live Block posting was pruned because the page said
+// "...for when this role was first posted". The pattern accepted a bare has/was,
+// so ordinary live-page prose read as a closed-job phrase.
+test('looksDeadJobPage: live-page prose with this job/role + has/was is not dead', () => {
+  for (const s of [
+    'Please refer to the date listed at the top of this job page for when this role was first posted.',
+    'This role was posted on our careers site.',
+    'This position was created to support our growing team.',
+    'This job was posted 3 days ago.',
+    'This listing was updated recently.',
+    'This role has a competitive salary and equity.',
+    'This position has excellent benefits.',
+  ]) assert.equal(looksDeadJobPage(s), false, `should be live: ${s}`);
+});
+
+test('looksDeadJobPage: this job/role + explicit dead outcome is still caught', () => {
+  for (const s of [
+    'This role has been closed',
+    'this position has been filled',
+    'this posting was removed',
+    'This job has expired',
+    'this listing is no longer available',
+    'This position was cancelled',
+  ]) assert.equal(looksDeadJobPage(s), true, `should be dead: ${s}`);
+});
+
+// Regression (2026-09-05): company-hosted Greenhouse embeds fell through to HTML
+// scraping. Carry gh_jid + a hostname-derived slug so prune can ask the API first.
+test('parseLink: company-hosted Greenhouse embed carries gh_jid + slug guess', () => {
+  const r = parseLink('http://block.xyz/careers/jobs/5406194008?gh_jid=5406194008');
+  assert.equal(r.type, 'generic');          // slug is a guess, so not a real greenhouse hit
+  assert.equal(r.ghJid, '5406194008');
+  assert.equal(r.ghSlugGuess, 'block');
+});
+
+test('parseLink: gh_jid slug guess strips www and multi-label hosts', () => {
+  assert.equal(parseLink('https://www.fanduel.careers/open-positions?gh_jid=8079895').ghSlugGuess, 'fanduel');
+  assert.equal(parseLink('https://jobs.example.co.uk/x?gh_jid=12').ghSlugGuess, 'co');
+});
+
+test('parseLink: non-numeric or absent gh_jid → plain generic', () => {
+  assert.equal(parseLink('https://example.com/careers?gh_jid=abc').ghJid, undefined);
+  assert.equal(parseLink('https://example.com/careers/eng').ghJid, undefined);
+});
+
 test('looksLikeJobUrl: job ID in query string (embedded GH board) → true', () => {
   assert.equal(looksLikeJobUrl('https://stripe.com/jobs/search?gh_jid=8009143'), true);
   assert.equal(looksLikeJobUrl('https://www.fanduel.careers/open-positions?gh_jid=8079895'), true);

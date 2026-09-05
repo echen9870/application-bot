@@ -2,136 +2,111 @@
   "Mistral AI (lever)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Actalent (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "CGI (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
-  },
-  "DriveTime (smartrecruiters)": {
-    "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Epic (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Forterra (lever)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Interclypse (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "John Deere (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "L3Harris (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
-  },
-  "Liberty Mutual (smartrecruiters)": {
-    "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Lockheed Martin (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "MicroStrategy (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
-  },
-  "MITRE (smartrecruiters)": {
-    "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Moodys (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Nordstrom (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "NSA (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Paramount (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Pega (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "SAP (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Siemens (smartrecruiters)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
-  },
-  "Walmart (workday)": {
-    "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-01",
-    "scans": 42
+    "scans": 83
   },
   "Deel (ashby)": {
     "firstSeen": "2026-08-07",
     "lastSeen": "2026-09-05",
-    "scans": 82
+    "scans": 83
   },
   "Marshall Wace (greenhouse)": {
     "firstSeen": "2026-08-12",
     "lastSeen": "2026-09-05",
-    "scans": 74
+    "scans": 75
   },
   "Foursquare (ashby)": {
     "firstSeen": "2026-08-19",
     "lastSeen": "2026-09-05",
-    "scans": 63
-  },
-  "Visa (smartrecruiters)": {
-    "firstSeen": "2026-08-21",
-    "lastSeen": "2026-09-02",
-    "scans": 29
+    "scans": 64
   },
   "Blockhouse (ashby)": {
     "firstSeen": "2026-08-29",
     "lastSeen": "2026-09-05",
-    "scans": 44
+    "scans": 45
   },
   "Aleph Alpha (ashby)": {
     "firstSeen": "2026-09-02",
     "lastSeen": "2026-09-05",
-    "scans": 38
+    "scans": 39
   }
 }

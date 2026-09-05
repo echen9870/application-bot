@@ -65,6 +65,17 @@ function updateEmptyAtsLog(emptyKeys, scannedKeys, date) {
       delete log[key];
     }
   }
+  // Keys are `name (type)`, so moving a company to a different ATS leaves its old
+  // key unmatched by every future scan — it could never be deleted above and sat
+  // in the log forever, inflating the dead-endpoint list (observed: Visa was
+  // re-homed smartrecruiters → workday and kept a stale 29-scan streak while the
+  // new endpoint served 755 jobs). Drop stale-type keys for companies scanned now.
+  const scannedNames = new Set(scannedKeys.map(k => k.replace(/ \([a-z]+\)$/, '')));
+  const scannedSet = new Set(scannedKeys);
+  for (const key of Object.keys(log)) {
+    const name = key.replace(/ \([a-z]+\)$/, '');
+    if (scannedNames.has(name) && !scannedSet.has(key)) delete log[key];
+  }
   writeFileSync(EMPTY_ATS_LOG, JSON.stringify(log, null, 2) + '\n');
   return log;
 }

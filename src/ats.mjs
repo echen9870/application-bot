@@ -1114,19 +1114,32 @@ export const ATS = {
       if (!info) return { jobPostings: [], _info: null };
       const endpoint = `https://${info.host}/wday/cxs/${info.tenant}/${info.site}/jobs`;
       // Workday caps limit at 20 (50 returns an empty page). 5 pages = 100 jobs,
-      // recent-first. Page 0 reports `total`, so the remaining pages are known up
-      // front and fetched together rather than one after another.
-      // Workday caps limit at 20 (50 returns an empty page). 5 pages = 100 jobs,
       // recent-first. Pages are fetched one at a time on purpose: firing them
       // concurrently makes the tenant throttle and hand back empty pages, which
       // silently loses jobs and marks healthy boards as dead in the empty-ATS log.
+      //
+      // A failure on page 0 must therefore never be reported as "0 jobs": the
+      // caller treats an empty result as a misconfigured endpoint and logs it to
+      // data/empty-ats.json, so a transient throttle would masquerade as a dead
+      // board (observed 2026-09-05: PNC, Red Hat, Rockwell and 5 others were
+      // flagged empty while their boards served hundreds of live postings).
+      // Throw instead, so the scanner counts it as an error and leaves the
+      // empty-ATS streak alone. Failures on later pages keep the partial page 0.
       const all = [];
       for (let page = 0; page < 5; page++) {
         let json;
         try {
           json = await postJson(endpoint, { appliedFacets: {}, limit: 20, offset: page * 20, searchText: '' }, opts);
-        } catch { break; }
+        } catch (e) {
+          if (page === 0) throw new Error(`Workday page 0 fetch failed: ${e.message}`);
+          break;
+        }
         const jobs = json.jobPostings || [];
+        // Throttled tenants answer 200 with an empty page while still reporting a
+        // non-zero total. Only total === 0 means the board is genuinely empty.
+        if (page === 0 && jobs.length === 0 && Number(json.total) > 0) {
+          throw new Error(`Workday returned 0 postings but total=${json.total} (throttled?)`);
+        }
         all.push(...jobs);
         if (jobs.length < 20) break;
       }
@@ -1482,6 +1495,19 @@ export function parseLink(url) {
     for (const ats of Object.values(ATS)) {
       const result = ats.parseLink(u.hostname, u.pathname);
       if (result) return result;
+    }
+    // Company-hosted Greenhouse embeds (block.xyz/careers/jobs/123?gh_jid=123)
+    // don't live on a greenhouse.io host, so the loop above misses them and they
+    // fall back to scraping HTML for closed-job phrases — which produced false
+    // "dead" verdicts on live postings. Carry the job id plus a slug guessed from
+    // the hostname so callers can consult the Greenhouse API first. The guess is
+    // unverified, so this stays type 'generic': a caller must confirm the board
+    // exists before trusting a 404 on the job.
+    const ghJid = u.searchParams.get('gh_jid');
+    if (ghJid && /^\d+$/.test(ghJid)) {
+      const labels = u.hostname.replace(/^www\./, '').split('.');
+      const ghSlugGuess = labels.length > 2 ? labels[labels.length - 2] : labels[0];
+      return { type: 'generic', url, ghJid, ghSlugGuess };
     }
     return { type: 'generic', url };
   } catch {

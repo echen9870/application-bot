@@ -16,10 +16,6 @@ title_filter:
     - Application Engineer
     - Product Engineer
     - Founding Engineer
-    - Software Engineer Intern
-    - Software Developer Intern
-    - Engineering Intern
-    - SWE Intern
     - New Grad
     - Entry Level
     - University Grad
@@ -38,7 +34,6 @@ title_filter:
     - Systems Software Engineer
     # Added 2026-08-18 after Simplify-feed audit — common entry-level phrasings the list missed
     - Software Development Engineer
-    - Software Development Intern
     - Full Stack Developer
     - Full-Stack Developer
     - Java Developer
@@ -63,6 +58,12 @@ title_filter:
     - Rust Engineer
     - Fullstack Engineer
   negative:
+    # Internships / co-ops — Eric is targeting new grad full-time only (2026-09-04).
+    # Matched word-bounded, so "Internal Tools Engineer" and "International" are safe.
+    - Intern
+    - Internship
+    - Co-Op
+    - Apprentice
     # Seniority — the original list was missing these
     - Senior
     - 'Sr.'
@@ -2006,8 +2007,9 @@ tracked_companies:
     careers_url: https://github.com/SimplifyJobs/Summer2026-Internships
     api: https://raw.githubusercontent.com/SimplifyJobs/Summer2026-Internships/dev/.github/scripts/listings.json
     scan_method: simplify
-    notes: Community-curated cross-company internship feed; fans out to many companies
-    enabled: true
+    notes: Community-curated cross-company internship feed; fans out to many companies.
+      Disabled 2026-09-04 — new-grad-only search; every posting here is an internship.
+    enabled: false
   - name: Sentry
     careers_url: https://sentry.io/careers/
     api: https://api.ashbyhq.com/posting-api/job-board/sentry
@@ -2923,7 +2925,7 @@ tracked_companies:
   - name: Booking
     careers_url: https://careers.booking.com
     scan_method: websearch
-    scan_query: site:careers.booking.com ("software engineer" OR "intern") 2026
+    scan_query: site:careers.booking.com ("software engineer") 2026
     notes: Booking.com / Booking Holdings.
     enabled: true
   - name: Klarna
@@ -2948,7 +2950,7 @@ tracked_companies:
   - name: Canva
     careers_url: https://www.canva.com/careers/jobs/
     scan_method: websearch
-    scan_query: site:canva.com/careers ("software engineer" OR "engineer" OR "intern") 2026
+    scan_query: site:canva.com/careers ("software engineer" OR "engineer") 2026
     notes: Design platform (Australia).
     enabled: false  # disabled 2026-08-18 — covered by Simplify feed
   - name: Loom

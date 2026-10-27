@@ -1,112 +1,147 @@
 {
   "Mistral AI (lever)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Actalent (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "CGI (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Epic (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Forterra (lever)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Interclypse (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "John Deere (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "L3Harris (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Lockheed Martin (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "MicroStrategy (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Moodys (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Nordstrom (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "NSA (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Paramount (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Pega (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "SAP (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Siemens (smartrecruiters)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
   "Deel (ashby)": {
     "firstSeen": "2026-08-07",
-    "lastSeen": "2026-09-05",
-    "scans": 83
+    "lastSeen": "2026-10-27",
+    "scans": 84
   },
-  "Marshall Wace (greenhouse)": {
-    "firstSeen": "2026-08-12",
-    "lastSeen": "2026-09-05",
-    "scans": 75
+  "Hugging Face (workable)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
   },
-  "Foursquare (ashby)": {
-    "firstSeen": "2026-08-19",
-    "lastSeen": "2026-09-05",
-    "scans": 64
+  "Capella Space (greenhouse)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
   },
-  "Blockhouse (ashby)": {
-    "firstSeen": "2026-08-29",
-    "lastSeen": "2026-09-05",
-    "scans": 45
+  "Ethereum Foundation (ashby)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
   },
-  "Aleph Alpha (ashby)": {
-    "firstSeen": "2026-09-02",
-    "lastSeen": "2026-09-05",
-    "scans": 39
+  "NimbleRx (lever)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
+  },
+  "Tamr (ashby)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
+  },
+  "WebFX (lever)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
+  },
+  "Wisk (workday)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
+  },
+  "Webflow (greenhouse)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
+  },
+  "Solana Labs (ashby)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
+  },
+  "D-ID (workable)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
+  },
+  "Gather (greenhouse)": {
+    "firstSeen": "2026-10-27",
+    "lastSeen": "2026-10-27",
+    "scans": 1
   }
 }

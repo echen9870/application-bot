@@ -157,6 +157,7 @@ export async function parseResume({ force? } = {})    // → resume text. PDF→
 export const SPREADSHEET_ID       // spreadsheet ID string
 export const RED_BG               // { red, green, blue } for Rejected row background
 export const RED_TEXT             // { red, green, blue } for Rejected row text
+export function loadServiceAccountCredentials(env?) // → key JSON from GOOGLE_SERVICE_ACCOUNT_JSON, else the key file
 export function createSheetsClient()              // → google.sheets v4 client
 export async function getColumn(sheets, sheetName, col)  // → Set<string> of non-empty values (skips header)
 export async function getSheetId(sheets, tabName)        // → numeric sheetId for batchUpdate requests

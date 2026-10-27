@@ -18,6 +18,21 @@ export const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID;
 export const RED_BG   = { red: 1.0, green: 0.7804, blue: 0.8078 };
 export const RED_TEXT = { red: 0.6118, green: 0, blue: 0.0235 };
 
+// Service-account credentials: the key's JSON in GOOGLE_SERVICE_ACCOUNT_JSON (for cloud
+// runs, where no key file exists) wins; otherwise read the key file from disk.
+// The error never echoes the variable's value, since it is a secret.
+export function loadServiceAccountCredentials(env = process.env) {
+  const inline = env.GOOGLE_SERVICE_ACCOUNT_JSON;
+  if (inline && inline.trim()) {
+    try { return JSON.parse(inline); }
+    catch { throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON is set but is not valid JSON. Paste the whole key file contents.'); }
+  }
+  const paths = [env.GOOGLE_SERVICE_ACCOUNT_PATH, 'service-account.json', '/tmp/app/service-account.json'].filter(Boolean);
+  const saPath = paths.find(p => existsSync(p));
+  if (!saPath) throw new Error('service-account.json not found. Set GOOGLE_SERVICE_ACCOUNT_PATH in .env, or GOOGLE_SERVICE_ACCOUNT_JSON to the key\'s contents');
+  return JSON.parse(readFileSync(saPath, 'utf-8'));
+}
+
 export function createSheetsClient() {
   if (!SPREADSHEET_ID) {
     throw new Error(
@@ -25,11 +40,7 @@ export function createSheetsClient() {
       'your own spreadsheet ID (the long string in your sheet\'s URL).'
     );
   }
-  const envPath = process.env.GOOGLE_SERVICE_ACCOUNT_PATH;
-  const paths = [envPath, 'service-account.json', '/tmp/app/service-account.json'].filter(Boolean);
-  const saPath = paths.find(p => existsSync(p));
-  if (!saPath) throw new Error('service-account.json not found. Set GOOGLE_SERVICE_ACCOUNT_PATH in .env');
-  const credentials = JSON.parse(readFileSync(saPath, 'utf-8'));
+  const credentials = loadServiceAccountCredentials();
   const auth = new google.auth.GoogleAuth({
     credentials,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],

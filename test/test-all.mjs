@@ -28,6 +28,7 @@ import { trainLogistic, predictLogistic, loadModel } from '../src/ml/model.mjs';
 import { detectApi, parseLink, parseJobs, extractGHSlug, ATS, cleanDescription } from '../src/ats.mjs';
 
 import { isPermanentError } from '../src/fetch.mjs';
+import { loadServiceAccountCredentials } from '../src/sheets-client.mjs';
 
 // ── YOE title filter ─────────────────────────────────────────────────
 
@@ -1390,4 +1391,19 @@ test('featuresToVector + explainScore: ordering and contribution accounting', ()
   for (let i = 1; i < ex.contributions.length; i++) {
     assert.ok(Math.abs(ex.contributions[i - 1].contribution) >= Math.abs(ex.contributions[i].contribution));
   }
+});
+
+test('loadServiceAccountCredentials: GOOGLE_SERVICE_ACCOUNT_JSON wins over the key file', () => {
+  const creds = loadServiceAccountCredentials({
+    GOOGLE_SERVICE_ACCOUNT_JSON: '{"client_email":"bot@example.iam.gserviceaccount.com"}',
+    GOOGLE_SERVICE_ACCOUNT_PATH: '/nonexistent/key.json',
+  });
+  assert.equal(creds.client_email, 'bot@example.iam.gserviceaccount.com');
+});
+
+test('loadServiceAccountCredentials: invalid inline JSON errors without echoing the value', () => {
+  assert.throws(
+    () => loadServiceAccountCredentials({ GOOGLE_SERVICE_ACCOUNT_JSON: 'not-json-secret' }),
+    err => /not valid JSON/.test(err.message) && !err.message.includes('not-json-secret'),
+  );
 });
